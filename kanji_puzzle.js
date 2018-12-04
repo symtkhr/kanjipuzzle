@@ -625,12 +625,11 @@ var load_quiz = function(qid)
         
         console.log($word.height() - $glyph.position().top);
         var $ki = $("#keyinput").appendTo($word).show();
-        console.log($glyph.position());
         $ki.css(
-            {"width": ($word.width() - $glyph.position().left - 5),
+            {"width": $word.width() - $glyph.position().left,
              "left" : $glyph.position().left,
-             "bottom": ($word.height() - $glyph.position().top - 3) });
-        $(".userans").show().focus().select();
+             "bottom": ($word.height() - $glyph.position().top) });
+        $(".userans").show().css({"width": "100%"}).focus().select();
 
         if ($(this).parents(".word").find(".correct:hidden").size() == 0) {
             $ki.hide();
@@ -645,12 +644,48 @@ var load_quiz = function(qid)
         //if (!timer.is_running) timer.start(0);
     });
 
+    $("#sh input").keypress(function(e){
+        if (e.which != 13) return;
+        //全角半角
+        var val = $(this).val().replace(/[！-ｚ]/g, function(s) {
+            return String.fromCharCode(s.charCodeAt(0) + 0x20 - 0xff00);
+        });
+        console.log(val);
+        var m = val.trim().match(/^p([0-9]+)/i);
+        if (m) {
+            console.log(m);
+            var classname = m[1];
+            $(".elm").css("background-color", "");
+            $(".kidx" + classname).parent().css("background-color", "#8cf");
+            $(this).select();
+            return;
+        }
+        var m = val.trim().match(/^([0-9]+)([^0-9-]+)$/);
+        if (m) {
+            var value = m[2];
+            var $glyphs = $(".word").eq(m[1]-1).find(".glyph");
+            var pos = 0;
+            for (; pos < $glyphs.size() && "?・*".indexOf(value.charAt(pos)) != -1 ; pos++);
+            $(".glyph").removeClass("selected");
+            console.log(pos);
+            $glyphs.eq(pos).addClass("selected");
+
+            answer_check(value);
+        }
+        var m = val.trim().match(/^([0-9]+)([^0-9]+)([0-9]+)([^0-9]+)$/);
+        if (m) {
+            var value = m[4];
+            var $glyphs = $(".word").eq(m[1]-1).find(".glyph");
+            $(".glyph").removeClass("selected");
+            console.log(pos);
+            $glyphs.eq(m[3]-1).addClass("selected");
+            answer_check(value);
+        }
+        $(this).select();
+    });
+    
     $(".userans").keypress(function(e){
         if (e.which != 13) return;
-
-        //var c = $(".glyph.selected").prop("class");
-        var $selected = $(".glyph.selected");
-        $("#judge").show();
 
         //数字入力は語番号選択扱い
         var val = $(this).val().replace(/[０-９：]/g, function(s) {
@@ -663,17 +698,27 @@ var load_quiz = function(qid)
             $(".word").eq(wid - 1).find(".glyph:first").find(".elm:first").click();
             return;
         }
-        
+        answer_check($(this).val());
+    });
+
+    var answer_check = function(value)
+    {
+        //var c = $(".glyph.selected").prop("class");
+        var $selected = $(".glyph.selected");
+        $("#judge").show();
+
         //かな不在の語はかな入力を無視
-        if ($selected.parent().find(".hiragana .qelm").size() == 0)
-            $(this).val($(this).val().match(/[一-龠]/g).join(""));
+        if ($selected.parent().find(".hiragana .qelm").size() == 0) {
+            value = value.match(/[一-龠]/g).join("");
+            $(".userans").val(value);
+        }
 
         var g_log = $("#g_log").val() + ";[" + timer.count() + "]";
         var seikai = 0;
         var trate = 0;
 
         //1文字ずつ正解判定
-        $(this).val().split("").forEach(function(c, i) {
+        value.split("").forEach(function(c, i) {
             //途中に誤答があれば以降は判定しない
             if (seikai < i) return;
 
@@ -746,7 +791,7 @@ var load_quiz = function(qid)
     
         $(".userans").select();
         if ($(".kidx.undone").size() == 0) show_ending();
-    });
+    };
 
     var light = 0;
     $(document).keydown(function(e) {
@@ -814,11 +859,16 @@ var show_menu = function()
     $("#main").hide();
     $("#menu").show();
     $("#rule").hide();
-
+    $("#sh").hide();
+    
     load_status();
 
     $("#showrule").click(function() {
         $('#rule').toggle();
+    });
+    $("#shen").click(function() {
+        $(this).hide();
+        $("#sh").show();
     });
 
     $("#fragtable").load(function(){

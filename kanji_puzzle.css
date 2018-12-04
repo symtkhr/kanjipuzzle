@@ -94,18 +94,17 @@ div.kpart {
     font: 30pt bold;
 }
 #keyinput {
-    position:absolute;
-    left:0;
-    padding:0;
-    /* background-color:#8e8; */
+    display:block;
+    padding:0; 
+    position: absolute;
     z-index:4;
 }
-.userans {
-    width:100%;
+.userans, .usercmd {
+    width:300px;
     height:30px;
     font-size:30px;
+    border:3px solid #8c8;
     background-color:#efe;
-    border:3px solid #6c6;
 }
 
 #g_log, #score {
