@@ -1,0 +1,242 @@
+body {
+  padding:0;
+  margin:0;
+}
+@font-face {
+  font-family: "glyphwiki";
+  src: url("glyphwikiCDP.woff");
+}
+
+/* #quiz */
+div.sbox {
+   position:absolute;
+   width:100%;
+   height:100%;
+   pointer-events:none;
+}
+div.elm {
+  border:1px solid #88f;
+  box-sizing: border-box;
+  background-color: #eee;
+  pointer-events:initial;
+}
+div.qelm {
+  background-color: #cce;
+}
+
+div.glyph {
+  font-family: MS Gothic;
+  position:relative;
+  width:60px; height:60px; 
+  border:1px solid black; 
+  box-sizing: border-box;
+  display:inline-block;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+div.correct {
+  line-height: 58px; /* glyph decrements 2 */
+  font-size:58px;
+  display:none;
+  pointer-events:none;
+  position:absolute; 
+  bottom:0; left:0; right:0; top:0;
+}
+
+div.glyph.hiragana,
+div.glyph.hiragana div.elm {
+    border-radius:30px;
+}
+
+div.glyph.hiragana div.elm div.kpart,
+div.glyph.hiragana div.correct {
+    text-align:center;
+    font-size:40px;
+}
+
+div.word {
+  border: 1px solid green;
+  display:inline-block;
+  padding: 5px;
+  margin: 5px;
+  background-color: #eee;
+}
+
+div.glyph.selected .elm {
+    //background-color: #ecc;
+    border-color: red;
+}
+
+div.glyph.selected {
+    border-color: red;
+}
+div.kidx {
+    width:100%; position:absolute; text-align:center; color:blue; z-index:2;
+    top:0; height:16px; line-height:16px;
+}
+
+div.kpart {
+    font-family: "glyphwiki";
+    color: black;
+    width: 100%;
+    position: absolute;
+    text-align: center;
+    z-index: 1;
+    pointer-events: none;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+#judge {
+    position:absolute; right:10px; bottom:10px; display:none;
+    font: 30pt bold;
+}
+#keyinput {
+    position:absolute;
+    left:0;
+    padding:0;
+    /* background-color:#8e8; */
+    z-index:4;
+}
+.userans {
+    width:100%;
+    height:30px;
+    font-size:30px;
+    background-color:#efe;
+    border:3px solid #6c6;
+}
+
+#g_log, #score {
+    display:none;
+}
+
+div.cdp {
+    width:20px; height:20px;
+    display:inline-block;
+}
+
+#message {
+    display:none; width:300px; height:120px; 
+    position:absolute; bottom:0; left:0; right:0; top:0;
+    background-color:#bcc; margin:auto; border:2px solid gray; 
+    border-radius:100px; line-height:25px; z-index:4;
+}
+
+/* #menu */
+.qoption {
+    width: 240px; margin: 0 2px 5px 2px;
+    float:left;
+    display:block; border:1px solid gray; height:80px;
+    cursor:pointer;
+    line-height: 20px;
+    position:relative;
+    z-index:1;
+}
+.qoption.selected .loading {
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    top:0;
+    opacity:0;
+    line-height:80px;
+    font-size:60px;
+    text-align:center;
+    z-index:0;
+    color:#008;
+}
+
+.qoption:hover {
+    background-color: #bdc;
+}
+
+.qoption.resume {
+    background-color: #faa;
+    border: #f22 solid 1px;
+}
+.qoption.resume:hover {
+    background-color: #fca;
+    border: #f22 solid 1px;
+}
+
+.qid {
+    border-radius:20px; float:left; background-color:#9df;
+    width:40px; height:40px; line-height:40px;text-align:center;
+}
+
+.qinfo {
+    color: #66a;
+    margin-left: 4px;
+    float:left;
+    height:40px;
+    line-height:20px;
+    white-space:nowrap;
+}
+.qdesc {
+    margin: 0 5px;
+    clear:both;
+    display:block;
+    font-size:12pt;
+    width:auto;
+}
+
+/* #makequiz */
+h2 {
+    margin:2px;
+    background-color: #dca;
+    font-size:12pt;
+}
+
+.fkana {
+    font-size:80%;
+    color: #338;
+//    white-space:nowrap;
+//    position:relative;
+//    display:inline-block;
+//    overflow:hidden;
+}
+.fword {
+    position:relative;
+    display:inline-block;
+    line-height:10px;
+}
+.fchar, .fword {
+    cursor: pointer;
+}
+.unbare .fchar {
+    color:red;
+}
+.tounbare .fchar {
+    color:blue;
+}
+
+.barekey, .fragkey, .statparts, .cdpf, #parts, #redefine {
+    font-family: "glyphwiki";
+}
+
+#parts, #chars, #nchars, #numof {
+    width:100px;
+}
+
+#frequents label {
+    display:inline-block;
+    background-color:#ccc;
+    border-radius:12px;
+    border:1px solid #080;
+    font-size:12px;
+    padding:0 5px;
+}
+#frequents span {
+    display:inline-block;
+    color:#008;
+    /* text-decoration: underline; */
+    font-family:glyphwiki;
+    height:24px;
+    line-height:24px;
+    cursor:pointer;
+}
+#frequents span:hover {
+    background-color:#ccc;
+}
