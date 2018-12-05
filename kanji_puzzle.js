@@ -574,25 +574,33 @@ var load_quiz = function(qid)
         // 部首表示: 番号付きならば伏せる
         if ($(this).hasClass("qelm")) $kpart.hide();
 
-        if (!c.match(/^&.+;$/)) {
+        var name = c.match(/^&([^;]+);$/);
+        if (!name) {
             $kpart.append(c).css(style);
             return;
         }
 
-        $kpart.append(cdp2ucs(c)).css(style);
+        var gaiji = cdp2ucs(c);
+        if (gaiji != c) {
+            $kpart.append(gaiji).css(style);
+            return;
+        }
+
+        // 部首表示: glyphwikiからロードする
+        $("head").append('<link rel="stylesheet" href="http://glyphwiki.org/style?glyph=' + name[1] + '">');
+        style["font-family"] = name[1];
+        $kpart.append("〓").css(style);
         return;
         
         // 部首表示: フォントがない場合はSVGを使う(いちおう残し?)
-        var $svg = $("#" + c.substr(1, c.length - 2));
-        if ($svg.size() > 0)
+        var $svg = $("#" + name[1]);
+        if ($svg.size() > 0) {
             $kpart.append($svg.clone().show()).css(style);
-        else
-            $kpart.append(c).css({
-                "font-size": "10px",
-                "bottom": "auto",
-                "transform": "scale(1,1)"
-            });
+            return;
+        }
 
+        // 部首表示: 諦めてそのまま表示
+        $kpart.append(c).css(style);
     });
 
     //枠外クリックで選択外し
