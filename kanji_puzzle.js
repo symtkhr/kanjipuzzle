@@ -855,7 +855,19 @@ var show_menu = function()
         $('<div>').addClass("qid").appendTo($option).text(1 + idx);
         $('<div>').addClass("qinfo").appendTo($option).html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" + factor.author);
         $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
+        if (quiztable.length - idx <= 10) $option.addClass("newest");
     });
+    $("#archives").click(function() {
+	if ($(this).hasClass("open")) {
+	    $(".qoption").hide();
+	    $(".qoption.newest").show();
+	    $(this).removeClass("open").text("昔のを表示");
+	} else {
+	    $(".qoption").show();
+	    $(this).addClass("open").text("昔のを隠す");
+	}
+    });
+
 
     $(".qoption").click(function() {
         if (!$("#fragtable").hasClass("done")) return;

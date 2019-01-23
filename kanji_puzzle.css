@@ -124,14 +124,26 @@ div.cdp {
 }
 
 /* #menu */
+#archives {
+    text-decoration: underline;
+    cursor:pointer;
+}
+
+#qlists {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 .qoption {
     width: 240px; margin: 0 2px 5px 2px;
-    float:left;
     display:block; border:1px solid gray; height:80px;
     cursor:pointer;
     line-height: 20px;
     position:relative;
     z-index:1;
+}
+.qoption:not(.newest) {
+    display:none;
 }
 .qoption.selected .loading {
     position:absolute;
