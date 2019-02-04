@@ -470,7 +470,7 @@ var load_status = function()
 
 var load_quiz = function(qid)
 {
-    $(window).on('beforeunload', function(event) {
+    $(window).on('pagehide', function(event) {
         save_status(qid);
         return;
     });
@@ -587,7 +587,7 @@ var load_quiz = function(qid)
         }
 
         // 部首表示: glyphwikiからロードする
-        $("head").append('<link rel="stylesheet" href="http://glyphwiki.org/style?glyph=' + name[1] + '">');
+        $("head").append('<link rel="stylesheet" href="https://glyphwiki.org/style?glyph=' + name[1] + '">');
         style["font-family"] = name[1];
         $kpart.append("〓").css(style);
         return;
@@ -798,6 +798,7 @@ var load_quiz = function(qid)
         });
     
         $(".userans").select();
+        save_status(qid);
         if ($(".kidx.undone").size() == 0) show_ending();
     };
 
