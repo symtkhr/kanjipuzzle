@@ -426,6 +426,7 @@ var load_status = function()
         res.logs = data.join("<>");
         is_valid = true;
     });
+    //console.log(document.cookie);
 
     if (!is_valid) return false;
     if (!res.qid) return false;
@@ -898,11 +899,34 @@ var show_menu = function()
         $(this).addClass("done");
     });
 
+    //save_result();
+
     if (location.href.indexOf("#debug") < 0) return;
     $.getScript("./makequiz_tool.js");
     $.getScript("./jisho_tool.js");
 
 };
+
+
+var save_result = function(qid, pt, tpt, name)
+{
+    var param = {
+        qid: (qid + 1),
+        score: (pt + ";" + tpt),
+        log: $("#g_log").val(),
+        name: name,
+    };
+    var url = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
+    $.ajax({
+        url: url,
+        data: JSON.stringify(param),
+        type: 'post',
+        dataType: 'json',
+        success: function(data, status, error) {
+        },
+        timeout: 10000,
+   });
+}
 
 var show_ending = function()
 {
@@ -917,8 +941,23 @@ var show_ending = function()
     $("#point").text(pt);
     $(".tpoint").html(pt + tpt);
     $("#score").show();
-    $("#message").fadeIn().click(function() {
-        $(this).fadeOut();
+    $("#message").fadeIn();
+
+    var uname = "";
+    document.cookie.split(";").some(function(param) {
+        var p = param.split("=");
+        if (p[0].trim() != "uname") return false;
+        uname = decodeURIComponent(p[1]);
     });
+    save_result(qid, pt, tpt, uname);
+    
+    $("#message input").val(uname).focus().unbind().keypress(function(e){
+        if (e.which != 13) return;
+        save_result(qid, pt, tpt, $(this).val());
+        document.cookie = "uname=" + $(this).val();
+        $("#message").fadeOut();
+    });
+
+
 };
 
