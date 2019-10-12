@@ -6,6 +6,50 @@ body {
   font-family: "glyphwiki";
   src: url("glyphwikiCDP.woff");
 }
+@media screen and (max-width:600px){
+    .topbox {
+        width:100%;
+    }
+    #qex, #daily {
+        min-width: 0;
+    }
+}
+/* top */
+#top {
+    display:flex;
+    flex-wrap: wrap;
+}
+.topbox {
+    border-radius:10px;
+    margin: 10px;
+    border: 1px solid #950;
+    text-align:left;
+    padding:5px;
+}
+.topbox span:first-child,
+#menu span:first-child {
+    border-radius:20px;
+    display:inline-block;
+    border: 1px solid #ccc;
+    padding: 0 6px;
+    margin: 0px;
+    background-color: #fdc;
+}
+#daily:hover {
+    background-color: #bdc;
+    cursor:pointer;
+}
+#qex, #daily {
+    text-align: center;
+}
+#example, #example_answer {
+    display:inline-block;
+}
+#erase_resume {
+    float:right;
+    height:22px;
+    width:22px;
+}
 
 /* #quiz */
 div.sbox {
@@ -56,11 +100,20 @@ div.glyph.hiragana div.correct {
 }
 
 div.word {
-  border: 1px solid green;
-  display:inline-block;
-  padding: 5px;
-  margin: 5px;
-  background-color: #eee;
+    border: 1px solid green;
+    display:inline-block;
+    padding: 0 0 0 5px;
+    margin: 5px;
+    background-color: #eee;
+}
+
+div.word div.wid {
+    width:100%;
+    color:green;
+    background-color:none;
+    font-size:12px;
+    font-family:monospace;
+    text-align:right;
 }
 
 div.glyph.selected .elm {
@@ -94,7 +147,7 @@ div.kpart {
     font: 30pt bold;
 }
 #keyinput {
-    display:block;
+    display:inline-block;
     padding:0; 
     position: absolute;
     z-index:4;
@@ -109,6 +162,11 @@ div.kpart {
 
 #g_log, #score {
     display:none;
+}
+
+#discover {
+    background-color:#8c8;
+    font-family:glyphwiki;
 }
 
 div.cdp {
@@ -129,7 +187,7 @@ div.cdp {
     cursor:pointer;
 }
 
-#qlists {
+#qlists, #newest {
     display: flex;
     flex-wrap: wrap;
 }
@@ -142,10 +200,7 @@ div.cdp {
     position:relative;
     z-index:1;
 }
-.qoption:not(.newest) {
-    display:none;
-}
-.qoption.selected .loading {
+.qoption.selected .loading, #daily .loading {
     position:absolute;
     left:0;
     right:0;
@@ -171,10 +226,26 @@ div.cdp {
     background-color: #fca;
     border: #f22 solid 1px;
 }
-
+    
 .qid {
     border-radius:20px; float:left; background-color:#9df;
+    position:relative;
     width:40px; height:40px; line-height:40px;text-align:center;
+}
+
+.qclear {
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    color:red;
+    height:40px;
+    font-size:40px;
+    display:none;
+}
+
+.qoption.cleared .qid .qclear {
+    display:block;
 }
 
 .qinfo {

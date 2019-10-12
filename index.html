@@ -2,7 +2,7 @@
 <head>
 <meta http-equiv="pragma" content="no-cache"></meta>
 <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
-<meta name="viewport" content="width=device-width,initial-scale=.5"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="kanji_puzzle.js"></script>
 <script src="qlist.js"></script>
@@ -12,11 +12,40 @@
 </head>
 
 <body>
+  <h2>部首部</h2>
+  <div id="top">
+      <div class="topbox">
+        <span>●例題</span> 同じ数字のところに同じ漢字パーツが入って熟語が完成します。
+        <button id="showrule">ルール詳細</button>
+        <div id='qex'>
+          <div id="example"></div>
+          →
+          <div id="example_answer"></div>
+        </div>
+      </div>
+      <div class="topbox">
+        <span>●日替わりアーカイブ</span>
+        クリックで開始します。
+        <div id="daily"></div>
+      </div>
+      <div class="topbox" id="continue">
+        <span>●解きかけ</span>
+        <button id="erase_resume">X</button>
+        <div style='margin-top:6px;'></div>
+      </div>
+      <div class="topbox">
+        <span>●最近の出題</span>
+        問題を選んでください。
+        <button class='anch' href='#archives' style="float:right; height:22px;">
+          バックナンバー</button>
+        <div id="newest" style='margin-top:6px;'></div>
+      </div>
+  </div>
   <div id="menu">
-    問題を選んでください。(<span id="archives">昔のも表示</span>)
+    <span>●バックナンバー</span>
+    問題を選んでください。(<a href="#">トップへ</a>)
     <div style="float:right;">
       <button id="shen">sh</button>
-      <button id="erase_resume" style="display:none;">忘</button>
     </div>
     <hr style="clear:both;">
     <div id="qlists"></div>
@@ -28,7 +57,7 @@
       同じ数字のところに同じ漢字パーツが入って<span id="genre">三字熟語</span>が完成します。<br/>
       クリックして赤枠になったマスの漢字を入力してください。
     </div>
-    <div id="keyinput" style="display:inline-block;">
+    <div id="keyinput">
       <input class="userans" />
       <div id="judge"></div>
     </div>
@@ -47,14 +76,16 @@
         <span class="tpoint"></span>点
       </div>
     </div>
-  </div>
-  <hr style="clear:both;">
-  <div id="quiz"></div>
-  <span id="discover" style="background-color:#8c8; font-family:glyphwiki"></span> [Status] 素点 <span id="point">0</span>点 + タイムボーナス <span id="bonus">0</span>点 (<span id="time">0</span>秒経過) <span id="score">= <span class="tpoint"></span>点</span>
-  <input id="g_log">
-  <div style="float:right;">
-    <span id="knjdef"></span>
-    <button id="showrule">ルール表示</button>
+    <div id="quiz"></div>
+    <hr style="clear:both;">
+    <div>
+      <span id="discover"></span>
+      [Status] 素点 <span id="point">0</span>点 + タイムボーナス <span id="bonus">0</span>点 (<span id="time">0</span>秒経過) <span id="score">= <span class="tpoint"></span>点</span>
+      <input id="g_log">
+      <div style="float:right;">
+        <span id="knjdef"></span>
+      </div>
+    </div>
   </div>
   <hr />
   <div id="makequiz" style="width:99%; display:none;">

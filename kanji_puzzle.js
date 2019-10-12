@@ -1,3 +1,4 @@
+
 // noprotect
 $(function() {
     show_menu();
@@ -38,105 +39,122 @@ var TimeCounter = function()
     };
 };
 
+class Random {
+  constructor(seed = 12345) {
+    this.a = 102030405;
+    this.b = 314159265;
+    this.c = 271828183;
+    this.d = seed;
+  }
+
+  next() {
+    var t = this.a ^ (this.a << 11);
+    this.a = this.b;
+    this.b = this.c;
+    this.c = this.d;
+    return this.d = (this.d ^ (this.d >> 19)) ^ (t ^ (t >> 8));
+  }
+}
+
 /*
 リファクタリング:
 var splitbox = function(c, elm, hidden) -> $(c).prototype.splitbox(struct); にしたい. cは$cだし, hidden不要
 */
-var splitbox = function(c, elm)
+var splitbox = function($c, elm)
 {
     if (elm.length == 1) {
-        c = $("<div>").addClass("sbox").appendTo(c);
+        $c = $("<div>").addClass("sbox").appendTo($c);
         elm = elm[0];
     }
 	
     if (!Array.isArray(elm)) {
-        c.addClass("elm").html(elm);
+        $c.addClass("elm").html(elm);
         return;
     }
    
     var make_box = {
-        "N": function(c) {
-            c.append('<div class="sbox" style="left:0;">');
-            c.append('<div class="sbox" style="right:0;">');
+        "N": function($c) {
+            $c.append('<div class="sbox" style="left:0;">');
+            $c.append('<div class="sbox" style="right:0;">');
             return [1, 0];
         },
-        "M": function(c) {
-            c.append('<div class="sbox" style="left:0;">');
-            c.append('<div class="sbox" style="right:33%;">');
-            c.append('<div class="sbox" style="right:0;">');
+        "M": function($c) {
+            $c.append('<div class="sbox" style="left:0;">');
+            $c.append('<div class="sbox" style="right:33%;">');
+            $c.append('<div class="sbox" style="right:0;">');
             return [2, 0];
         },
-        "Z": function(c) {
-            c.append('<div class="sbox" style="top:0;">');
-            c.append('<div class="sbox" style="bottom:0;">');
+        "Z": function($c) {
+            $c.append('<div class="sbox" style="top:0;">');
+            $c.append('<div class="sbox" style="bottom:0;">');
 
-            if (c.hasClass("L1")) c.children().eq(0).css({"width":"30%"}); // 題=是+頁
+            if ($c.hasClass("L1")) $c.children().eq(0).css({"width":"30%"}); // 題=是+頁
             return [0, 1];
         },
-        "E": function(c) {
-            c.append('<div class="sbox" style="top:0;">');
-            c.append('<div class="sbox" style="bottom:33%;">');
-            c.append('<div class="sbox" style="bottom:0;">');
-            if (c.hasClass("L1")) {  // 勉=免+力, 翹=堯+羽
-                c.next().css({"height":"85%", "width":"50%"});
-                c.children().eq(0).css({"width":"50%"});
-                c.children().eq(1).css({"width":"50%"});
+        "E": function($c) {
+            $c.append('<div class="sbox" style="top:0;">');
+            $c.append('<div class="sbox" style="bottom:33%;">');
+            $c.append('<div class="sbox" style="bottom:0;">');
+            if ($c.hasClass("L1")) {  // 勉=免+力, 翹=堯+羽
+                $c.next().css({"height":"85%", "width":"50%"});
+                $c.children().eq(0).css({"width":"50%"});
+                $c.children().eq(1).css({"width":"50%"});
             }
             return [0, 2];
         },
-        "O": function(c) { // 国街裏
-            c.append('<div class="sbox O1">');
-            c.append('<div class="sbox" style="width:60%; height:60%; top:20%; right:20%;">');
+        "O": function($c) { // 国街裏
+            $c.append('<div class="sbox O1">');
+            $c.append('<div class="sbox" style="width:60%; height:60%; top:20%; right:20%;">');
             return [.5, .5];
         },
 	
-        "H": function(c) { //閃凧鬨同
-            c.append('<div class="sbox H1">');
-            c.append('<div class="sbox" style="width:60%; height:60%; bottom:0; right:20%;">');
+        "H": function($c) { //閃凧鬨同
+            $c.append('<div class="sbox H1">');
+            $c.append('<div class="sbox" style="width:60%; height:60%; bottom:0; right:20%;">');
 	    
-            if (c.hasClass("L1")) c.children().eq(1).css({"width":"20%", "left":"5%"}); // 颱=風+台
+            if ($c.hasClass("L1")) $c.children().eq(1).css({"width":"20%", "left":"5%"}); // 颱=風+台
             return [.7, .5];
         },
-        "U": function(c) { // 凵[興-同]
-            c.append('<div class="sbox U1">');
-            c.append('<div class="sbox" style="width:70%; height:70%; top:0; right:15%;">');
+        "U": function($c) { // 凵[興-同]
+            $c.append('<div class="sbox U1">');
+            $c.append('<div class="sbox" style="width:70%; height:70%; top:0; right:15%;">');
             return [.7, .5];
         },
 	
-        "C": function(c) { // 匚
-            c.append('<div class="sbox C1">');
-            c.append('<div class="sbox" style="width:70%; height:70%; right:0; top:15%;">');
+        "C": function($c) { // 匚
+            $c.append('<div class="sbox C1">');
+            $c.append('<div class="sbox" style="width:70%; height:70%; right:0; top:15%;">');
             return [.5, .7];
         },
-        "F": function(c) { //广厂病届戻
-            c.append('<div class="sbox F1">');
-            c.append('<div class="sbox" style="width:70%; height:70%; bottom:0; right:0;">');
+        "F": function($c) { //广厂病届戻
+            $c.append('<div class="sbox F1">');
+            $c.append('<div class="sbox" style="width:70%; height:70%; bottom:0; right:0;">');
 	    
-            if (c.hasClass("L1")) c.children().eq(1).css({"width":"85%", "height":"30%"}); // 彪=虎+彡
+            if ($c.hasClass("L1")) $c.children().eq(1).css({"width":"85%", "height":"30%"}); // 彪=虎+彡
             return [.5, .5];
         },
-        "K": function(c) { //気式戒匂
-            c.append('<div class="sbox K1">');
-            c.append('<div class="sbox" style="width:70%; height:70%; bottom:0; left:0;">');
+        "K": function($c) { //気式戒匂
+            $c.append('<div class="sbox K1">');
+            $c.append('<div class="sbox" style="width:70%; height:70%; bottom:0; left:0;">');
             return [.5, .5];
         },
-        "L": function(c) {
-            c.append('<div class="sbox L1">');
-            c.append('<div class="sbox" style="width:70%; height:70%; top:0; right:0;">');
+        "L": function($c) {
+            $c.append('<div class="sbox L1">');
+            $c.append('<div class="sbox" style="width:70%; height:70%; top:0; right:0;">');
             return [.5, .5];
         },
-        "J": function(c) { //氷図
-            c.append('<div class="sbox J1">');
-            c.append('<div class="sbox" style="width:70%; height:70%; top:0; left:0;">');
-            if (c.hasClass("K1")) { //武裁織
-                c.next().css({"height": "33%"});
-                c.children().eq(1).css({"height":"33%"});
+        "J": function($c) { //氷図
+            $c.append('<div class="sbox J1">');
+            $c.append('<div class="sbox" style="width:70%; height:70%; top:0; left:0;">');
+            if ($c.hasClass("K1")) { //武裁織
+                $c.next().css({"height": "33%"});
+                $c.children().eq(1).css({"height":"33%"});
             }
             return [.5, .5];
         },
-        "Q": function(c) {
-            c.append('<div class="sbox Q1">');
-            c.append('<div class="sbox">');
+        "Q": function($c) {
+            $c.append('<div class="sbox Q1">');
+            $c.append('<div class="sbox">');
             return [0, 0];
         },//null, // 坐幽楽盥弐匁
     };
@@ -146,7 +164,7 @@ var splitbox = function(c, elm)
     var splitype = elm.shift();
 
     // 子要素の作成
-    var splitrate = make_box[splitype](c);
+    var splitrate = make_box[splitype]($c);
     var div = {
         "x": splitrate[0],
         "y": splitrate[1]
@@ -154,13 +172,13 @@ var splitbox = function(c, elm)
     var divch = [];
 
     //作成した子要素の割当(再起)
-    var cc = c.children().eq(0);
+    var $cc = $c.children().eq(0);
     while (elm.length > 0) {
         var n = elm.shift();
-        var d = splitbox(cc, n);
+        var d = splitbox($cc, n);
         divch.push(d ? d : {x:0, y:0});
-        cc = cc.next();
-        if (cc.length == 0) break;
+        $cc = $cc.next();
+        if ($cc.length == 0) break;
     }
 
     //子要素の分割パラメータからサイズ調整
@@ -169,8 +187,8 @@ var splitbox = function(c, elm)
         div.y += divch[0].y + divch[1].y;
 
         var bunbo = divch[0].y + divch[1].y + 2;
-        c.children().eq(0).css("height", ((divch[0].y + 1) / bunbo * 100) + "%");
-        c.children().eq(1).css("height", ((divch[1].y + 1) / bunbo * 100) + "%");
+        $c.children().eq(0).css("height", ((divch[0].y + 1) / bunbo * 100) + "%");
+        $c.children().eq(1).css("height", ((divch[1].y + 1) / bunbo * 100) + "%");
     }
 
     if (splitype === "E") {
@@ -178,10 +196,10 @@ var splitbox = function(c, elm)
         div.y += divch[0].y + divch[1].y + divch[2].y;
 
         var bunbo = divch[0].y + divch[1].y + divch[2].y + 3;
-        c.children().eq(0).css("height", ((divch[0].y + 1) / bunbo * 100) + "%");
-        c.children().eq(1).css("height", ((divch[1].y + 1) / bunbo * 100) + "%")
+        $c.children().eq(0).css("height", ((divch[0].y + 1) / bunbo * 100) + "%");
+        $c.children().eq(1).css("height", ((divch[1].y + 1) / bunbo * 100) + "%")
                           .css("bottom", ((divch[2].y + 1) / bunbo * 100) + "%");
-        c.children().eq(2).css("height", ((divch[2].y + 1) / bunbo * 100) + "%");
+        $c.children().eq(2).css("height", ((divch[2].y + 1) / bunbo * 100) + "%");
     }
 
     if (splitype === "N") {
@@ -189,8 +207,8 @@ var splitbox = function(c, elm)
         div.y += Math.max(divch[0].y, divch[1].y);
 
         var bunbo = divch[0].x + divch[1].x + 2;
-        c.children().eq(0).css("width", ((divch[0].x + 1) / bunbo * 100) + "%");
-        c.children().eq(1).css("width", ((divch[1].x + 1) / bunbo * 100) + "%");
+        $c.children().eq(0).css("width", ((divch[0].x + 1) / bunbo * 100) + "%");
+        $c.children().eq(1).css("width", ((divch[1].x + 1) / bunbo * 100) + "%");
     }
 
     if (splitype === "M") {
@@ -198,10 +216,10 @@ var splitbox = function(c, elm)
         div.y += Math.max(divch[0].y, divch[1].y, divch[2].y);
         
         var bunbo = divch[0].x + divch[1].x + divch[2].x + 3;
-        c.children().eq(0).css("width", ((divch[0].x + 1) / bunbo * 100) + "%");
-        c.children().eq(1).css("width", ((divch[1].x + 1) / bunbo * 100) + "%")
+        $c.children().eq(0).css("width", ((divch[0].x + 1) / bunbo * 100) + "%");
+        $c.children().eq(1).css("width", ((divch[1].x + 1) / bunbo * 100) + "%")
                           .css("right", ((divch[2].x + 1) / bunbo * 100) + "%");
-        c.children().eq(2).css("width", ((divch[2].x + 1) / bunbo * 100) + "%");
+        $c.children().eq(2).css("width", ((divch[2].x + 1) / bunbo * 100) + "%");
     }
 
     if ("OHUCFKLQJ".indexOf(splitype) != -1) {
@@ -414,6 +432,12 @@ var load_status = function()
     
     document.cookie.split(";").forEach(function(param) {
         var p = param.split("=");
+        if (p[0].trim().indexOf('done') == 0) {
+            var qid = parseInt(p[0].split("_").pop());
+            if (!qid) return;
+            $("#menu .qoption").eq(qid - 1).addClass('cleared');
+            return;
+        }
         if (p[0].trim() != "tempopreserve") return;
         var data = decodeURIComponent(p[1]).split("<>");
         console.log(data);
@@ -432,65 +456,50 @@ var load_status = function()
     if (!res.qid) return false;
 
     // 再開時のデータ展開
-    $(".qoption").eq(res.qid - 1).addClass("resume").click(function() {
-        var qid = $(this).addClass("selected").find(".qid").text();
-        $(this).find(".loading").text("再開").animate({"color":"#ccf"}, function() {
-            
-            $(".kidx").removeClass("undone").hide().next().show();
-            res.undone.forEach(function(kid) {
-                $(".kidx" + kid).addClass("undone").show().next().hide();
+    $("#continue").show();
+    $("#menu .qoption").eq(res.qid - 1).addClass("resume").clone().appendTo("#continue");
+    //if (res.qid == quiztable.length) $("#newest").hide();
+
+    $(".resume").unbind().click(function() {
+        if (!$("#fragtable").hasClass("done")) return;
+        var qid = parseInt($(this).addClass("selected").find(".qid").text());
+        $(this).siblings(".qoption").animate({"opacity": "0"});
+
+        $('<div>').addClass("loading").text("再開").appendTo(this)
+            .animate({"opacity":".5"}, function() {
+                load_quiz(qid);
+                $(".kidx").removeClass("undone").hide().next().show();
+                res.undone.forEach(function(kid) {
+                    $(".kidx" + kid).addClass("undone").show().next().hide();
+                });
+                //全パーツが開いたグリフを表示
+                $(".glyph").each(function() {
+                    if ($(this).find(".undone").size() > 0) return;
+                    var n = $(this).parent().find(".glyph").index($(this));
+                    $(this).find(".correct").show();
+                    $(this).find(".elm div").hide();
+                });
+                $("#g_log").val(res.logs);
+                $("#point").text(res.pt);
+                timer.start(res.time + 1);
             });
-            //全パーツが開いたグリフを表示
-            $(".glyph").each(function() {
-                if ($(this).find(".undone").size() > 0) return;
-                var n = $(this).parent().find(".glyph").index($(this));
-                $(this).find(".correct").show();
-                $(this).find(".elm div").hide();
-            });
-            
-            $("#g_log").val(res.logs);
-            $("#point").text(res.pt);
-            timer.start(res.time + 1);
-        });
     });
 
     $("#erase_resume").show().click(function() {
         save_status(-1);
         $(this).hide();
-        $(".qoption.resume").removeClass("resume").unbind().click(function() {
-            if (!$("#fragtable").hasClass("done")) return;
-            var qid = $(this).addClass("selected").find(".qid").text();
-            $('<div>').addClass("loading").text("読込中").appendTo(this)
-                .animate({"opacity":".5"}, function() { load_quiz(qid); });
-            $(this).siblings(".qoption").animate({"opacity": "0"});
-        });
+        $("#continue").hide();
+        $(".qoption.resume").removeClass("resume").show();
     });
     return true;
 };
 
 
-var load_quiz = function(qid)
+var draw_puzzle = function(qwords, $quiz, options)
 {
-    $(window).on('pagehide', function(event) {
-        save_status(qid);
-        return;
-    });
-    
-    $(".qid").html(qid);
-    var quiz = quiztable[qid - 1];
-    var qlist = quiz.q;
     var ans = "";
-    kanjifrag.definelocal(quiz.def);
+    if (!options) options = {};
 
-    $("#knjtb").val("");
-    $("#quiz").html('');
-    $("#wordlist").val(qlist);
-    $("#redefine").val(quiz.def);
-
-    if (quiz.genre) {
-        $("#genre").text(quiz.genre);
-    }
-    
     // 語リストから以下のDOM要素を生成 + ansに分解結果を記録
     // .word
     //  .glyph
@@ -501,29 +510,34 @@ var load_quiz = function(qid)
     //    .elm
     //      .kpart [寸]
     //    .correct [村]
-    qlist.split("/").forEach(function(qword, i) {
-        var $word = $("<div>").addClass("word").appendTo("#quiz");
-        $word.css("padding", "0 0 0 5px");
-        $("<div>").css({"width":"100%", "color":"green", "background-color":"", "font-size":"12px", "font-family":"monospace", "text-align":"right"})
-            .html("["+("00"+(1+i)).substr(-2)+"]").appendTo($word);
+    qwords.forEach(function(qword, i) {
+        var is_hidden = (options && options.display && options.display != i);
+
+        if (!is_hidden) {
+            var $word = $("<div>").addClass("word").appendTo($quiz);
+            $("<div>").addClass("wid").text("[" + ("00" + (1 + i)).substr(-2) + "]").appendTo($word);
+        }
         stringToArray(qword).forEach(function(c) {
             if (c.match(/^[ -~\s]?$/)) return;
-            var $glyph = $('<div class="glyph">').appendTo($word)
+
+            // 漢字分解
             var n = kanjifrag.split(c);
             var fragged = n.toString();
             ans += fragged + ",";
-            
-           //分解結果の記録(問題作成ツール用)
-           if (fragged !== c)
+            if (fragged == "X") n = [c];
+
+            if (is_hidden) return;
+            //分解結果の記録(問題作成ツール用)
+            if (fragged !== c)
                $("#knjtb").val($("#knjtb").val() + c + ":" + fragged.split(",").join("") + "/");
 
-           if (fragged == "X") n = [c];
-           splitbox($glyph, n, false);
-           $glyph.append('<div class="correct">' + c + '</div>');
+            // 描画
+            var $glyph = $('<div class="glyph">').appendTo($word);
+            splitbox($glyph, n, false);
+            $glyph.append('<div class="correct">' + c + '</div>');
 
-           //かな文字の場合
-           if (c.match(/^[ぁ-ン]$/)) {
-               //$glyph = $(".word:last-child .glyph:last-child");
+            //かな文字の場合
+            if (c.match(/^[ぁ-ン]$/)) {
                $glyph.addClass("hiragana");
            }
         });
@@ -533,9 +547,11 @@ var load_quiz = function(qid)
     var kidx = make_list(ans);
 
     // 分割DOM要素内に部首または番号を表示
-    $(".elm").each(function(){
+    $quiz.find(".elm").each(function(){
         var c = $(this).text();
-        $(this).html("");
+        console.log(c, $(this).innerHeight(), $(this).innerWidth());
+
+        $(this).text("");
         if (c == "＿") {
             $(this).parent().remove();
             return;
@@ -571,6 +587,7 @@ var load_quiz = function(qid)
         style['height'] = h;
         style['line-height'] = h;
         style['transform'] = 'scale(1, ' + $(this).innerHeight() / $(this).innerWidth() + ')';
+         //style['transform'] = 'scale(.5, .5)';
 
         // 部首表示: 番号付きならば伏せる
         if ($(this).hasClass("qelm")) $kpart.hide();
@@ -603,6 +620,42 @@ var load_quiz = function(qid)
         // 部首表示: 諦めてそのまま表示
         $kpart.append(c).css(style);
     });
+    if (options.open) {
+        $quiz.find(".glyph").each(function() {
+            $(this).find(".correct").show();
+            $(this).find(".elm div").hide();
+        });
+    }
+
+    return (Object.keys(kidx).length);
+}
+
+var load_quiz = function(qid)
+{
+    var quiz = quiztable[qid - 1];
+    var qlist = quiz.q;
+    kanjifrag.definelocal(quiz.def);
+
+    $("#main .qid").text(qid);
+    $("#knjtb").val('');
+    $("#quiz").text('');
+    $("#main").show();
+    $("#top").hide();
+    $("#wordlist").val(qlist);
+    $("#redefine").val(quiz.def);
+
+    if (quiz.genre) {
+        $("#genre").text(quiz.genre);
+    }
+
+    // パズル描画
+    var qlen = draw_puzzle(qlist.split("/"), $("#quiz"));
+
+    // 中断時の保存
+    $(window).on('pagehide', function(event) {
+        save_status(qid);
+        return;
+    });
 
     //枠外クリックで選択外し
     $(document).on('click', function(e) {
@@ -614,7 +667,6 @@ var load_quiz = function(qid)
     });
 
     // カウントアップタイマのイベントハンドラ
-    var qlen = (Object.keys(kidx).length);
     timer.set_handler(function(count) {
         $('#time').html(count);
         var bpm = qlen * 60 / (count);
@@ -622,7 +674,7 @@ var load_quiz = function(qid)
     });
 
     //枠内クリックで入力欄表示
-    $(".elm").click(function() {
+    $("#quiz .elm").click(function() {
         var $glyph = $(this).parents(".glyph");
         var $word = $glyph.parents(".word").css("position", "relative");
         var classname = $(this).find(".kidx").html();
@@ -632,7 +684,6 @@ var load_quiz = function(qid)
         $(".glyph").removeClass("selected");
         $glyph.addClass("selected");
         
-        console.log($word.height() - $glyph.position().top);
         var $ki = $("#keyinput").appendTo($word).show();
         $ki.css(
             {"width": $word.width() - $glyph.position().left,
@@ -650,7 +701,6 @@ var load_quiz = function(qid)
         } else {
             $("#discover").html("(" + classname + " = <span class='cdpf'>"  + $kidx.next().html() + "</span>)");
         }
-        //if (!timer.is_running) timer.start(0);
     });
 
     $("#sh input").keypress(function(e){
@@ -800,7 +850,7 @@ var load_quiz = function(qid)
     
         $(".userans").select();
         save_status(qid);
-        if ($(".kidx.undone").size() == 0) show_ending();
+        if ($("#quiz .kidx.undone").size() == 0) show_ending();
     };
 
     var light = 0;
@@ -846,6 +896,34 @@ var load_quiz = function(qid)
     timer.start(0);
 };
 
+var show_daily = function()
+{
+    var today = new Date();
+    var seed = today.getFullYear() * 12 +
+        today.getMonth() * 35 + today.getDate();
+    //seed = 2019 * 12 + 9 * 35 + 13;
+    var random = new Random(seed);
+    var qid = 1 + random.next() % (quiztable.length - 1);
+    var quiz = quiztable[qid - 1];
+    var qlist = quiz.q;
+    var wlen = qlist.split("/").length;
+    var iword = wlen - 1 - random.next() % parseInt(wlen * 0.3);
+    var options = { display: iword };
+
+    kanjifrag.definelocal(quiz.def);
+    draw_puzzle(qlist.split("/"), $("#daily"), options);
+
+    $("#daily").css("position", "relative").click(function() {
+        $(this).parent().css("background-color", "#bdc");
+        $('*').unbind();
+        $('<div>').addClass("loading").text("読込中").appendTo(this)
+            .animate({"opacity":".5"}, function() {
+                load_quiz(qid);
+                $("#quiz .word").eq(iword).find(".elm").eq(0).click();
+            });
+    });
+};
+
 var show_menu = function()
 {
     quiztable.forEach(function(factor, idx) {
@@ -854,36 +932,51 @@ var show_menu = function()
         quiztable[idx].q = q;
         var words = q.split("/");
         var $option = $('<div>').addClass("qoption").appendTo("#qlists");
-        $('<div>').addClass("qid").appendTo($option).text(1 + idx);
+        var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
+        $('<div>').addClass("qclear").appendTo($qid).text('✔');
         $('<div>').addClass("qinfo").appendTo($option).html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" + factor.author);
         $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
-        if (quiztable.length - idx <= 10) $option.addClass("newest");
-    });
-    $("#archives").click(function() {
-	if ($(this).hasClass("open")) {
-	    $(".qoption").hide();
-	    $(".qoption.newest").show();
-	    $(this).removeClass("open").text("昔のを表示");
-	} else {
-	    $(".qoption").show();
-	    $(this).addClass("open").text("昔のを隠す");
-	}
+        // if (quiztable.length == idx + 1)
     });
 
+    if (!$('.qoption').size()) { return $('body').hide(); }
 
+    var anchor_check = function() {
+        if (location.href.indexOf("#archives") < 0) {
+            $("#menu, #main").hide();
+            $("#top").show();
+        } else {
+            $("#top, #main").hide();
+            $("#menu").show();
+        }
+    };
+
+    //$('body').append(document.cookie);
+    $("#rule, #sh, #continue").hide();
+    load_status();
+    anchor_check();
+
+    $(".qoption").eq(-1).clone().appendTo("#newest");
+    $(".qoption").eq(-2).clone().appendTo("#newest");
+    $(".qoption").eq(-3).clone().appendTo("#newest");
+    $("#newest .resume").hide();
+    
     $(".qoption").click(function() {
         if (!$("#fragtable").hasClass("done")) return;
-        var qid = $(this).addClass("selected").find(".qid").text();
+        if ($(this).hasClass("resume")) return;
+        var qid = parseInt($(this).addClass("selected").find(".qid").text());
         $('<div>').addClass("loading").text("読込中").appendTo(this)
-            .animate({"opacity":".5"}, function() { load_quiz(qid); });
+            .animate({"opacity":".5"}, function() {
+                    $("#top").hide();
+                    load_quiz(qid); });
         $(this).siblings(".qoption").animate({"opacity": "0"});
     });
-    $("#main").hide();
-    $("#menu").show();
-    $("#rule").hide();
-    $("#sh").hide();
-    
-    load_status();
+
+
+    $("#menu a, button.anch").click(function() {
+        location.href = $(this).attr("href");
+        anchor_check();
+    });
 
     $("#showrule").click(function() {
         $('#rule').toggle();
@@ -897,9 +990,12 @@ var show_menu = function()
         var txt = $(this).contents().find("body").text();
         kanjifrag.define(txt);
         $(this).addClass("done");
+        $("#top").show();
+        show_daily();
+        draw_puzzle(["徒競走"], $("#example"));
+        draw_puzzle(["徒競走"], $("#example_answer"), {open: true});
+        anchor_check();
     });
-
-    //save_result();
 
     if (location.href.indexOf("#debug") < 0) return;
     $.getScript("./makequiz_tool.js");
@@ -926,7 +1022,7 @@ var save_result = function(qid, pt, tpt, name)
         },
         timeout: 10000,
    });
-}
+};
 
 var show_ending = function()
 {
@@ -944,11 +1040,14 @@ var show_ending = function()
     $("#message").fadeIn();
 
     var uname = "";
+    document.cookie = 'done_' + (qid + 1) + '=' + pt + '_' + timer.count();
     document.cookie.split(";").some(function(param) {
         var p = param.split("=");
         if (p[0].trim() != "uname") return false;
         uname = decodeURIComponent(p[1]);
     });
+    
+    var bpm = quiztable[qid].n * 60 / timer.count();
     save_result(qid, pt, tpt, uname);
     
     $("#message input").val(uname).focus().unbind().keypress(function(e){
@@ -960,4 +1059,3 @@ var show_ending = function()
 
 
 };
-
