@@ -514,7 +514,9 @@ var draw_puzzle = function(qwords, $quiz, options)
         var is_hidden = (options && options.display && options.display != i);
 
         if (!is_hidden) {
-            var $word = $("<div>").addClass("word").appendTo($quiz);
+            var $word = (qword.substr(0, 1) == "+") ?
+                $quiz.find(".word:last-child") :
+                $("<div>").addClass("word").appendTo($quiz);
             $("<div>").addClass("wid").text("[" + ("00" + (1 + i)).substr(-2) + "]").appendTo($word);
         }
         stringToArray(qword).forEach(function(c) {
@@ -783,7 +785,6 @@ var load_quiz = function(qid)
 
             g_log += c;
             //正解判定
-            console.log($selected.find(".correct").text());
             if (c != $selected.find(".correct").text()){ g_log += "x"; return; }
             seikai++;
 
@@ -794,8 +795,9 @@ var load_quiz = function(qid)
             }
 
             $selected = $selected.next();
-            //かなが解答対象でなければスキップ
-            if ($selected.hasClass("hiragana") && $selected.find(".qelm").size() == 0)
+            //枠内に2単語ある場合 || かなが解答対象でなければスキップ
+           if ($selected.hasClass("wid") ||
+               ($selected.hasClass("hiragana") && $selected.find(".qelm").size() == 0))
                 $selected = $selected.next();
         });
 
@@ -828,7 +830,9 @@ var load_quiz = function(qid)
                $("." + c[0]).hide().next().show();
            });
            $selected = $selected.next();
-           if ($selected.hasClass("hiragana") && $selected.find(".qelm").size() == 0)
+
+           if ($selected.hasClass("wid") ||
+               ($selected.hasClass("hiragana") && $selected.find(".qelm").size() == 0))
                $selected = $selected.next();
        }
        //開けたパーツの数に応じて加点
