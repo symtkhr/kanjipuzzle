@@ -764,88 +764,105 @@ var load_quiz = function(qid)
 
     var answer_check = function(value)
     {
-        //var c = $(".glyph.selected").prop("class");
         var $selected = $(".glyph.selected");
+        var $word = $selected.parent();
         $("#judge").show();
 
         //かな不在の語はかな入力を無視
-        if ($selected.parent().find(".hiragana .qelm").size() == 0) {
-            value = value.match(/[一-龠]/g).join("");
-            $(".userans").val(value);
+        if ($word.find(".hiragana .qelm").size() == 0) {
+            value = (value.match(/[一-龠]/g) || []).join("");
         }
 
-        var g_log = $("#g_log").val() + ";[" + timer.count() + "]";
-        var seikai = 0;
+        var $selecteds = $selected.nextAll(".glyph").filter(function() {
+            return (0 < $(this).find(".qelm").size());
+        });
+
+        //枠外の入力を無視
+        value = value.substring(0, $selected.size() + $selecteds.size());
+        $(".userans").val(value);
+
+        var g_log = $("#g_log").val() + ";" + timer.count() + "=";
         var trate = 0;
 
-        //1文字ずつ正解判定
-        value.split("").forEach(function(c, i) {
-            //途中に誤答があれば以降は判定しない
-            if (seikai < i) return;
+        var is_same = function(a, b) {
+            //かな・カナの大小を同一視する
+            String.prototype.kanachange = function() {
+                if (!this) return "";
+                var c = this.trim();
+                if (c.match(/[ぁ-ん]/)) c = String.fromCharCode(c.charCodeAt(0) + 0x60);
+                var t = "ァィゥェォヵヶャュョッヮ".indexOf(c);
+                if (t < 0) return c;
+                return "アイウエオカケヤユヨツワ".substring(t, t + 1);
+            };
 
+            //JISが変更した字形を同一視する
+            String.prototype.jischange = function() {
+                if (!this) return "";
+                var c = this.trim();
+                var t = "倶剥呑嘘妍屏并痩繋唖焔鴎噛侠躯鹸麹屡繍蒋醤蝉掻騨箪掴填顛祷涜嚢溌醗頬麺莱蝋攅".indexOf(c);
+                if (t < 0) return c;
+                return "俱剝吞噓姸屛幷瘦繫啞焰鷗嚙俠軀鹼麴屢繡蔣醬蟬搔驒簞摑塡顚禱瀆囊潑醱頰麵萊蠟攢".substring(t, t + 1);
+            };
+
+            return a.kanachange().jischange() == b.kanachange().jischange();
+        };
+
+        //1文字ずつ正解判定
+        var missed = value.split("").some(function(c, i) {
+            if (0 < i) $selected = $selecteds.eq(i - 1);
             g_log += c;
+
             //正解判定
-            if (c != $selected.find(".correct").text()){ g_log += "x"; return; }
-            seikai++;
+            if (!is_same(c, $selected.find(".correct").text())) {
+                g_log += "x" + $word.find(".wid").text();
+                $("<div class='judge'>").text("×").appendTo($selected);
+                return true;
+            }
+            $selected.addClass("toopen");
+            $("<div class='judge'>").text("○").appendTo($selected);
 
             //加点計算
             if (!$selected.hasClass("hiragana")) {
                 var rate = $selected.find(".kidx.undone").size() / $selected.find(".elm").size() * 10;
                 trate += rate;
             }
-
-            $selected = $selected.next();
-            //枠内に2単語ある場合 || かなが解答対象でなければスキップ
-           if ($selected.hasClass("wid") ||
-               ($selected.hasClass("hiragana") && $selected.find(".qelm").size() == 0))
-                $selected = $selected.next();
+            return false;
         });
 
         //伏せられていた割合に応じて加点
-        trate = trate / $(".glyph.selected").parent().find(".glyph").size();
+        trate = trate / $word.find(".glyph").size();
         var pt = parseInt($("#point").text(), 10) + trate * trate * 9;
-        console.log(trate);
 
         $("#g_log").val(g_log).show();
+        setTimeout(function() {
+                $(".judge").fadeOut(200, function() {
+                        $(this).remove(); }); }, 300);
         
-       if (0 == seikai) {
-           $("#judge").css("color", "red").html("×");
-           setTimeout(function() { $("#judge").fadeOut(200); }, 300);
-           return;
-       }
-
-       //パーツ開け
-       var opened = 0;
-       var $selected = $(".glyph.selected");
-       for (var i = 0; i < seikai; i++) {
-           $selected.find(".elm").each(function() {
-               //console.log($(this).html());
-               var c = $(this).find(".kidx");
-               if (c.hasClass("undone")) opened++;
-               if (!c || !c.html()) return;
-               c = c.prop("class").match(/kidx([0-9]+)/);
-               if (!c) return;
-               //console.log(c);
-               $("." + c[0]).removeClass("undone");
-               $("." + c[0]).hide().next().show();
-           });
-           $selected = $selected.next();
-
-           if ($selected.hasClass("wid") ||
-               ($selected.hasClass("hiragana") && $selected.find(".qelm").size() == 0))
-               $selected = $selected.next();
-       }
-       //開けたパーツの数に応じて加点
-       pt += opened * opened;
-
-       console.log(opened);
-       $("#point").html(parseInt(pt, 10));
-
-       $("#judge").css("color", "green").html("○");
-       setTimeout(function() { $("#judge").fadeOut(200); }, 300);
-
-       //全パーツが開いたグリフを表示
-       $(".glyph").each(function() {
+        if (0 == $word.find(".toopen").size()) {
+            return;
+        }
+        
+        //パーツ開け
+        var opened = 0;
+        $word.find(".toopen").each(function() {
+            $(this).removeClass("toopen").find(".elm").each(function() {
+                //console.log($(this).html());
+                var c = $(this).find(".kidx");
+                if (c.hasClass("undone")) opened++;
+                if (!c || !c.html()) return;
+                c = c.prop("class").match(/kidx([0-9]+)/);
+                if (!c) return;
+                //console.log(c);
+                $("." + c[0]).removeClass("undone");
+                $("." + c[0]).hide().next().show();
+            });
+        });
+        //開けたパーツの数に応じて加点
+        pt += opened * opened;
+        $("#point").text(parseInt(pt, 10));
+        
+        //全パーツが開いたグリフを表示
+        $(".glyph").each(function() {
             if ($(this).find(".undone").size() > 0) return;
             var n = $(this).parent().find(".glyph").index($(this));
             $(this).find(".correct").show();
@@ -1001,7 +1018,7 @@ var show_menu = function()
         anchor_check();
     });
 
-    if (location.href.indexOf("#debug") < 0) return;
+    if (location.href.indexOf("#debug") < 0 || makecache()) return;
     $.getScript("./makequiz_tool.js");
     $.getScript("./jisho_tool.js");
 
@@ -1063,3 +1080,25 @@ var show_ending = function()
 
 
 };
+
+var makecache = function()
+{
+    if (location.href.indexOf("?cache=") < 0) return;
+    var val = location.href.split("?cache=").pop().match(/^[0-9A-Za-z.,]+/);
+    var ret = val[0].split("").map(function(c) {
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZ,0123456789abcdefghijklmnopqrstuvwxyz.".indexOf(c);
+    });
+    if (ret.reduce((sum, v) => sum + v) % 64) return;
+    ret.shift();
+    var rev = (ret.shift() == 12);
+    ret.forEach(function(v, i) {
+        for (var n = 0; n < 6; n++) {
+            if ((v >> n) & 1) document.cookie = 'done_' + (i * 6 + n + 1) +
+                (rev ? '=; max-age=0': '=undefined');
+        }
+    });
+    location.href = "#archives";
+    $("body").append('(Cache have been made)');
+
+    return true;
+}

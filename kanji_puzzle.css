@@ -79,6 +79,21 @@ div.glyph {
   cursor: pointer;
 }
 
+div.glyph div.judge {
+    font-family: MS Gothic;
+    position:absolute;
+    width:40px;
+    height:40px;
+    top:10px;
+    left:10px;
+    font-size: 40px;
+    line-height: 40px;
+    font-weight: bold;
+    color:red;
+    text-align:center;
+    z-index: 6;
+}
+
 div.correct {
   line-height: 58px; /* glyph decrements 2 */
   font-size:58px;
