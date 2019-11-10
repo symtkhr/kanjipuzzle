@@ -210,6 +210,7 @@ var dump_partstable = function(kidx, count)
 //問題生成
 var make_quiz = function(is_unsort)
 {
+    $("#top, #menu").text("");
     var quiz = quiztable.pop();
     //再定義
     if (quiz.def != $("#redefine").val()) {
