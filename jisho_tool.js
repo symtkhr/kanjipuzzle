@@ -151,6 +151,8 @@ $(function() {
         if ($("#glyphcolor").prop("checked")) {
             var fcharR = $(  ".unbare .fchar").map(function() { return $(this).text(); }).get().join("");
             var fcharB = $(".tounbare .fchar").map(function() { return $(this).text(); }).get().join("");
+            var fcharP = $(  ".unbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
+            var fcharC = $(".tounbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
         }
 
         setTimeout(function() {
@@ -172,7 +174,7 @@ $(function() {
                     if (cs.some(c => (word.indexOf(c) == -1))) return;
                 } else {
                     //赤青以外の文字がないかチェック
-                    if (word.split("").some(d => ((fcharR + fcharB).indexOf(d) == -1))) return;
+                    if (word.split("").some(d => ((fcharR + fcharP).indexOf(d) == -1))) return;
                 }
 
                 // 包含部品チェック
@@ -208,6 +210,10 @@ $(function() {
                             return key0 + '<span style="color:red">' + d + '</span>';
                         if (fcharB.indexOf(d) != -1)
                             return key0 + '<span style="color:blue">' + d + '</span>';
+                        if (fcharP.indexOf(d) != -1)
+                            return key0 + '<span style="color:#f80">' + d + '</span>';
+                        if (fcharC.indexOf(d) != -1)
+                            return key0 + '<span style="color:#08f">' + d + '</span>';
                         return key0 + d;
                     }, ""));
                 }
@@ -326,7 +332,7 @@ $(function() {
         if ($("#glyphcolor").prop("checked")) {
             find_chars_with_existing_parts();
         }
-        $(".unbare, .tounbare").hide();
+        $(".unbare, .tounbare, .unbare0, .tounbare0").hide();
         var queries = stringToArray(val);
         if (!queries) return "";
 
@@ -351,6 +357,10 @@ $(function() {
                 if (fcharR.indexOf(c) != -1) $c.css("color", "red");
                 var fcharB = $(".tounbare .fchar").map(function() { return $(this).text(); }).get().join("");
                 if (fcharB.indexOf(c) != -1) $c.css("color", "blue");
+                var fcharP = $(  ".unbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
+                if (fcharP.indexOf(c) != -1) $c.css("color", "#f55");
+                var fcharC = $(".tounbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
+                if (fcharC.indexOf(c) != -1) $c.css("color", "#58f");
             }
         });
         $(".fchar").dblclick(function() {
@@ -383,22 +393,35 @@ $(function() {
                 return part;
             }, {r:0, b:0});
             
-            if (psize.r == s.length) return {r:(ret.r + c), b:ret.b};
-            if (psize.r + psize.b == s.length) return {r:ret.r, b:(ret.b + c)};
+            if (psize.r == s.length) ret.r += c;
+            else if (psize.r + psize.b == s.length) ret.b += c;
+            else if (0 < psize.r && (psize.r + 1 == s.length)) ret.p += c;
+            else if (0 < psize.b) ret.c += c;
             return ret;
-        }, {r:"", b:""});
+        }, {r:"", b:"", p:"", c:""});
 
         //結果表示
         var $red = $("<div>").addClass("unbare").appendTo("#parts_ret");
         var $blue = $("<div>").addClass("tounbare").appendTo("#parts_ret");
+        var $lred = $("<div>").addClass("unbare0").appendTo("#parts_ret");
+        var $lblue = $("<div>").addClass("tounbare0").appendTo("#parts_ret");
         $red.text("(" + ret.r.length + ")");
         $blue.text("(" + ret.b.length + ")");
+        $lred.text("(" + ret.p.length + ")");
+        $lblue.text("(" + ret.c.length + ")");
         ret.r.split("").forEach(function(c) {
             $red.append('<span class="fchar">' + c + "</span>");
         });
         ret.b.split("").forEach(function(c) {
             $blue.append('<span class="fchar">' + c + "</span>");
         });
+        ret.p.split("").forEach(function(c) {
+            $lred.append('<span class="fchar">' + c + "</span>");
+        });
+        ret.c.split("").forEach(function(c) {
+            $lblue.append('<span class="fchar">' + c + "</span>");
+        });
+        console.log(ret);
         $(".fchar").dblclick(function() {
             $("#chars").val($(this).text());
             findwords();
