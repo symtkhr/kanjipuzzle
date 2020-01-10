@@ -382,7 +382,6 @@ var make_list = function(ans, openlist)
         count[val]++;
     });
 
-
     var kidx = {};
     var idx = 0;
     for (var key in count) {
@@ -539,9 +538,9 @@ var draw_puzzle = function(qwords, $quiz, options)
             $glyph.append('<div class="correct">' + c + '</div>');
 
             //かな文字の場合
-            if (c.match(/^[ぁ-ン]$/)) {
-               $glyph.addClass("hiragana");
-           }
+            if (c.match(/^[ぁ-ー]$/)) {
+		$glyph.addClass("hiragana");
+            }
         });
     });
 
@@ -628,6 +627,7 @@ var draw_puzzle = function(qwords, $quiz, options)
             $(this).find(".elm div").hide();
         });
     }
+    $quiz.find(".hiragana .elm .kpart").css("font-size", "");
 
     return (Object.keys(kidx).length);
 }
@@ -774,7 +774,7 @@ var load_quiz = function(qid)
         }
 
         var $selecteds = $selected.nextAll(".glyph").filter(function() {
-            return (0 < $(this).find(".qelm").size());
+            return (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana");
         });
 
         //枠外の入力を無視
@@ -785,6 +785,7 @@ var load_quiz = function(qid)
         var trate = 0;
 
         var is_same = function(a, b) {
+	    console.log(a,b);
             //かな・カナの大小を同一視する
             String.prototype.kanachange = function() {
                 if (!this) return "";
@@ -945,6 +946,88 @@ var show_daily = function()
     });
 };
 
+var dump_logs = function()
+{
+    var $lately = $("<div>").prependTo("#menu");
+    $("<h4>").text("●最近の解かれ").appendTo($lately);
+    $lately.append("<br>");
+    $("<hr>").insertAfter($lately);
+
+    $.ajax({
+	url: "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec",//"scorelist.json",
+        type: 'get',
+        dataType: 'json',
+	timeout: 10000,
+    }).fail(function(data, status, error) {
+	$lately.append("Loading log error");
+	console.log(data, status, error);
+    }).done(function(rawdata, status, error) {
+	// sort & merge data
+	var data = rawdata.reduce(function(ret, v) {
+	    if (v.time.toString().indexOf("/") != -1) {
+		var d = v.time.split("/").map(v => parseInt(v));
+		v.time = (new Date(d[0], d[1]-1, d[2], 0, 0)).getTime();
+	    }
+	    var idx = ret.findIndex(function(setv) {
+		var timediff = v.time - setv.time;
+		return (0 < timediff) && (timediff < 1000 * 60 * 60 * 24) && (v.score == setv.score);
+	    });
+	    if (idx < 0) 
+		ret.push(v);
+	    else
+		ret[idx] = v;
+	    return ret;
+	}, []);
+	data.sort((a, b) => b.time - a.time);
+	dump_logs(data);
+    });
+
+    var dump_logs = function(logs) {
+	logs.forEach(function(r, i) {
+	    var $qopt = $("#qlists .qoption").eq(r.qid - 1);
+	    var $rec = $("<div>").addClass("log").appendTo($qopt)
+		.click(function(e) {
+		    e.stopPropagation();
+		    var toclose = $(this).hasClass("logdetail");
+		    $("#qlists .log").removeClass("logdetail");
+		    if (!toclose) $(this).parent().find(".log").addClass("logdetail");
+		});
+
+	    var d = new Date(r.time);
+	    var strdate = d.getFullYear() * 10000
+		+ (d.getMonth() + 1) * 100
+		+ d.getDate();
+
+	    var strtime = '0000' + (d.getHours() * 100 + d.getMinutes());
+	    strtime = strtime.slice(-4, -2) + ':' + strtime.slice(-2);
+
+	    var score = r.score.split(";").map(v => parseInt(v));
+	    score.push(score.reduce((sum, v) => (sum + 1 * v), 0));
+
+	    var $date = $('<div>').addClass("logdate").text(strdate).appendTo($rec);
+	    $("<span>").text(strtime).appendTo($date);
+
+	    var $score = $('<div>').addClass("logscore").text(score[2]).appendTo($rec);
+	    $("<span>").text("(=" + score[0] + "+" + score[1] + ")").appendTo($score);
+
+	    if (r.name)
+		$rec.append(r.name);
+	    else
+		$("<span>").text("--").css("color", "#999").appendTo($rec);
+
+	    if (20 <= i) return;
+
+	    var $box = $("<div>").css(
+		{"display": "inline-block",
+		 "margin":"2px",
+		}).appendTo($lately);
+	    $("<div>").addClass("qid").text(r.qid).appendTo($box);
+	    
+	    $rec.clone().appendTo($box).addClass("logdetail");
+	});
+    };
+};
+
 var show_menu = function()
 {
     quiztable.forEach(function(factor, idx) {
@@ -966,10 +1049,14 @@ var show_menu = function()
         if (location.href.indexOf("#archives") < 0) {
             $("#menu, #main").hide();
             $("#top").show();
-        } else {
-            $("#top, #main").hide();
-            $("#menu").show();
-        }
+	    return;
+        } 
+        $("#top, #main").hide();
+        $("#menu").show();
+	if ($("#qlists").hasClass("logs")) return;
+        if (location.href.slice(-3) != "log") return;
+	$("#qlists").addClass("logs");
+	dump_logs();
     };
 
     //$('body').append(document.cookie);
