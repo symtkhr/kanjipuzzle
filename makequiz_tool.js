@@ -5,11 +5,21 @@ $(function() {
     //単語リスト・再定義文字
     $("#wordlist, #redefine").keydown(function(e) {
         if (e.keyCode == 13 && e.ctrlKey) {
-            make_quiz();
-            $("#qsave, #qload").css("background-color", "");
+            $("#make").click();
         }
     });
 
+    $("#make").click(function() {
+        make_quiz();
+        $("#qsave, #qload").css("background-color", "");
+    });
+
+    $("#untempo").click(function() {
+        var list = $("#wordlist").val().split("(").join("").split(")").join("");
+        $("#wordlist").val(list);
+        $(this).hide();
+    });
+    
     //統計
     $("#stat").click(function() {
         $(this).hide();
@@ -144,39 +154,29 @@ var dump_partstable = function(kidx, count)
 
         return colorcode ? colorcode : "#f00";
     };
+    // <div#op><div($part)><checkbox/><span.fragkey/barekey>key</span><span.cdpf>cdp</span></div></div>
+    // <div#op><div($partbox)><div.setpart($part)>key/cdpf</div></div></div>
     var partbox = function(key, count) {
         var classname = (1 < count) ? "fragkey" : "barekey";
-        var $part = $("<div>").appendTo("#op")
+        var $partbox = $("<div>").addClass("setpartbox")
+	    .appendTo("#op").text(count);
+        var $part = $("<div>").addClass("setpart " + classname)
+            .appendTo($partbox).text(key);
 
-        if (1 < count) {
-            $part.append('<input type="checkbox" class="on' + kidx[key] + '">');
-            $part.append(kidx[key] + "=");
-        }
-
-        var $key = $("<span>").addClass(classname).text(key);
-        var color = (count < 7 ? (0xfff - (count - 2) * 0x220) : 0x11f);
-        $part.append($key).css({
-            'background-color': count == 1 ? "" : ('#' + color.toString(16)),
+        //var $key = $("<span>").addClass(classname).text(key);
+        var color = (count < 7 ? (0xfff - (count - 2) * 0x022) : 0xf11);
+        $partbox.css({
+            'background-color': count == 1 ? "#ccf" : ('#' + color.toString(16)),
             'display': 'inline-block',
             'cursor': 'pointer',
         });
-        $part.css("color", ctypecolor(key));
+        //$part.css("color", ctypecolor(key));
         
         if (key.match(/&[^;]+;/)) {
             $("<span>").appendTo($part).html(cdp2ucs(key))
                 .addClass("cdpf")
                 .prev("." + classname).hide();
-                
-            if (0) {
-                var $svg = $("#" + key.substr(1, key.length - 2));
-                if ($svg.size() > 0) {
-                    $("<div>").appendTo($part).html($svg.clone().show())
-                        .addClass("cdp")
-                        .prev("." + classname).hide();
-                }
-            }
         }
-        if (1 < count) $part.append("(" + count + ")");
     };
 
     // リスト表示
@@ -184,19 +184,18 @@ var dump_partstable = function(kidx, count)
     for (var key in kidx) {
         partbox(key, count[key]);
     }
-    $("#op").append(' [Open] = ');
     for (var key in count) {
         if (count[key] != 1) continue;
         partbox(key, 1);
     }
 
     //チェック時に解表示
-    $("#op div :checkbox").click(function() {
-        var classname = $(this).prop("class").split("on").join("kidx");
-        if ($(this).prop("checked")) {
-             $("." + classname).removeClass("undone").hide().next().show();
+    $("#op .fragkey").click(function() {
+        var classname = "kidx" + (1 + $(this).index("#op .fragkey"));
+        if ($("." + classname).eq(0).hasClass("undone")) {
+            $("." + classname).removeClass("undone").hide().next().show();
         } else {
-             $("." + classname).addClass("undone").show().next().hide();
+         //   $("." + classname).addClass("undone").show().next().hide();
         }
     });
     if (1) {
@@ -211,6 +210,8 @@ var dump_partstable = function(kidx, count)
 var make_quiz = function(is_unsort)
 {
     $("#top, #menu").text("");
+    $("#keyinput").appendTo("#main");
+    
     var quiz = quiztable.pop();
     //再定義
     if (quiz.def != $("#redefine").val()) {
@@ -218,12 +219,16 @@ var make_quiz = function(is_unsort)
         $("#redefine").val(redef);
         quiz.def = redef;
     }
-
     //生成
     quiz.q = $("#wordlist").val();
     quiztable.push(quiz);
     load_quiz(quiztable.length);
 
+    if (quiz.q.indexOf("(") < quiz.q.indexOf(")"))
+        $("#untempo").show();
+    else
+        $("#untempo").hide();
+    
     $("<span>").css({"display":"inline-block"}).appendTo("#quiz")
         .text("(" + $(".word").size() + "語 " + $(".glyph").size() + "字 " + $(".fragkey").size() + "部首)");
     
@@ -237,7 +242,7 @@ var make_quiz = function(is_unsort)
     
     //語使用歴チェック
     var words = $(".wordstat").map(function() { return $(this).text(); }).get();
-    console.log(words);
+
     var worddup = quiz.q.split("/").reduce(function(dup, w) {
         if (words.join(",").split(",").indexOf(w) == -1) return dup;
         var n = words.findIndex((word, i) => (word.split(",").indexOf(w) != -1));
@@ -259,6 +264,7 @@ var make_quiz = function(is_unsort)
     //ソート
     if (!$("#wsort").prop("checked") || is_unsort) return;
     wordsort();
+    $("#wsort").prop("checked", false);
 };
 
 // ソート

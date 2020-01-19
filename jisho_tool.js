@@ -55,7 +55,6 @@ $(function() {
             return;
         }
         var list = partslist(true);
-        console.log(list);
         var ctypecolor = function(c) {
             var ctype = possible_mojibake(c);
             var colorcode = {
@@ -75,16 +74,10 @@ $(function() {
         var $list = $("#partlist").css({"line-height":"10px"});
         
         Object.keys(list).sort().forEach(function(c) {
-            var $partbox = $("<div>").css({
-                "margin":"0 1px 1px 0", "line-height":"10px", "font-size": "10px",
-                "width":"20px", "height":"30px", "overflow":"hidden",
-                "display":"inline-block"}).appendTo($list).html(list[c]);
-            var $part = $("<div>").addClass("setpart").css({
-                "font-family": "glyphwiki",
-                "cursor": "pointer",
-                "line-height":"20px", "font-size": "18px",
-                "width":"20px", "height":"20px", "background-color":"red",
-                "display":"inline-block"}).appendTo($partbox).html(c);
+            var $partbox = $("<div>").addClass("setpartbox")
+		.appendTo($list).html(list[c]);
+            var $part = $("<div>").addClass("setpart")
+		.appendTo($partbox).html(c);
             
             $part.css("background-color", ctypecolor(c)).attr("id", c)
                 .dblclick(function() {
@@ -110,15 +103,6 @@ $(function() {
                 $part.css("background-color", "#7C7");
                 
             }
-        });
-        $("#partlist .setpart").click(function() {
-            $("#parts").val($(this).text());
-            var ret = find_parts($(this).text());
-            $("#parts_ret").html(ret);
-            $(".fchar").dblclick(function() {
-                $("#chars").val($(this).text());
-                findwords();
-            });
         });
     });
     
@@ -149,10 +133,11 @@ $(function() {
 
         //色付き判定
         if ($("#glyphcolor").prop("checked")) {
-            var fcharR = $(  ".unbare .fchar").map(function() { return $(this).text(); }).get().join("");
-            var fcharB = $(".tounbare .fchar").map(function() { return $(this).text(); }).get().join("");
-            var fcharP = $(  ".unbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
-            var fcharC = $(".tounbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
+            var maskch = {};
+            maskch.r = $(".maskr .fchar").map(function() { return $(this).text(); }).get().join("");
+            maskch.b = $(".maskb .fchar").map(function() { return $(this).text(); }).get().join("");
+            maskch.p = $(".maskp .fchar").map(function() { return $(this).text(); }).get().join("");
+            maskch.c = $(".maskc .fchar").map(function() { return $(this).text(); }).get().join("");
         }
 
         setTimeout(function() {
@@ -161,7 +146,7 @@ $(function() {
 
             //該当語の絞り込み
             var words = Object.keys(wordDb).filter(function(word) {
-                var knjmatch = word.match(/[一-龠]/g);
+                var knjmatch = word.match(/[一-龠々]/g);
                 if (!knjmatch) return;
 
                 //文字数・除外文字の条件チェック
@@ -174,7 +159,7 @@ $(function() {
                     if (cs.some(c => (word.indexOf(c) == -1))) return;
                 } else {
                     //赤青以外の文字がないかチェック
-                    if (word.split("").some(d => ((fcharR + fcharP).indexOf(d) == -1))) return;
+                    if (word.split("").some(d => ((maskch.r + maskch.p).indexOf(d) == -1))) return;
                 }
 
                 // 包含部品チェック
@@ -205,17 +190,10 @@ $(function() {
                 var $word = $(this);
                 //色付け
                 if ($("#glyphcolor").prop("checked")) {
-                    $word.html(word.split("").reduce(function(key0, d) {
-                        if (fcharR.indexOf(d) != -1)
-                            return key0 + '<span style="color:red">' + d + '</span>';
-                        if (fcharB.indexOf(d) != -1)
-                            return key0 + '<span style="color:blue">' + d + '</span>';
-                        if (fcharP.indexOf(d) != -1)
-                            return key0 + '<span style="color:#f80">' + d + '</span>';
-                        if (fcharC.indexOf(d) != -1)
-                            return key0 + '<span style="color:#08f">' + d + '</span>';
-                        return key0 + d;
-                    }, ""));
+                    $word.html(word.split("").map(function(d) {
+                        var key = "rbpc".split("").find(key => maskch[key].indexOf(d) != -1);
+                        return key ? ('<span class="mask' + key + '">' + d + '</span>') : d;
+                    }).join(""));
                 }
                 //かな付け
                 var kana = "(" + wordDb[word].replace(/ $/,"") + ")";
@@ -227,11 +205,16 @@ $(function() {
             kanjifrag.definelocal($("#redefine").val());
 
             $("#skana").change();
-            $(".fword").dblclick(function() {
-                var text = $("#wordlist").val().replace(/\(.+?\)/g, "").replace(/\/+$/, "") +
-                    "/(" + $(this).text().split("(").shift() + ")";
-                $("#wordlist").val(text);
-                make_quiz(true);
+            $(".fword").click(function() {
+        if ($(this).hasClass("selected")) {
+                    var text = $("#wordlist").val().replace(/\(.+?\)/g, "").replace(/\/+$/, "") +
+            "/(" + $(this).text().split("(").shift() + ")";
+                    $("#wordlist").val(text);
+                    make_quiz(true);
+        } else {
+            $(".fword").removeClass("selected");
+            $(this).addClass("selected");
+        }
             });
 
         }, 20);
@@ -252,6 +235,20 @@ $(function() {
         });
 
     };
+    //検索結果文字クリック時のイベント
+    var fchar_events = function() {
+        $(".fchar").unbind().click(function() {
+            if ($(this).hasClass("selected")) {
+                $("#chars").val($(this).text());
+                findwords();
+            } else {
+                $(".fchar").removeClass("selected");
+                $(this).addClass("selected");
+            }
+        });
+    };
+
+
     //複合語ソート
     var factorsort = function(c, words) {
         var ret = {"_":[]};
@@ -312,120 +309,111 @@ $(function() {
         find_parts($(this).val());
     });
 
-    $("#op").on("dblclick", "div", function() {
-        var $key = $(this).find(".fragkey").text() || $(this).find(".barekey").text();
-        $("#parts").val($key);
-        var ret = find_parts($key);
-        $("#parts_ret").html(ret);
-        $(".fchar").dblclick(function() {
-            $("#chars").val($(this).text());
-            findwords();
-        });
+    $("#partlist, #op").on("click", ".setpartbox", function() {
+	//$("body").append("[click]");
+	if ($(this).hasClass("selected")) {
+	    $(this).removeClass("selected");
+            var $key = $(this).find(".setpart").text();
+            $("#parts").val($key);
+            find_parts($key);
+	    return;
+	}
+	$(".setpartbox").removeClass("selected");
+	$(this).addClass("selected");
+    });
+    $("#makequiz").on("click", function(e) {
+        if ($(e.target).closest('.setpartbox').length != 0) return;
+	$(".setpartbox").removeClass("selected");
     });
     
     //字検索
     var find_parts = function(val) {
-        $("#parts_ret").html("");
         append_to_but();
-        if (val == "*" || val == "") return find_chars_with_existing_parts();
 
-        if ($("#glyphcolor").prop("checked")) {
-            find_chars_with_existing_parts();
-        }
-        $(".unbare, .tounbare, .unbare0, .tounbare0").hide();
-        var queries = stringToArray(val);
-        if (!queries) return "";
+        $("#parts_ret").text("Searching...");
+        setTimeout(function() {
+            $("#parts_ret").text("");
+            if (val == "*" || val == "") return find_chars_with_existing_parts();
+            var queries = stringToArray(val);
+            if (!queries) return "";
 
-        //指定パーツを分割しない
-        kanjifrag.definelocal($("#redefine").val() + "/" + queries.join(":/") + ":/");
+	    var maskch = $("#glyphcolor").prop("checked") ? 
+		find_chars_with_existing_parts(true) : {};
+            
+            //指定パーツを分割しない
+            kanjifrag.definelocal($("#redefine").val() + "/" + queries.join(":/") + ":/");
+            
+            //skktableの各文字について調べる
+            var ret = skktable.split("").filter(function(c) {
+                var n = kanjifrag.split(c).toString() + ",";
+                return (!queries.some(val => (n.indexOf(val) == -1)));
+            });
+            
+            //結果表示
+            $("#parts_ret").append("(" + ret.length + ")");
+            ret.forEach(function(c) {
+                var $c = $("<span>").addClass("fchar").text(c).appendTo("#parts_ret");
+                if ($("#nchars").val().indexOf(c) != -1) $c.before("[").after("]");
+                if (!$("#glyphcolor").prop("checked")) return;
+                //色付け
+                "rbpc".split("").forEach(function(key) {
+                    var cname = "mask" + key;
+                    if (maskch[key].indexOf(c) != -1) $c.addClass(cname);
+                });
+            });
+            fchar_events();
 
-        //skktableの各文字について調べる
-        var ret = skktable.split("").reduce(function(ret, c) {
-            var n = kanjifrag.split(c).toString() + ",";
-            if (queries.some(val => (n.indexOf(val) == -1))) return ret;
-            return (ret + c);
-        }, "");
-
-        //結果表示
-        $("#parts_ret").append("(" + ret.length + ")");
-        ret.split("").forEach(function(c) {
-            var $c = $("<span>").addClass("fchar").text(c).appendTo("#parts_ret");
-            if ($("#nchars").val().indexOf(c) != -1) $c.before("[").after("]");
-            //色付け
-            if ($("#glyphcolor").prop("checked")) {
-                var fcharR = $(  ".unbare .fchar").map(function() { return $(this).text(); }).get().join("");
-                if (fcharR.indexOf(c) != -1) $c.css("color", "red");
-                var fcharB = $(".tounbare .fchar").map(function() { return $(this).text(); }).get().join("");
-                if (fcharB.indexOf(c) != -1) $c.css("color", "blue");
-                var fcharP = $(  ".unbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
-                if (fcharP.indexOf(c) != -1) $c.css("color", "#f55");
-                var fcharC = $(".tounbare0 .fchar").map(function() { return $(this).text(); }).get().join("");
-                if (fcharC.indexOf(c) != -1) $c.css("color", "#58f");
-            }
-        });
-        $(".fchar").dblclick(function() {
-            $("#chars").val($(this).text());
-            findwords();
-        });
-
-        //パーツ辞書を元に戻す
-        kanjifrag.definelocal($("#redefine").val());
+            //パーツ辞書を元に戻す
+            kanjifrag.definelocal($("#redefine").val());
+        }, 100);
     };
 
     //既存部品字
-    var find_chars_with_existing_parts = function() {
+    var find_chars_with_existing_parts = function(is_hidden) {
         //既存部品リスト
         var queriesR = $("#op .fragkey").map(function() { return $(this).text(); }).get();
         var queriesB = $("#op .barekey").map(function() { return $(this).text(); }).get();
 
-        //skktableの各文字について赤・青の色付け
-        var ret = skktable.split("").reduce(function(ret, c) {
+        var maskch = skktable.split("").reduce(function(ret, c) {
             //既使用字は除外
             if ($("#wordlist").val().indexOf(c) != -1) return ret;
+
             //分解
             var n = kanjifrag.split(c);
             var s = n.toString().match(/(&.+?;)|[(\[].+?[)\]]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[^ -~]/g);
             if (!s) return ret;
-            //分解部品と既存パーツとの比較
+
+            //分解部品と既存パーツとの比較(r:番号パーツ,b:Openパーツ)
             var psize = s.reduce(function(part, val) {
                 if (queriesR.join(",").indexOf(val) != -1) part.r++;
                 if (queriesB.join(",").indexOf(val) != -1) part.b++;
                 return part;
             }, {r:0, b:0});
-            
+
+            //red:番号パーツのみで全伏せ
             if (psize.r == s.length) ret.r += c;
+            //blue:Openパーツで全伏せ
             else if (psize.r + psize.b == s.length) ret.b += c;
+            //pink:番号パーツのみで準全伏せ
             else if (0 < psize.r && (psize.r + 1 == s.length)) ret.p += c;
+            //cyan:Openパーツを含む
             else if (0 < psize.b) ret.c += c;
             return ret;
         }, {r:"", b:"", p:"", c:""});
 
         //結果表示
-        var $red = $("<div>").addClass("unbare").appendTo("#parts_ret");
-        var $blue = $("<div>").addClass("tounbare").appendTo("#parts_ret");
-        var $lred = $("<div>").addClass("unbare0").appendTo("#parts_ret");
-        var $lblue = $("<div>").addClass("tounbare0").appendTo("#parts_ret");
-        $red.text("(" + ret.r.length + ")");
-        $blue.text("(" + ret.b.length + ")");
-        $lred.text("(" + ret.p.length + ")");
-        $lblue.text("(" + ret.c.length + ")");
-        ret.r.split("").forEach(function(c) {
-            $red.append('<span class="fchar">' + c + "</span>");
-        });
-        ret.b.split("").forEach(function(c) {
-            $blue.append('<span class="fchar">' + c + "</span>");
-        });
-        ret.p.split("").forEach(function(c) {
-            $lred.append('<span class="fchar">' + c + "</span>");
-        });
-        ret.c.split("").forEach(function(c) {
-            $lblue.append('<span class="fchar">' + c + "</span>");
-        });
-        console.log(ret);
-        $(".fchar").dblclick(function() {
-            $("#chars").val($(this).text());
-            findwords();
-        });
+        for (var key in maskch) {
+            var fchars = maskch[key];
+            var $div = $("<div>").addClass("maskful mask" + key).appendTo("#parts_ret")
+                .text("(" + fchars.length + ")").hide();
+            fchars.split("").forEach(function(c) {
+                $div.append('<span class="fchar">' + c + "</span>");
+            });
+        }
+        if (is_hidden) return maskch;
+         $(".maskful").show();
+        fchar_events();
+	return maskch;
     };
 
 

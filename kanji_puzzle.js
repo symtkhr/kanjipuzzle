@@ -1,4 +1,3 @@
-
 // noprotect
 $(function() {
     show_menu();
@@ -56,10 +55,6 @@ class Random {
   }
 }
 
-/*
-リファクタリング:
-var splitbox = function(c, elm, hidden) -> $(c).prototype.splitbox(struct); にしたい. cは$cだし, hidden不要
-*/
 var splitbox = function($c, elm)
 {
     if (elm.length == 1) {
@@ -439,7 +434,6 @@ var load_status = function()
         }
         if (p[0].trim() != "tempopreserve") return;
         var data = decodeURIComponent(p[1]).split("<>");
-        console.log(data);
 
         if (data.length < 5) return;
         res.qid = data.shift();
@@ -550,7 +544,6 @@ var draw_puzzle = function(qwords, $quiz, options)
     // 分割DOM要素内に部首または番号を表示
     $quiz.find(".elm").each(function(){
         var c = $(this).text();
-        console.log(c, $(this).innerHeight(), $(this).innerWidth());
 
         $(this).text("");
         if (c == "＿") {
@@ -677,6 +670,7 @@ var load_quiz = function(qid)
 
     //枠内クリックで入力欄表示
     $("#quiz .elm").click(function() {
+        console.log("nyuuryoku");
         var $glyph = $(this).parents(".glyph");
         var $word = $glyph.parents(".word").css("position", "relative");
         var classname = $(this).find(".kidx").html();
@@ -711,10 +705,8 @@ var load_quiz = function(qid)
         var val = $(this).val().replace(/[！-ｚ]/g, function(s) {
             return String.fromCharCode(s.charCodeAt(0) + 0x20 - 0xff00);
         });
-        console.log(val);
         var m = val.trim().match(/^p([0-9]+)/i);
         if (m) {
-            console.log(m);
             var classname = m[1];
             $(".elm").css("background-color", "");
             $(".kidx" + classname).parent().css("background-color", "#8cf");
@@ -770,7 +762,7 @@ var load_quiz = function(qid)
 
         //かな不在の語はかな入力を無視
         if ($word.find(".hiragana .qelm").size() == 0) {
-            value = (value.match(/[一-龠]/g) || []).join("");
+            value = (value.match(/[一-龠々]/g) || []).join("");
         }
 
         var $selecteds = $selected.nextAll(".glyph").filter(function() {
@@ -785,7 +777,6 @@ var load_quiz = function(qid)
         var trate = 0;
 
         var is_same = function(a, b) {
-	    console.log(a,b);
             //かな・カナの大小を同一視する
             String.prototype.kanachange = function() {
                 if (!this) return "";
@@ -954,9 +945,10 @@ var dump_logs = function()
     $("<hr>").insertAfter($lately);
 
     $.ajax({
-	url: "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec",//"scorelist.json",
+	url: "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec",
         type: 'get',
         dataType: 'json',
+	cache: false,
 	timeout: 10000,
     }).fail(function(data, status, error) {
 	$lately.append("Loading log error");
@@ -964,8 +956,8 @@ var dump_logs = function()
     }).done(function(rawdata, status, error) {
 	// sort & merge data
 	var data = rawdata.reduce(function(ret, v) {
-	    if (v.time.toString().indexOf("/") != -1) {
-		var d = v.time.split("/").map(v => parseInt(v));
+	    if (v.time.toString().indexOf("-") != -1) {
+		var d = v.time.split("-").map(v => parseInt(v));
 		v.time = (new Date(d[0], d[1]-1, d[2], 0, 0)).getTime();
 	    }
 	    var idx = ret.findIndex(function(setv) {
@@ -978,7 +970,7 @@ var dump_logs = function()
 		ret[idx] = v;
 	    return ret;
 	}, []);
-	data.sort((a, b) => b.time - a.time);
+	data.sort((a, b) => (b.time - a.time));
 	dump_logs(data);
     });
 
@@ -1188,4 +1180,4 @@ var makecache = function()
     $("body").append('(Cache have been made)');
 
     return true;
-}
+};

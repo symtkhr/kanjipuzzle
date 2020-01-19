@@ -340,20 +340,63 @@ h2 {
 .fword {
     position:relative;
     display:inline-block;
-    line-height:10px;
 }
 .fchar, .fword {
     cursor: pointer;
 }
-.unbare .fchar {
+.fchar.selected, .fword.selected {
+    border: 1px solid gray;
+    font-size: 150%;
+}
+.maskr {
     color:red;
 }
-.tounbare .fchar {
+.maskb {
     color:blue;
 }
-
+.maskp {
+    color:#f80;
+}
+.maskc {
+    color:#08f;
+}
+    
 .barekey, .fragkey, .statparts, .cdpf, #parts, #redefine {
     font-family: "glyphwiki";
+}
+
+.setpartbox {
+    margin:0 1px 1px 0;
+    line-height:10px;
+    font-size: 10px;
+    width:20px;
+    height:30px;
+    overflow:hidden;
+    display:inline-block;
+}
+
+.setpart {
+    font-family: glyphwiki;
+    cursor: pointer;
+    line-height:20px;
+    font-size: 18px;
+    width:20px;
+    height:20px;
+    background-color:#ccc;
+    display:inline-block;
+}
+
+.setpartbox.selected {
+    overflow:visible;
+}
+.setpartbox.selected .setpart {
+    width: 40px;
+    height: 40px;
+    line-height:40px;
+    font-size: 38px;
+    position:relative;
+    left: -10px;
+    border: 1px solid white;
 }
 
 #parts, #chars, #nchars, #numof {
@@ -379,4 +422,7 @@ h2 {
 }
 #frequents span:hover {
     background-color:#ccc;
+}
+.setpart:hover {
+    background-color:#888;
 }

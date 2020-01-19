@@ -6,7 +6,6 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="kanji_puzzle.js"></script>
 <script src="qlist.js"></script>
-<!-- <script src="makequiz_tool.js"></script -->
 <link rel="stylesheet" type="text/css" href="kanji_puzzle.css">
 <title>Kanji Puzzle</title>
 </head>
@@ -91,8 +90,9 @@
   <div id="makequiz" style="width:99%; display:none;">
     <div>
       <h2>問題作成ツール</h2> 
-      ●単語リスト(Ctrl+Enterで作成):
+      ●単語リスト <button id="make">作成<span style="font-size:60%; color:gray;">(Ctrl+Enter)</span></button>
       <label><input type="checkbox" id="wsort">ソート</label>
+      <button id="untempo" style="display:none;">仮追加解除</button>
       <div style="float:right">
         <input type="button" id="qsave" value="save">
         <input type="button" id="qload" value="load" style="display:none;">
@@ -107,16 +107,15 @@
         (文字:[NMZEFLOHUCKQJ]パーツ, 「/」区切り,  以下リストをクリックで追加 or 削除)
         <span id="frequents"></span>
       </div>
-      <br />
+      <div style="display:flex;">
       ●フラグメント結果:
-      <span id="op" style="width:100%;"></span><br/>
+      <div id="op" style="border:1px solid gray; padding:2px; width:calc(100% - 200px);"></div>
       <span style="white-space:nowrap; display:none;">
         <input type="text" id="knjtb" style="width:90%;">
       </span>
     </div>
     <div>
       <h2>辞書ツール</h2>
-      
       <div id="dicloader" style="background-color:#eee;">
         ●辞書選択: 
         <label><input type="checkbox" checked>SKK-JISYO.L.filter</label>
@@ -155,9 +154,21 @@
     <div>
       <h2>使い方</h2>
        <div style="font-size:80%; margin:0 10px">
+         <h3>基本的な作問手順</h3>
+         <p>
+           <ol>
+             <li>「単語リスト」になにか適当な語を入れて [作成]。
+             <li>「フラグメント結果」の部品をダブルクリックすると漢字検索する。
+             <li>さらに漢字検索で出た文字をダブルクリックすると単語検索する。
+             <li>単語検索で出た語をダブルクリックすると「単語リスト」に(括弧)付きで仮追加する。単語をダブルクリックするたびに仮追加の語は差し替わる。
+             <li>仮追加の語を採用する場合は[仮追加解除]し[作成]。
+             <li>2以降を繰り返し。
+           </ol>
+         </p>
+
          <h3>問題作成ツール</h3>
            <p>
-             「●単語リスト」に単語をがんがんぶちこんで[Ctrl+Enter]を押すとパズル生成<br/>
+             「●単語リスト」に単語をがんがんぶちこんで[作成]を押すとパズル生成<br/>
              気に入らない分割があったときは「●再定義文字」で定義しなおしてから[Ctrl+Enter]<br/>
            </p>
            <h3>字検索・語検索</h3>
@@ -171,18 +182,6 @@
 
          <p>「●部品」のボックスでEnterを押すと、入力した部品すべてを含む漢字一覧が出る(出現頻度の低い順)<br/>
            空欄でEnterを押した場合は、既存パーツのみで構成される漢字一覧が出る
-         </p>
-
-         <h3>基本的な作問手順</h3>
-         <p>
-           <ol>
-             <li>「単語リスト」になにか適当な語を入れて [Ctrl+Enter]。
-             <li>「フラグメント結果」の部品をダブルクリックすると漢字検索する。
-             <li>さらに漢字検索で出た文字をダブルクリックすると単語検索する。
-             <li>単語検索で出た語をダブルクリックすると「単語リスト」に(括弧)付きで仮追加する。単語をダブルクリックするたびに仮追加の語は差し替わる。
-             <li>仮追加の語を採用する場合は手作業で括弧を外して [Ctrl+Enter]。
-             <li>2以降を繰り返し。
-           </ol>
          </p>
 
          <h3>TIPS</h3>
