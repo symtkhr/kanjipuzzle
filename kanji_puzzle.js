@@ -533,13 +533,18 @@ var draw_puzzle = function(qwords, $quiz, options)
 
             //かな文字の場合
             if (c.match(/^[ぁ-ー]$/)) {
-		$glyph.addClass("hiragana");
+                $glyph.addClass("hiragana");
             }
         });
     });
 
     // ansから番号リストを生成する
     var kidx = make_list(ans);
+
+    if (0) {
+        $(".glyph").css({"width":"50px", "height":"50px"});
+        $(".correct").css({"font-size":"48px", "line-height":"48px"});
+    }
 
     // 分割DOM要素内に部首または番号を表示
     $quiz.find(".elm").each(function(){
@@ -581,7 +586,7 @@ var draw_puzzle = function(qwords, $quiz, options)
         style['height'] = h;
         style['line-height'] = h;
         style['transform'] = 'scale(1, ' + $(this).innerHeight() / $(this).innerWidth() + ')';
-         //style['transform'] = 'scale(.5, .5)';
+        //style['transform'] = 'scale(.5, .5)';
 
         // 部首表示: 番号付きならば伏せる
         if ($(this).hasClass("qelm")) $kpart.hide();
@@ -906,7 +911,13 @@ var load_quiz = function(qid)
     
     $("#main").show();
     $("#menu, #keyinput").hide();
-    timer.start(0);
+
+    if ($("#srvlog").size() == 0) {
+        timer.start(0);
+        return;
+    }
+
+    replay_log(qlist, answer_check);
 };
 
 var show_daily = function()
@@ -937,89 +948,6 @@ var show_daily = function()
     });
 };
 
-var dump_logs = function()
-{
-    var $lately = $("<div>").prependTo("#menu");
-    $("<h4>").text("●最近の解かれ").appendTo($lately);
-    $lately.append("<br>");
-    $("<hr>").insertAfter($lately);
-
-    $.ajax({
-	url: "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec",
-        type: 'get',
-        dataType: 'json',
-	cache: false,
-	timeout: 10000,
-    }).fail(function(data, status, error) {
-	$lately.append("Loading log error");
-	console.log(data, status, error);
-    }).done(function(rawdata, status, error) {
-	// sort & merge data
-	var data = rawdata.reduce(function(ret, v) {
-	    if (v.time.toString().indexOf("-") != -1) {
-		var d = v.time.split("-").map(v => parseInt(v));
-		v.time = (new Date(d[0], d[1]-1, d[2], 0, 0)).getTime();
-	    }
-	    var idx = ret.findIndex(function(setv) {
-		var timediff = v.time - setv.time;
-		return (0 < timediff) && (timediff < 1000 * 60 * 60 * 24) && (v.score == setv.score);
-	    });
-	    if (idx < 0) 
-		ret.push(v);
-	    else
-		ret[idx] = v;
-	    return ret;
-	}, []);
-	data.sort((a, b) => (b.time - a.time));
-	dump_logs(data);
-    });
-
-    var dump_logs = function(logs) {
-	logs.forEach(function(r, i) {
-	    var $qopt = $("#qlists .qoption").eq(r.qid - 1);
-	    var $rec = $("<div>").addClass("log").appendTo($qopt)
-		.click(function(e) {
-		    e.stopPropagation();
-		    var toclose = $(this).hasClass("logdetail");
-		    $("#qlists .log").removeClass("logdetail");
-		    if (!toclose) $(this).parent().find(".log").addClass("logdetail");
-		});
-
-	    var d = new Date(r.time);
-	    var strdate = d.getFullYear() * 10000
-		+ (d.getMonth() + 1) * 100
-		+ d.getDate();
-
-	    var strtime = '0000' + (d.getHours() * 100 + d.getMinutes());
-	    strtime = strtime.slice(-4, -2) + ':' + strtime.slice(-2);
-
-	    var score = r.score.split(";").map(v => parseInt(v));
-	    score.push(score.reduce((sum, v) => (sum + 1 * v), 0));
-
-	    var $date = $('<div>').addClass("logdate").text(strdate).appendTo($rec);
-	    $("<span>").text(strtime).appendTo($date);
-
-	    var $score = $('<div>').addClass("logscore").text(score[2]).appendTo($rec);
-	    $("<span>").text("(=" + score[0] + "+" + score[1] + ")").appendTo($score);
-
-	    if (r.name)
-		$rec.append(r.name);
-	    else
-		$("<span>").text("--").css("color", "#999").appendTo($rec);
-
-	    if (20 <= i) return;
-
-	    var $box = $("<div>").css(
-		{"display": "inline-block",
-		 "margin":"2px",
-		}).appendTo($lately);
-	    $("<div>").addClass("qid").text(r.qid).appendTo($box);
-	    
-	    $rec.clone().appendTo($box).addClass("logdetail");
-	});
-    };
-};
-
 var show_menu = function()
 {
     quiztable.forEach(function(factor, idx) {
@@ -1041,14 +969,14 @@ var show_menu = function()
         if (location.href.indexOf("#archives") < 0) {
             $("#menu, #main").hide();
             $("#top").show();
-	    return;
-        } 
+            return;
+        }
         $("#top, #main").hide();
         $("#menu").show();
-	if ($("#qlists").hasClass("logs")) return;
+        if ($("#qlists").hasClass("logs")) return;
         if (location.href.slice(-3) != "log") return;
-	$("#qlists").addClass("logs");
-	dump_logs();
+        $("#qlists").addClass("logs");
+        $.getScript("./logger.js");
     };
 
     //$('body').append(document.cookie);
@@ -1065,11 +993,25 @@ var show_menu = function()
         if (!$("#fragtable").hasClass("done")) return;
         if ($(this).hasClass("resume")) return;
         var qid = parseInt($(this).addClass("selected").find(".qid").text());
+        $(this).siblings(".qoption").animate({"opacity": "0"});
+        var cleared = $(this).hasClass("cleared");
+    
         $('<div>').addClass("loading").text("読込中").appendTo(this)
             .animate({"opacity":".5"}, function() {
-                    $("#top").hide();
-                    load_quiz(qid); });
-        $(this).siblings(".qoption").animate({"opacity": "0"});
+                $("#top").hide();
+                load_quiz(qid);
+                if (!cleared) return;
+
+                $("<button>").text("正解表示")
+                    .css({"background":"#f99"})
+                    .click(function() {
+                        $(this).hide();
+                        timer.stop();
+                        $("#quiz .kpart").hide();
+                        $("#quiz .kidx").removeClass("undone");
+                        $("#quiz").find(".correct").show();
+                    }).insertAfter("#main .qid");
+            });
     });
 
 
@@ -1126,6 +1068,8 @@ var save_result = function(qid, pt, tpt, name)
 
 var show_ending = function()
 {
+    if ($("#srvlog").size()) return;
+
     timer.stop();
     $(document).unbind();
     var qid = parseInt($(".qid:last").text()) - 1;
