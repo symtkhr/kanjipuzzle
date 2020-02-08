@@ -26,8 +26,7 @@ body {
     text-align:left;
     padding:5px;
 }
-.topbox h4,
-#menu h4 {
+.topbox h4, #menu h4, #stat h4, span.minimized {
     border-radius:20px;
     display:inline-block;
     border: 1px solid #ccc;
@@ -35,6 +34,10 @@ body {
     margin: 0px;
     font-weight: normal;
     background-color: #fdc;
+}
+span.minimized {
+    cursor:pointer;
+    margin:5px;
 }
 #daily:hover {
     background-color: #bdc;

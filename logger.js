@@ -10,7 +10,7 @@ var scorelist = function()
 
     $.ajax({
         url: LOGGERURL,
-        //url: "scorelist.json",
+        url: "scorelist.json",
         type: 'get',
         data: {v: "score"},
         dataType: 'json',
@@ -101,7 +101,7 @@ var scorelist = function()
 
                     $.ajax({
                         url: LOGGERURL,
-                        //url:"log.json",
+                        url:"log.json",
                         type: 'get',
                         data: {logid: logid},
                         dataType: 'json',
@@ -198,14 +198,18 @@ var replay_log = function(qlist, callback)
         };
         if (!ans.wid) return;
 
+	// select glyph
         var $word = $('#main .word').eq(ans.wid-1).css("position", "relative");
         $word.find('.correct').each(function() {
-            if($(this).text() == ans.input.substring(0,1))
+            if($(this).text() == ans.input.substring(0,1)) {
                 $(this).parent().addClass('selected');
+		return false;
+	    }
         });
         var $glyph = $(".glyph.selected");
         var $ki = $("#keyinput").appendTo($word).show();
         
+	// draw inputbox
         $(".userans").show().css({"width": "100%"})
             .prop('disabled', false)
             .val(ans.input)
@@ -216,9 +220,15 @@ var replay_log = function(qlist, callback)
             {"width": $word.width() - $glyph.position().left,
              "left" : $glyph.position().left,
              "bottom": ($word.height() - $glyph.position().top) });
-        
-        callback(ans.input);
-        $("#g_log").val("").hide();
     });
+
+    $("#srvlog").keydown(function(e) {
+	if (e.keyCode != 13) return;
+	
+        callback($(".userans").val());
+	$("#g_log").val("").hide();
+    });
+    
+
 };
 

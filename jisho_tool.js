@@ -75,9 +75,9 @@ $(function() {
         
         Object.keys(list).sort().forEach(function(c) {
             var $partbox = $("<div>").addClass("setpartbox")
-		.appendTo($list).html(list[c]);
+                .appendTo($list).html(list[c]);
             var $part = $("<div>").addClass("setpart")
-		.appendTo($partbox).html(c);
+                .appendTo($partbox).html(c);
             
             $part.css("background-color", ctypecolor(c)).attr("id", c)
                 .dblclick(function() {
@@ -309,7 +309,7 @@ $(function() {
         find_parts($(this).val());
     });
 
-    $("#partlist, #op").on("click", ".setpartbox", function() {
+    $("#partlist, #op, #statbox").on("click", ".setpartbox", function() {
 	//$("body").append("[click]");
 	if ($(this).hasClass("selected")) {
 	    $(this).removeClass("selected");

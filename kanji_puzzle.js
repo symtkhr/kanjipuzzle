@@ -1,6 +1,11 @@
 // noprotect
 $(function() {
     show_menu();
+    //if (800 < document.documentElement.clientWidth) return;
+    $("#viewport").show().change(function() {
+	var n = $(this).prop("selectedIndex");
+	document.getElementsByName('viewport')[0].setAttribute('content', 'width=' + (window.innerWidth * (1 + n * .3) ) +',initial-scale=1,minimum-scale=.2');
+    });
 });
 
 var TimeCounter = function()
@@ -759,9 +764,10 @@ var load_quiz = function(qid)
         answer_check($(this).val());
     });
 
-    var answer_check = function(value)
+    var answer_check = function(value, $selected)
     {
-        var $selected = $(".glyph.selected");
+	if (!$selected) $selected = $(".glyph.selected");
+
         var $word = $selected.parent();
         $("#judge").show();
 
