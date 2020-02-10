@@ -1,4 +1,5 @@
 $(function() {
+    var LOADURL = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
     quiztable.push({q:""});
     $("#makequiz").show();
 
@@ -22,18 +23,13 @@ $(function() {
     
     //統計
     $("#stat").click(function() {
-        $(this).hide();
-        stats();
+        $(this).remove();
+	$("#statbox").show();
+	setTimeout(stats, 400);
     });
 
     //頻出再定義リスト
-    $("#showfrequent").dblclick(function() {
-        var $fbox = $("#frequents").parent();
-        if ($fbox.is(":visible")) {
-            $fbox.hide();
-        } else {
-            $fbox.show();
-        }
+    $("#makequiz .help").click(function() {
         if ($("#frequents label").size() > 0) return;
 
         $("#redefinelist").text().split("/").forEach(function(frag) {
@@ -58,6 +54,95 @@ $(function() {
 
     });
 
+    //投稿ボタン
+    $("#main .qid").click(function() {
+
+	var n = $("#op .fragkey").size();
+	if (n == 0) return;
+	if (!$("#qpost").size()) {
+	    var name = $("#message input").val();
+	    $("#message").text("").css({"padding":"30px"});
+	    $("<button class=closer>").text("x").appendTo("#message").click(function() {
+		$("#message").hide();
+	    });
+	    var $name = $("<div>").text("名前:").appendTo("#message");
+	    var $desc = $("<div>").text("内容:").appendTo("#message");
+	    $("<input>").appendTo($name).val(name);
+	    $("<input>").appendTo($desc).css({"width": "100%"});
+	    $("<div class=n>").appendTo("#message");
+	    $("<button id=qpost>").appendTo("#message").css({"font-size": "20px"});
+	}
+	$("#message").show();
+	$("#message .n").text(n + "部首");
+	$("#qpost").text("投稿").click(function() {
+	    var post = {};
+            post.date = "#" + (new Date).toJSON();
+	    post.q = $("#wordlist").val();
+	    post.def = $("#redefine").val();
+	    post.author = $("#message input").eq(0).val();
+	    post.desc = $("#message input").eq(1).val();
+	    post.n = $("#op .fragkey").size();
+
+	    if (post.desc === "") {
+		$("#message").hide();
+		return;
+	    }
+	    $(this).prop("disabled", true).text("投稿中...");
+	    
+	    $.ajax({
+		url: LOADURL,
+		data: JSON.stringify(post),
+		type: 'post',
+		dataType: 'json',
+		timeout: 10000,
+	    }).fail(function(data, status, error) {
+		$("#qpost").prop("disabled", false).text("Post error");
+	    }).done(function(data, status, error) {
+		$("#qpost").prop("disabled", false);
+		$("#message").fadeOut();
+	    });
+	});
+    });
+
+    $("#posted").click(function() {
+	var $qlist = $(this).next().show();
+	$(this).remove();
+	var $qlist = $("#qposts");
+	$.ajax({
+	    url: LOADURL,
+	    data: {v:"qlist"},
+	    type: 'get',
+	    dataType: 'json',
+	    timeout: 10000,
+	}).fail(function(data, status, error) {
+	    $qlist.append("Loading error");
+	}).done(function(rawdata, status, error) {
+	    $qlist.text("");
+	    rawdata.forEach(function(factor, idx) {
+		if (!factor.date) return;
+		if (factor.date.toString().substring(0,1) != "#") return;
+		if (!factor.q) return;
+		var q = factor.q;
+		var words = q.split("/");
+		var $option = $('<div>').addClass("qoption").appendTo($qlist);
+		var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
+		$('<div>').addClass("qinfo").appendTo($option)
+		    .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
+			  factor.date.split("T").shift().substring(1) + " " + factor.author);
+		$('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
+		$("<div>").addClass("qdef").appendTo($option).text(factor.def).hide();
+		$("<div>").addClass("qwq").appendTo($option).text(factor.q).hide();
+	    });
+	    $qlist.find(".qoption").click(function() {
+		$("#wordlist").val($(this).find(".qwq").text());
+		$("#redeine").val($(this).find(".qdef").text());
+		make_quiz();
+	    });
+
+	});
+    });
+
+    
     //保存ボタン
     $("#qsave").click(function() {
         var date = new Date();
@@ -222,7 +307,7 @@ var make_quiz = function(is_unsort)
     //生成
     quiz.q = $("#wordlist").val();
     quiztable.push(quiz);
-    load_quiz(quiztable.length);
+    load_quiz();
 
     if (quiz.q.indexOf("(") < quiz.q.indexOf(")"))
         $("#untempo").show();
@@ -261,6 +346,7 @@ var make_quiz = function(is_unsort)
         $("#knjdef").text(c + ":" + kanjifrag.db(c));
     });
 
+    $("#main .qid").text("投稿");
     //ソート
     if (!$("#wsort").prop("checked") || is_unsort) return;
     wordsort();
@@ -346,7 +432,7 @@ var stats = function()
 {
     var res = "";
     var q = quiztable.pop();
-    var qs = quiztable.reduce((ret, quiz) => (ret + "/" + quiz.q), "");
+    var qs = quiztable.reduce((ret, quiz) => (ret + "/" + quiz.q.split("+").join("")), "");
     quiztable.push(q);
 
     // 語出現数
@@ -359,7 +445,6 @@ var stats = function()
 
         var list = [];
         Object.keys(occ).forEach(function(w) {
-            //if (occ[w] <= 1) return;
             if (list[occ[w]])
                 list[occ[w]] += "," + w;
             else
@@ -376,7 +461,6 @@ var stats = function()
             if (!occ[c]) occ[c] = 0;
             occ[c]++;
         });
-
         var list = [];
         Object.keys(occ).forEach(function(c) {
             if (list[occ[c]])
@@ -384,28 +468,26 @@ var stats = function()
             else
                 list[occ[c]] = c;
         });
-
         return list;
     }(qs.split("/"));
 
     //結果表示
-    var $statjigo = $("<div>").insertAfter("#stat");
-    var $list = $("<ul>").appendTo($statjigo);
-    var $wordstat = $("<li>").text("語出現数(2回以上)").appendTo($list);
-    var $ul = $("<ul>").appendTo($wordstat);
+    var $statjigo = $("#statbox .result").text("");
+    $("<p>").text("出題数:" + (quiztable.length - 1)).appendTo($statjigo);
+    var $wordstat = $("<h4>").text("部首出現数").appendTo($statjigo);
+    var $pl = $("<div>").appendTo($statjigo).addClass("statparts").css("margin","0 0 30px  0");
+    var $wordstat = $("<h4>").text("語出現数(2回以上)").appendTo($statjigo);
+    var $wl = $("<ol>").appendTo($statjigo);
+    var $glyphstat = $("<h4>").text("字出現数").appendTo($statjigo);
+    var $gl = $("<ol>").appendTo($statjigo);
+    
     wordstat.forEach(function(v, i) {
-        var $list = $('<li>').appendTo($ul).html(i + ':<span class="wordstat">' + v + "</span>");
+        var $list = $('<li>').appendTo($wl).prop("value", i).html('<span class="wordstat">' + v + "</span>");
         if (i == 1) $list.hide();
     });
+    glyphstat.forEach((v, i) => { $("<li>").prop("value", i).appendTo($gl).text(v); });
 
-    var $glyphstat = $("<li>").text("字出現数").appendTo($list);
-    var $ul = $("<ul>").appendTo($glyphstat);
-    glyphstat.forEach(function(v, i) {
-        $("<li>").appendTo($ul).text(i + ":" + v);
-    });
-    
     // パーツ出現数
-    var $statpart = $("<div>").insertAfter($statjigo).addClass("statparts");
     var partappear = function() {
         var occ = partslist();
         var ans = "";
@@ -433,10 +515,7 @@ var stats = function()
         });
 
         //結果表示
-        var res = "<ul>";
-        res += "<li>パーツ出現数";
-        var $list = $("div.statparts").html(res);
-        //var $list = $("<li>").appendTo("div.statparts");//.html(i + ":");
+        var $list = $("div.statparts").append("<ul>").css("line-height","10px");
         var ctypecolor = function(c) {
             var ctype = possible_mojibake(c);
             var colorcode = {
@@ -455,15 +534,8 @@ var stats = function()
         
         list.forEach(function(v, i) {
             v.forEach(function(c) {
-                var $partbox = $("<div>").css({
-                    "margin-left":"1px", "line-height":"10px", "font-size": "10px",
-                    //"background-color":"#00f",
-                    "width":"20px", "height":"30px", "overflow":"hidden",
-                    "display":"inline-block"}).appendTo($list).html(i);
-                var $part = $("<div>").css({
-                    "line-height":"20px", "font-size": "18px",
-                    "width":"20px", "height":"20px", "background-color":"red",
-                    "display":"inline-block"}).appendTo($partbox).html(c);
+                var $partbox = $("<div>").appendTo($pl).html(i).addClass("setpartbox");
+                var $part = $("<div>").addClass("setpart").appendTo($partbox).html(c);
 
                 $part.css("background-color", ctypecolor(c)).attr("id", c)
                     .dblclick(function() {
@@ -483,7 +555,6 @@ var stats = function()
                     return;
                 }
 
-                
                 var $svg = $("#" + c.substr(1, c.length - 2));
                 if ($svg.size() > 0) {
                     $part.html($svg.clone().show());
@@ -491,12 +562,8 @@ var stats = function()
                 }
             });
 
-            //res += "<li>" + i + ":" + v;
         });
-        console.log(list);
     }();
-
-
 };
 
 //素点ガイダンス

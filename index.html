@@ -2,8 +2,8 @@
 <head>
 <meta http-equiv="pragma" content="no-cache"></meta>
 <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0">
-<script src="jquery.min.js"></script>
+<meta name="viewport" content="width=600,initial-scale=1.0">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="kanji_puzzle.js"></script>
 <script src="qlist.js"></script>
 <link rel="stylesheet" type="text/css" href="kanji_puzzle.css">
@@ -11,12 +11,11 @@
 </head>
 
 <body>
-  <div style="float:right;"><select id="viewport" style="display:none;"><option>大</option><option>中</option><option>小</option></select></div>
+  <button id="showrule" class="help">?</button>
   <h2>部首部</h2>
   <div id="top">
-      <div class="topbox">
+    <div class="topbox">
         <h4>●例題</h4> 同じ数字のところに同じ漢字パーツが入って熟語が完成します。
-        <button id="showrule">?</button>
         <div id='qex'>
           <div id="example"></div>
           →
@@ -28,16 +27,15 @@
         クリックで開始します。
         <div id="daily"></div>
       </div>
-      <div class="topbox" id="continue">
+      <div class="topbox helper" id="continue">
         <h4>●解きかけ</h4>
-        <button id="erase_resume">X</button>
+        <button id="erase_resume" class="closer">X</button>
         <div style='margin-top:6px;'></div>
       </div>
       <div class="topbox">
         <h4>●最近の出題</h4>
         問題を選んでください。
-        <button class='anch' href='#archives' style="float:right; height:22px;">
-          バックナンバー</button>
+        <button class='anch' href='#archives' style="float:right; height:22px;">バックナンバー</button>
         <div id="newest" style='margin-top:6px;'></div>
       </div>
   </div>
@@ -46,6 +44,36 @@
     問題を選んでください。(<a href="#">トップへ</a>)
     <hr style="clear:both;">
     <div id="qlists"></div>
+  </div>
+  <div id="rule" class="topbox helper">
+    <button class="closer">X</button>
+    <DIV style="display:flex; flex-wrap: wrap;">
+    <div>
+      <h4>入力欄キーボード操作</h4>
+      <ul>
+	<li> [Ctrl] + [左] で入力欄表示、
+	  [Ctrl] + [左][右] で入力欄移動、
+	  [Ctrl] + [上][下] で部首選択移動
+	<li> 入力<span style="border:3px solid #8c8; background-color:#efe;">10</span> + [Enter]で
+	  <span style="background-color: #eee; color:green; font-family:monospace;">語[10]</span>を選択、
+	  入力<span style="border:3px solid #8c8; background-color:#efe;">p10</span> + [Enter]で
+	  <span style="background-color: #cce; color:blue; border:1px solid #88f;">部首10</span>を選択
+      </ul>
+      <h4>ルール</h4> (読まなくていいです)<br/>
+      <iframe src="rule.html" style="max-width:100%; width:800px; margin-right:10px; height:150px; border:1px solid green; box-sizing:border-box;"></iframe>
+    </div>
+    <div style="min-width:300px;">
+      <h4>使用データベース入手先</h4><br/>
+      お世話になっています。
+      <ul>
+        <li> <a href="https://glyphwiki.org">グリフウィキ</a>
+        <li> <a href="http://www.chise.org">CHISE 漢字構造情報データベース</a>
+        <li> <a href="http://openlab.ring.gr.jp/skk/wiki/wiki.cgi?page=SKK%BC%AD%BD%F1">SKK辞書</a>
+	<li> <a href="https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec" id="gasapi">GAS</a>
+      </ul>
+      <h4>作問ツール</h4>
+      <a href="#debug" target="_blank">こちら</a>
+    </div>    </div>
   </div>
 
   <div id="main">
@@ -57,10 +85,6 @@
     <div id="keyinput">
       <input class="userans" />
       <div id="judge"></div>
-    </div>
-    <div id="sh" style="display:inline-block;">
-      <input class="usercmd" />
-      <div class="judge"></div>
     </div>
 
     <div id="message">
@@ -85,228 +109,155 @@
     </div>
   </div>
   <hr />
-  <div id="makequiz" style="width:99%; display:none;">
-    <div>
-      <h2>問題作成ツール</h2> 
-      ●単語リスト <button id="make">作成<span style="font-size:60%; color:gray;">(Ctrl+Enter)</span></button>
-      <label><input type="checkbox" id="wsort">ソート</label>
-      <button id="untempo" style="display:none;">仮追加解除</button>
-      <div style="float:right">
-        <input type="button" id="qsave" value="save">
-        <input type="button" id="qload" value="load" style="display:none;">
+  <div id="makequiz" style="width:100%; display:none;">
+    <div style="position:relative;">
+      <button class="closer">X</button>
+      <button class="help">?</button>
+      <h2>問題作成ツール</h2>
+      <div class="topbox helper" style="display:none;">
+        <button class="closer">X</button>
+        <h4>パズル生成</h4>
+        「●単語リスト」に「/」区切りで単語を入力して[作成]を押すとパズル生成。<br/>
+	統計情報を集計してからパズル作成すると過去問から既出語も表示してくれる。
+	<br/>
+	<h4>再定義文字</h4>
+	気に入らない分割があったときは「●再定義文字」に定義しなおしてから[作成]。
+	以下リストからも選べる。
+	<div style="background-color:#eee;" id="frequents">
+	  (文字:[NMZEFLOHUCKQJ]パーツ, 「/」区切り, クリックすると追加 or 削除)
+	</div>
       </div>
-      <br />
-      <textarea id="wordlist" style="width:100%; height:40px;"></textarea>
-      <br />
-      ●再定義文字:
-      <textarea id="redefine" style="width: calc( 100% - 200px ); height:25px;"></textarea>
-      <span id="showfrequent">[頻出一覧]</span>
-      <div style="display:none; background-color:#eee;">
-        (文字:[NMZEFLOHUCKQJ]パーツ, 「/」区切り,  以下リストをクリックで追加 or 削除)
-        <span id="frequents"></span>
+      <div>
+        ●単語リスト <button id="make">作成<span style="font-size:60%; color:gray;">(Ctrl+Enter)</span></button>
+        <label><input type="checkbox" id="wsort">ソート</label>
+        <button id="untempo" style="display:none;">仮追加解除</button>
+        <div style="float:right">
+          <input type="button" id="qsave" value="save">
+          <input type="button" id="qload" value="load" style="display:none;">
+        </div>
+        <br />
+        <textarea id="wordlist" style="box-sizing:border-box; width:100%; height:40px;">徒競走</textarea>
+      </div>
+      <div>
+        ●再定義文字
+        <textarea id="redefine" style="width: calc( 100% - 200px ); height:25px;"></textarea>
       </div>
       <div style="display:flex;">
-      ●フラグメント結果:
-      <div id="op" style="border:1px solid gray; padding:2px; width:calc(100% - 200px);"></div>
-      <span style="white-space:nowrap; display:none;">
-        <input type="text" id="knjtb" style="width:90%;">
-      </span>
-    </div>
-    <div>
-      <h2>辞書ツール</h2>
-      <div id="dicloader" style="background-color:#eee;">
-        ●辞書選択: 
-        <label><input type="checkbox" checked>SKK-JISYO.L.filter</label>
-        <label><input type="checkbox">SKK-JISYO.fullname.filter</label>
-        <label><input type="checkbox">SKK-JISYO.geo.filter</label>
-        <label><input type="checkbox">SKK-JISYO.JIS3_4.filter</label>
-        <input type="button" value="辞書リロード" id="dicload">
-      </div>
-      <div id="partlist" style="background-color:#eee;"></div>
-
-      <div style="display:flex;">
-        <span style="margin-top: auto;">
-          ●部品:
-          <input type="text" id="parts" value="口木">
+        ●フラグメント結果
+        <div id="op" style="border:1px solid gray; padding:2px; width:calc(100% - 200px);"></div>
+        <span style="white-space:nowrap; display:none;">
+          <input type="text" id="knjtb" style="width:90%;">
         </span>
-        <span id="ifdicload" style="display:none;">
+      </div>
+    </div>
+    <div style="position:relative;">
+      <button class="closer">X</button>
+      <button class="help">?</button>
+      <div style="float:right;">
+        <button id="dicloaded"></button>
+        <button id="showparts">部品一覧</button>
+      </div>
+      <h2>辞書ツール</h2>
+      <div class="topbox helper" style="display:none;">
+        <button class="closer">X</button>
+	<p>
+	  <h4>字検索</h4>
+	  「●部品」のボックスでEnterを押すと、入力した部品すべてを含む漢字一覧が出る(出現頻度の低い順)
+	</p>
+        <p>
+	  <h4>語検索</h4>
+	  「●文字」以降の3ボックスのどこかでEnterを押すと、以下すべてに該当する単語一覧が出る
+	</p>
+        <ul>
+          <li>単語内に「部品」と「文字」を含むもの
+          <li>単語内に「but」欄の文字を含まないもの
+          <li>「文字数」に該当するもの（"3-5"とかけば3文字以上5文字以下）
+        </ul>
+      
+        <h4>TIPS</h4>
+        <ul>
+          <li>「色付き」にチェックを入れて単語探しすると、既存パーツのみで構成される漢字に色がつく。<br/>
+	    <span class="maskr">赤</span>:完全隠蔽、<span class="maskp">橙</span>:1パーツ以外隠蔽、
+	    <span class="maskb">青</span>:Open含む完全隠蔽、<span class="maskc">水色</span>:Open含む
+	    <ul>
+	      <li> 字検索で空欄Enterを押した場合は、上記色つき漢字一覧が出る。
+	      <li> 語検索で空欄Enterを押した場合は、赤・橙のみで構成される単語一覧が出る。
+	    </ul>
+          <li>「複合語ソート」にチェックを入れて単語探しすると、構成要素の2字熟語が一致する語同士をグループ化して表示する。
+          <li>「かな表示」にチェックを入れるとふりがな表示。人名辞典を使った場合は簡単なプロフィールも出たり。
+          <li>[部品一覧]をダブルクリックすると部品一覧が表示され、部品をクリックすると漢字検索する。
+          <li>[辞書ロード済]をダブルクリックすると使う辞書を選択できる。
+        </ul>
+      </div>
+    <div id="dicloader" class="topbox" style="background-color:#eee;">
+      ●辞書選択: 
+      <label><input type="checkbox" checked>SKK-JISYO.L.filter</label>
+      <label><input type="checkbox">SKK-JISYO.fullname.filter</label>
+      <label><input type="checkbox">SKK-JISYO.geo.filter</label>
+      <label><input type="checkbox">SKK-JISYO.JIS3_4.filter</label>
+      <input type="button" value="辞書リロード" id="dicload">
+    </div>
+    <div id="partlist" class="topbox helper" style="display:none; background-color:#eee;"><button class="closer">X</button></div>
+    <div style="display:flex;">
+      <span style="margin-top: auto; white-space:nowrap;">
+        ●部品:
+        <input type="text" id="parts" value="口木">
+      </span>
+      <span id="ifdicload" style="display:none;">
+	<span style="white-space:nowrap;">
           ●文字:
           <input type="text" id="chars" value="生">
           but <input type="text" id="nchars" value="一三様事書/">
-          文字数:<input type="text" id="numof" value="3-">
-          <label><input type="checkbox" id="skana">かな表示</label>
-          <label><input type="checkbox" id="addbut" checked>既使用字を除く</label>
-          <label><input type="checkbox" id="glyphcolor" checked>色つき</label>
-          <label><input type="checkbox" id="factorsort" checked>複合語ソート</label>
-        </span>
-        <div style="margin-left: auto;">
-          <span id="dicloaded"></span>
-          <span id="showparts">[部品一覧]</span>
-        </div>
+          文字数:<input type="text" id="numof" value="3">
+	</span>
+        <label><input type="checkbox" id="skana">かな表示</label>
+        <label><input type="checkbox" id="addbut" checked>既使用字を除く</label>
+        <label><input type="checkbox" id="glyphcolor" checked>色つき</label>
+        <label><input type="checkbox" id="factorsort" checked>複合語ソート</label>
+      </span>
+    </div>
+    ●検索結果:
+    <div id="parts_ret" style="box-sizing:border-box; background-color:#dfd; border:1px solid #ccc;"></div>
+    <div id="foundwords" style="width:100%; box-sizing:border-box; background-color:#ddf; border:1px solid #ccc;"></div>
+    </div>
+    
+    <div class="topbox">
+      <button class="closer">X</button>
+      <h2>基本的な作問手順</h2>
+      <ol>
+        <li>「●単語リスト」になにか適当な語を入れて<button>作成</button>。パズル生成される。[例: 徒競走]
+        <li>「●フラグメント結果」の部品をダブルクリック。漢字検索して「●検索結果」に表示される(使用頻度の低い順)。 [例: 彳]
+        <li>さらに漢字検索で出た文字をダブルクリック。単語検索して「●検索結果」に表示される。　[例: 街]
+        <li>単語検索で出た語をダブルクリック。「●単語リスト」に(括弧)付きで仮追加される。単語をダブルクリックするたびに仮追加の語は差し替わる。 [例:街路灯]
+        <li>仮追加の語を採用する場合は<button>仮追加解除</button>し<button>作成</button>。
+        <li>2以降を繰り返し。
+	<li> 完成したら<div style="border-radius:50%; background-color:#9df;
+				    width:35px; height:35px; line-height:35px; text-align:center;
+				    display:inline-block;">投稿</div>をクリック。
+      </ol>
+    </div>
+    <span class="minimized" id="stat">統計情報</span>
+    <div class="topbox" id="statbox" style="display:none;">
+      <button class="closer">X</button>
+      <h2>統計情報</h2>
+      <div class="result">集計中...</div>
+      <div style="display:none;">
+        <h4>TIPS</h4>
+        <ul style="font-family:glyphwiki">
+          <li>造語力が高い割にまず使えない文字：一二三円事様書図承氷丹来弔互与典越飛挿/
+            使発下夜華印看卵倉興憂気制段面西州御象無帯両以入北存在妻島武奉悪為乗血衆
+          <li>再定義WishList: "L𠃊目(u268fb-itaiji-002)/Z一由(k5-026c)/〓:Z一八(u2ff1-u4e00-u516b)/Z冖一/&amp;prv1;:[畏-田](u5140-itaiji-001)"
+          <li>定義変更予定: "<!-- &#x9fb9;/&#x24d13;/&#x2b740;/&#x2ea4;/&#x2ecc;/朗:N&#xF579;月/-->&amp;CDP-89AE;:N冫㇛/尃:Z&amp;u24c14-var-001;寸"
+        </ul>
       </div>
-
-      検索結果 (ダブルクリックで仮追加):
-      <div id="parts_ret" style="background-color:#dfd; border:1px solid #ccc;"></div>
-      <div id="foundwords" style="width:100%; background-color:#ddf; border:1px solid #ccc;"></div>
     </div>
-    <div>
-      <h2>使い方</h2>
-       <div style="font-size:80%; margin:0 10px">
-         <h3>基本的な作問手順</h3>
-         <p>
-           <ol>
-             <li>「単語リスト」になにか適当な語を入れて [作成]。
-             <li>「フラグメント結果」の部品をダブルクリックすると漢字検索する。
-             <li>さらに漢字検索で出た文字をダブルクリックすると単語検索する。
-             <li>単語検索で出た語をダブルクリックすると「単語リスト」に(括弧)付きで仮追加する。単語をダブルクリックするたびに仮追加の語は差し替わる。
-             <li>仮追加の語を採用する場合は[仮追加解除]し[作成]。
-             <li>2以降を繰り返し。
-           </ol>
-         </p>
-
-         <h3>問題作成ツール</h3>
-           <p>
-             「●単語リスト」に単語をがんがんぶちこんで[作成]を押すとパズル生成<br/>
-             気に入らない分割があったときは「●再定義文字」で定義しなおしてから[Ctrl+Enter]<br/>
-           </p>
-           <h3>字検索・語検索</h3>
-         <p>「●文字」以降の3ボックスのどこかでEnterを押すと、以下すべてに該当する単語一覧が出る
-           <ul>
-             <li>単語内に「部品」と「文字」を含むもの
-             <li>単語内に「but」欄の文字を含まないもの
-             <li>「文字数」に該当するもの（"3-5"とかけば3文字以上5文字以下）
-           </ul>
-         </p>
-
-         <p>「●部品」のボックスでEnterを押すと、入力した部品すべてを含む漢字一覧が出る(出現頻度の低い順)<br/>
-           空欄でEnterを押した場合は、既存パーツのみで構成される漢字一覧が出る
-         </p>
-
-         <h3>TIPS</h3>
-         <ul>
-           <li>「フラグメント結果」のチェックボックスを入れるとパズル内の伏せ部品が表示される
-           <li>[頻出一覧]をダブルクリックするとデフォルト定義とは異なるがよく使う再定義の一覧が出る。
-           <li>[部品一覧]をダブルクリックすると部品一覧が表示され、部品をクリックすると漢字検索する。
-           <li>[辞書ロード済]をダブルクリックすると使う辞書を選択できる。
-           <li>「色付き」にチェックを入れて単語探しすると、既存パーツのみで構成される漢字(赤:伏字のみ、青:Open含む)に色がつく。
-           <li>「複合語ソート」にチェックを入れて単語探しすると、構成要素の2字熟語が一致する語同士をグループ化して表示する。
-           <li>「かな表示」にチェックを入れるとふりがな表示。人名辞典を使った場合は簡単なプロフィールも出たり。
-         </ul>
-
-       </div>
-       <h2>作問TIPS</h2>
-       <ul style="font-family:glyphwiki">
-         <li>造語力が高い割にまず使えない文字：一二三円事様書図承氷丹来弔互与典越飛挿/
-           使発下夜華印看卵倉興憂気制段面西州御象無帯両以入北存在妻島武奉悪為乗血衆
-         <li>再定義WishList: "L𠃊目(u268fb-itaiji-002)/Z一由(k5-026c)/〓:Z一八(u2ff1-u4e00-u516b)/Z冖一/&amp;prv1;:[畏-田](u5140-itaiji-001)"
-         <li>定義変更予定: "<!-- &#x9fb9;/&#x24d13;/&#x2b740;/&#x2ea4;/&#x2ecc;/朗:N&#xF579;月/-->&amp;CDP-89AE;:N冫㇛/尃:Z&amp;u24c14-var-001;寸"
-       </ul>
-       <button id="stat">統計情報</button>
-    </div>
-    </div>
-    </div>
-  <div id="rule">
-    <h2>ルール(読まなくてもいいです)</h2>
-    <div style="font-size:80%; margin:0 10px; font-family:glyphwiki">
-      単に作者の趣味を明文化しただけなので読まなくても大丈夫だと思います。気づいたら都度追加しています。
-      <h3>字体・字形</h3>
-      <ul>
-        <li>基本的には常用漢字表・人名用漢字表・表外漢字字体表の印刷標準字体を採用する。
-        <li>人名・地名はその限りではない。
-      </ul>
-      <h3>分割の方式</h3>
-      <ul>
-        <li>1画のパーツは伏せない(一乛丨亅丶ノ𠃌⺄𠃊乚乙ほか) → 一部例外あり(問26,39)。1画パーツは色付きにするとかしたほうがいいかも。
-        <li>問題によって切り方が一定でない漢字があり得る。(交=亠父/六乂)
-        <li>交差する筆画は分割しない(事車吏聿果東ほか)
-      </ul>
-      <h3>部品の同定</h3>
-      <ul>
-        <li>以下のパーツを区別しない
-          <ul>
-            <li>一般的に区別される部首: 口と囗(くち/くにがまえ)、日と曰(にち/ひらび)、阝(こざと/おおざと)、匸と匚(かくしがまえ/はこがまえ)、夊と夂(なつあし/ふゆがしら)、月(つき/にくづき/ふなづき)
-            <li>パーツ使用時に筆画が変化するもの
-              <ul>
-                <li>偏ではねる: 土工龶女子止牛王正且生立至舟豆金里重/匕光元/疋足 (地攻契妹孫此物球政助甥端致船頭針野動/比輝頑/疎路)
-                <li>偏で払わない: 乂又木火夫父文禾米釆耒矢皮耳朿束求 (刈双相灯規効対科料釈耕短頗取刺頼救)
-                <li>旁ではねる: 丸瓦 (執瓶)
-                <li>脚で払わない: 八月用 (共胃桶)
-                <li>冠で払う: 其 (基)
-                <li>冠ではねる: 穴雨冎 (究雲骨)
-                <li>冠ではねない: 竹小羽 (笑隙習)
-              </ul>
-            <li>接点の異なる"大"(莫墓)
-            <li>書き順の違う"ナ"(左右)
-            <li>長短の異なる"天"(蚕奏)
-              
-            <li>新旧字体で差分がある以下のパーツ
-              <ul>
-                <li>一点/二点しんにょう、3画/4画草冠、耒(耕耘)、戸(戻扁)、平(評秤)、半(伴絆)、𠔉&#x9fb9;(券眷)、及(汲扱)、堇(饉謹)、𦰩(艱難)、礻(祈祀)、内內(訥納)、
-                  ヨ(箒掃)、羽羽(習翅)、&#x2ea4;爫(浮蜉)、彑彐(緑彙)、爿丬(状牀)、
-                  &#xf516;皀(即櫛)、亞亜(悪鐚)、粛肅(粛繡)、业(戯墟)、斉齊(済臍)、者(暑箸)、黽&#xf3fb;(縄蠅)、夾夹(狭鋏)、刃(認籾)
-                <li>以下のパーツを新旧字体で同一視する場合はこれ以上の分割はしない<br/>
-                  兑兌(税蛻)、酋(尊鱒鰌)、肖(消蛸)、翟(曜櫂)、告吿(酷靠)、周(調蜩)、产(産諺)、鼻(鼻鼾)、寧(寧檸)、全(詮栓)、
-                  奥奧(奥襖)、厤(歴瀝)、黄黃(簧横)、曷(喝葛)、兪俞(輸喩)、𣥂少歩步(渉捗/賓檳/歳穢)、包(抱鉋)、曽曾(増噌)、毎每(晦侮)、
-                  黒黑(墨黴)、青靑(蜻晴)、将將(奨醬)、冬(終疼)、巻卷(圏蜷)、真眞(鎮癲)、間閒(簡癇)
-              </ul>
-          </ul>
-        <li>以下のパーツは区別する
-          <ul>
-            <li>部首の変形:
-              <ul>
-                <li>人/亻/𠆢
-                <li>几/⺇(風構)
-                <li>冂/⺆(周構)
-                <li>卩/⺋
-                <li>刀/刂
-                <li>小/⺌(小冠)
-                <li>心/忄/㣺
-                <li>手/扌
-                <li>水/氵/氺
-                <li>火/灬
-                <li>母/毋 (←"毎"は除く)
-                <li>犬/犭
-                <li>玉/王偏
-                <li>示/礻 (←偏は除く)
-                <li>衣/衤
-                <li>食/飠
-              </ul>
-            <li>「小」と「忄」、土士、未末、干于、「茶」の末尾4画と「木」
-            <li>「令」の末尾2画と「卩」と「マ」
-          </ul>
-          
-        <li>迷いどころ
-          <ul>
-            <li>「占貞卓鹵」「外朴卦訃」の"卜"は同一扱い? (→現状「⺊」「卜」として区別)
-            <li>「実」「春奏泰」は同一扱い? (→問7で採用)
-            <li>「叫糾収」に共通するパーツは"丩"で同一扱い?
-            <li>「別」は「NZ口勹刂」でよいか? (→問64で採用)
-            <li>「袁睘衣」の末尾4画や「猿遠園環旅」に共通するパーツは"𧘇"で同一扱い?
-	      (→問22,33で単発採用, 問55で同一扱い)
-            <li>「売先見児充」「夋坴」「空深」「奐商四匹」の"儿"は同一扱い?
-	      (→問4で前者2つ, 問48で「商売」, 問49で「深充」を同一扱い)
-            <li>というか穴冠は「Z宀儿」か「Z宀八」か?
-	      (→ 問11,35,48で「Z宀八」を採用)
-            <li>「博敷縛薄簿榑搏」内の「尃」は「Z甫寸」でよいか?
-	      (→問22,25,36で単発採用しているが差替予定、現状「甫浦捕補蒲」などとは区別)
-            <li>「瑯螂榔廊朗郎」「浪娘狼」の"良"は同一扱い?
-	      (→現状「&#xF579;」「良」として区別)
-	    <li> 「雨雪」「骨咼」が同じなら「高亭豪膏」「尚賞」「帝旁啇商」も同一扱いでいいのでは?
-	      (→現状「冂」「冖」として区別)
-          </ul>
-      </ul>
-    </div>
-    <h2>使用データベース入手先</h2>
-    <div style="font-size:80%; margin:0 10px; font-family:glyphwiki">
-      お世話になっています。
-      <ul>
-        <li> <a href="https://glyphwiki.org">グリフウィキ</a>
-        <li> <a href="http://www.chise.org">CHISE 漢字構造情報データベース</a>
-        <li> <a href="http://openlab.ring.gr.jp/skk/wiki/wiki.cgi?page=SKK%BC%AD%BD%F1">SKK辞書</a>
-      </ul>
+    <span class="minimized" id="posted">投稿作品</span>
+    <div class="topbox" id="postbox" style="display:none;">
+      <button class="closer">X</button><h2>投稿作品</h2>
+      <div id="qposts">読込中...</div>
     </div>
   </div>
-  <iframe src="fragtable.txt" id="fragtable" style="width:99%; margin: 5px 0; height:40px; font-size:10px; display:none;"></iframe>
+  <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
   <pre id="redefinelist" style="display:none;">
 #1画切り出し/主:Z丶王/勺:K勹丶/&amp;CDP-89F3;:O夂丶/亼:Z𠆢一/亘:Z一旦/成:H戊𠃌/百:Z一白/直:Z十L𠃊目/至:E一厶土/系:Zノ糸/血:Zノ皿/
 #2画切り出し/云:Z二厶/示:Z二小/市:Z亠巾/文:Z亠乂/玄:Z亠幺/衣:Z亠𧘇/亦:Z亠&#xF5ca;/介:Z𠆢&amp;CDP-8bf5;/食:Z𠆢良/谷:E八𠆢口/穴:Z宀八/父:Z八乂/四:O口儿/其:Z&#xf50c;八/肉:H内人/爻:Zメメ/尓:Z𠂉小/反:F厂又/𦍌:Z丷王/面:Z丆O口&amp;CDP-89CC;/石:F丆口/頁:Z丆貝/免:Eク&#x2ba4f;儿/魚:Eク田灬/争:Zク&amp;CDP-8BFE;/鬲:Z𠮛H冂Z儿丅/鬼:Z甶L儿厶/
@@ -317,3 +268,4 @@
 #QJ分割採用に伴う新定義/幾:Q戈ZM幺＿幺K＿人/幽:U山M幺＿幺/氷:J水丶/図:O口Jメ⺀/坐:Q土ZM人＿人＿/嗇:ZQ土E＿M人＿人＿回/喪:ZQ十Z＿M口＿口&prv01;/爽:Q大E＿M爻＿爻＿/兩:Q帀H＿M入＿入/函:U凵Q丂Z＿M冫＿く/亟:ZQ丂Z＿M口＿又一/&amp;CDP-8CB8;:J弋一/𢦏:J戈十/
   </pre>
 </body>
+</html>

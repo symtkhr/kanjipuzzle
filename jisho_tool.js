@@ -27,7 +27,7 @@ $(function() {
                             wordDb[key] += ws.pop();
                     });
                 });
-                $("#dicloaded").append("[辞書ロード済]").show();
+                $("#dicloaded").append("辞書ロード済").show();
                 $("#ifdicload").show();
             }).fail(function() {
                 $("#dicloaded").append("(辞書ロード失敗)");
@@ -71,7 +71,7 @@ $(function() {
             return colorcode ? colorcode : "#f00";
         };
 
-        var $list = $("#partlist").css({"line-height":"10px"});
+        var $list = $("#partlist").css({"line-height":"10px"}).show();
         
         Object.keys(list).sort().forEach(function(c) {
             var $partbox = $("<div>").addClass("setpartbox")
@@ -206,10 +206,10 @@ $(function() {
 
             $("#skana").change();
             $(".fword").click(function() {
-        if ($(this).hasClass("selected")) {
+		if ($(this).hasClass("selected")) {
                     var text = $("#wordlist").val().replace(/\(.+?\)/g, "").replace(/\/+$/, "") +
-            "/(" + $(this).text().split("(").shift() + ")";
-                    $("#wordlist").val(text);
+			"/(" + $(this).text().split("(").shift() + ")";
+                    $("#wordlist").val(text).parents().show();
                     make_quiz(true);
         } else {
             $(".fword").removeClass("selected");
@@ -330,7 +330,7 @@ $(function() {
     var find_parts = function(val) {
         append_to_but();
 
-        $("#parts_ret").text("Searching...");
+        $("#parts_ret").text("Searching...").parent().show();
         setTimeout(function() {
             $("#parts_ret").text("");
             if (val == "*" || val == "") return find_chars_with_existing_parts();

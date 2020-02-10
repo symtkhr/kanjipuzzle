@@ -25,6 +25,7 @@ body {
     border: 1px solid #950;
     text-align:left;
     padding:5px;
+    position:relative;
 }
 .topbox h4, #menu h4, #stat h4, span.minimized {
     border-radius:20px;
@@ -36,6 +37,8 @@ body {
     background-color: #fdc;
 }
 span.minimized {
+    border: 1px solid #950;
+    background-color: #dca;
     cursor:pointer;
     margin:5px;
 }
@@ -49,10 +52,11 @@ span.minimized {
 #example, #example_answer {
     display:inline-block;
 }
-#erase_resume {
+.help, .closer {
     float:right;
     height:22px;
     width:22px;
+    padding:0px;
 }
 
 /* #quiz */
@@ -248,7 +252,7 @@ div.cdp {
     cursor:pointer;
 }
 
-#qlists, #newest {
+#qlists, #newest, #qposts {
     display: flex;
     flex-wrap: wrap;
 }
@@ -366,6 +370,10 @@ h2 {
     
 .barekey, .fragkey, .statparts, .cdpf, #parts, #redefine {
     font-family: "glyphwiki";
+}
+
+#ifdicload label {
+    white-space:nowrap;
 }
 
 .setpartbox {

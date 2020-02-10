@@ -10,7 +10,6 @@ var scorelist = function()
 
     $.ajax({
         url: LOGGERURL,
-        url: "scorelist.json",
         type: 'get',
         data: {v: "score"},
         dataType: 'json',
@@ -101,7 +100,6 @@ var scorelist = function()
 
                     $.ajax({
                         url: LOGGERURL,
-                        url:"log.json",
                         type: 'get',
                         data: {logid: logid},
                         dataType: 'json',
