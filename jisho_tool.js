@@ -115,14 +115,18 @@ $(function() {
     };
     
     //語検索
-    var findwords = function() {
+    var findwords = () => {
         append_to_but();
+	find_chars_with_existing_parts(true);
+
+	if ($("#chars").val() === "") $("#chars").val("/rp");
 
         var cs = $("#chars").val().split("");
         var ps = stringToArray($("#parts").val());
         var num = $("#numof").val().split("-");
         var exc = $("#nchars").val().split("").filter(c => (cs.indexOf(c) == -1));
 
+	if ($("#chars").val() === "*") cs = [];
         if ($("#nchars").val() === "") exc = [];
         if ($("#parts").val() === "*") ps = [];
 
@@ -140,7 +144,7 @@ $(function() {
             maskch.c = $(".maskc .fchar").map(function() { return $(this).text(); }).get().join("");
         }
 
-        setTimeout(function() {
+        setTimeout(() => {
             if (num.length == 1) num[1] = num[0];
             if (num.length == 0) num = [2, 2];
 
@@ -154,12 +158,13 @@ $(function() {
                 if (num[1] && knjmatch.length > num[1]) return;
                 if (exc.some(e => (word.indexOf(e) != -1))) return;
 
-                if (cs.length) {
+                if (cs[0] != "/") {
                     //包含文字チェック
                     if (cs.some(c => (word.indexOf(c) == -1))) return;
                 } else {
+		    var target = cs.map(v => (maskch[v] || "")).join("");
                     //赤青以外の文字がないかチェック
-                    if (word.split("").some(d => ((maskch.r + maskch.p).indexOf(d) == -1))) return;
+                    if (word.split("").some(d => (target.indexOf(d) == -1))) return;
                 }
 
                 // 包含部品チェック
@@ -209,7 +214,7 @@ $(function() {
 		if ($(this).hasClass("selected")) {
                     var text = $("#wordlist").val().replace(/\(.+?\)/g, "").replace(/\/+$/, "") +
 			"/(" + $(this).text().split("(").shift() + ")";
-                    $("#wordlist").val(text).parents().show();
+                    $("#wordlist").val(text).parents().show().next(".minimized").remove();
                     make_quiz(true);
         } else {
             $(".fword").removeClass("selected");
@@ -330,7 +335,7 @@ $(function() {
     var find_parts = function(val) {
         append_to_but();
 
-        $("#parts_ret").text("Searching...").parent().show();
+        $("#parts_ret").text("Searching...").parents().show().next(".minimized").remove();
         setTimeout(function() {
             $("#parts_ret").text("");
             if (val == "*" || val == "") return find_chars_with_existing_parts();

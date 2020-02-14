@@ -652,13 +652,13 @@ var load_quiz = function(qid)
     var qlen = draw_puzzle(qlist.split("/"), $("#quiz"));
 
     // 中断時の保存
-    $(window).on('pagehide', function(event) {
+    $(window).unbind().on('pagehide', function(event) {
         save_status(qid);
         return;
     });
 
     //枠外クリックで選択外し
-    $(document).on('click', function(e) {
+    $(document).unbind().on('click', function(e) {
         if ($(e.target).closest('.word').length != 0) return;
         if ($(e.target).closest('#keyinput').length != 0) return;
         $(".glyph").removeClass("selected");
@@ -674,7 +674,7 @@ var load_quiz = function(qid)
     });
 
     //枠内クリックで入力欄表示
-    $("#quiz .elm").click(function() {
+    $("#quiz .elm").unbind().click(function() {
         console.log("nyuuryoku");
         var $glyph = $(this).parents(".glyph");
         var $word = $glyph.parents(".word").css("position", "relative");
@@ -704,7 +704,7 @@ var load_quiz = function(qid)
         }
     });
 
-    $("#sh input").keypress(function(e){
+    $("#sh input").unbind().keypress(function(e){
         if (e.which != 13) return;
         //全角半角
         var val = $(this).val().replace(/[！-ｚ]/g, function(s) {
@@ -742,7 +742,7 @@ var load_quiz = function(qid)
         $(this).select();
     });
     
-    $(".userans").keypress(function(e){
+    $(".userans").unbind().keypress(function(e){
         if (e.which != 13) return;
 
         //数字入力は語番号選択扱い
@@ -921,13 +921,14 @@ var load_quiz = function(qid)
     $("#main").show();
     $("#menu, #keyinput").hide();
 
-    if (!qid) return;
-    if ($("#srvlog").size() == 0) {
-        timer.start(0);
-        return;
+    if (0 < $("#srvlog").size()) {
+	replay_log(qlist, answer_check);
+	return;
     }
 
-    replay_log(qlist, answer_check);
+    if (qid || $("#demo").prop("checked")) {
+        timer.start(0);
+    }
 };
 
 var show_daily = function()

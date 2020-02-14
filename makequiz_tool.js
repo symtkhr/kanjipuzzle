@@ -135,7 +135,8 @@ $(function() {
 	    });
 	    $qlist.find(".qoption").click(function() {
 		$("#wordlist").val($(this).find(".qwq").text());
-		$("#redeine").val($(this).find(".qdef").text());
+		$("#redefine").val($(this).find(".qdef").text());
+		$("#demo").prop("checked", true);
 		make_quiz();
 	    });
 
@@ -308,18 +309,34 @@ var make_quiz = function(is_unsort)
     quiz.q = $("#wordlist").val();
     quiztable.push(quiz);
     load_quiz();
+    $("#main .qid").text("投稿");
 
     if (quiz.q.indexOf("(") < quiz.q.indexOf(")"))
         $("#untempo").show();
     else
         $("#untempo").hide();
     
+    //ソート
+    if ($("#wsort").prop("checked") && !is_unsort) {
+	return wordsort();
+    }
+
+    // 作成ツール情報の非表示
+    if ($("#demo").prop("checked")) {
+	$("#makequiz .closer").each(function() {
+	    if ($(this).parent().is(":visible")) $(this).click();
+	});
+	$("#demo").prop("checked", false);
+	return;
+    }
+
     $("<span>").css({"display":"inline-block"}).appendTo("#quiz")
         .text("(" + $(".word").size() + "語 " + $(".glyph").size() + "字 " + $(".fragkey").size() + "部首)");
-    
+
     //文字重複チェック
     var dup = quiz.q.split("").filter(function(x, i, self) {
-        return (x !== "/") && (self.indexOf(x) !== self.lastIndexOf(x));
+        return (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x);
+	//return (x !== "/") && (self.indexOf(x) !== self.lastIndexOf(x));
     });
     if (dup.length > 0) {
         $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.join());
@@ -327,14 +344,14 @@ var make_quiz = function(is_unsort)
     
     //語使用歴チェック
     var words = $(".wordstat").map(function() { return $(this).text(); }).get();
-
+    
     var worddup = quiz.q.split("/").reduce(function(dup, w) {
         if (words.join(",").split(",").indexOf(w) == -1) return dup;
         var n = words.findIndex((word, i) => (word.split(",").indexOf(w) != -1));
         dup.push(w + "(" + (n + 1) + ")");
         return dup;
     }, []);
-
+    
     if (worddup.length > 0) {
         $("<span>").css({"display":"inline-block","color":"blue"}).appendTo("#quiz").text(" [既出語]" + worddup.join(", "));
     }
@@ -346,11 +363,6 @@ var make_quiz = function(is_unsort)
         $("#knjdef").text(c + ":" + kanjifrag.db(c));
     });
 
-    $("#main .qid").text("投稿");
-    //ソート
-    if (!$("#wsort").prop("checked") || is_unsort) return;
-    wordsort();
-    $("#wsort").prop("checked", false);
 };
 
 // ソート
@@ -375,6 +387,7 @@ var wordsort = function()
         });
     
     $("#wordlist").val(txt.substr(1));
+    $("#wsort").prop("checked", false);
     make_quiz(true);
 }
 

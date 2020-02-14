@@ -128,6 +128,7 @@ var scorelist = function()
 var make_pulldown = function(log)
 {
     var $pdown = $('<select id="srvlog">').insertAfter("#g_log");
+    $('<span>').text("(Shift or Enterで入力)").insertAfter($pdown);
     var logs = log.split(';').map(ans => {
 
         if (!ans) return {};
@@ -221,12 +222,11 @@ var replay_log = function(qlist, callback)
     });
 
     $("#srvlog").keydown(function(e) {
-	if (e.keyCode != 13) return;
+	if (e.keyCode != 13 && !e.shiftKey) return;
 	
         callback($(".userans").val());
 	$("#g_log").val("").hide();
     });
     
-
 };
 
