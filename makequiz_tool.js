@@ -135,7 +135,8 @@ $(function() {
 	    });
 	    $qlist.find(".qoption").click(function() {
 		$("#wordlist").val($(this).find(".qwq").text());
-		$("#redeine").val($(this).find(".qdef").text());
+		$("#redefine").val($(this).find(".qdef").text());
+		$("#demo").prop("checked", true);
 		make_quiz();
 	    });
 
@@ -223,55 +224,61 @@ var possible_mojibake = function(c)
     return "unknown";
 };
 
+var draw_partbox = function(c, n, $parent, callback)
+{
+    var $partbox = $("<div>").addClass("setpartbox").text(n).appendTo($parent);
+    var $part = $("<div>").addClass("setpart").text(c).appendTo($partbox);
+    
+    if (callback) {
+	$partbox.css('background-color', callback(c, n));
+	$part.addClass((1 < n) ? "fragkey" : "barekey");
+    } else {
+	var ctype = possible_mojibake(c);
+        $part.css("background-color", {
+            "kana": "#999",
+            "radical": "#f77",
+            "CDP": "#8c8",
+            "private": "#8c8",
+            "CJK1": "#ccc",
+            "CJK4": "#a7f",
+            "CJKA": "#fa7",
+            "CJKB": "#7af",
+        }[ctype] || "#f00");
+    }
+
+    //SVG
+    if (!c.match(/&[^;]+;/)) return;
+            
+    if (c.indexOf("CDP") != -1) {
+        $part.html(cdp2ucs(c)).addClass("cdpf");
+        return;
+    }
+    var $svg = $("#" + c.substr(1, c.length - 2));
+    if ($svg.size() > 0) {
+        $part.html($svg.clone().show());
+        $part.css("background-color", "#7C7");
+    }
+};
+
 //問題パーツ一覧表示
 var dump_partstable = function(kidx, count)
 {
-    var ctypecolor = function(c) {
-        var ctype = possible_mojibake(c);
-        var colorcode = {
-            "kana": "#000",
-            "radical": "#840",
-            "CJK1": "#000",
-            "CJK4": "#f70",
-            "CJKA": "#800",
-            "CJKB": "#f00",
-        }[ctype];
-
-        return colorcode ? colorcode : "#f00";
-    };
     // <div#op><div($part)><checkbox/><span.fragkey/barekey>key</span><span.cdpf>cdp</span></div></div>
     // <div#op><div($partbox)><div.setpart($part)>key/cdpf</div></div></div>
-    var partbox = function(key, count) {
-        var classname = (1 < count) ? "fragkey" : "barekey";
-        var $partbox = $("<div>").addClass("setpartbox")
-	    .appendTo("#op").text(count);
-        var $part = $("<div>").addClass("setpart " + classname)
-            .appendTo($partbox).text(key);
-
-        //var $key = $("<span>").addClass(classname).text(key);
-        var color = (count < 7 ? (0xfff - (count - 2) * 0x022) : 0xf11);
-        $partbox.css({
-            'background-color': count == 1 ? "#ccf" : ('#' + color.toString(16)),
-            'display': 'inline-block',
-            'cursor': 'pointer',
-        });
-        //$part.css("color", ctypecolor(key));
-        
-        if (key.match(/&[^;]+;/)) {
-            $("<span>").appendTo($part).html(cdp2ucs(key))
-                .addClass("cdpf")
-                .prev("." + classname).hide();
-        }
+    var colorcode = (c, n) => {
+	if (n == 1) return "#ccf";
+        var color = (n < 7 ? (0xfff - (n - 2) * 0x022) : 0xf11);
+        return ('#' + color.toString(16));
     };
-
+    
     // リスト表示
-    $("#op").html("");
+    $("#op").text("");
     for (var key in kidx) {
-        partbox(key, count[key]);
+        draw_partbox(key, count[key], "#op", colorcode);
     }
     for (var key in count) {
         if (count[key] != 1) continue;
-        partbox(key, 1);
+        draw_partbox(key, 1, "#op", colorcode);
     }
 
     //チェック時に解表示
@@ -308,18 +315,34 @@ var make_quiz = function(is_unsort)
     quiz.q = $("#wordlist").val();
     quiztable.push(quiz);
     load_quiz();
+    $("#main .qid").text("投稿");
 
     if (quiz.q.indexOf("(") < quiz.q.indexOf(")"))
         $("#untempo").show();
     else
         $("#untempo").hide();
     
+    //ソート
+    if ($("#wsort").prop("checked") && !is_unsort) {
+	return wordsort();
+    }
+
+    // 作成ツール情報の非表示
+    if ($("#demo").prop("checked")) {
+	$("#makequiz .closer").each(function() {
+	    if ($(this).parent().is(":visible")) $(this).click();
+	});
+	$("#demo").prop("checked", false);
+	return;
+    }
+
     $("<span>").css({"display":"inline-block"}).appendTo("#quiz")
         .text("(" + $(".word").size() + "語 " + $(".glyph").size() + "字 " + $(".fragkey").size() + "部首)");
-    
+
     //文字重複チェック
     var dup = quiz.q.split("").filter(function(x, i, self) {
-        return (x !== "/") && (self.indexOf(x) !== self.lastIndexOf(x));
+        return (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x);
+	//return (x !== "/") && (self.indexOf(x) !== self.lastIndexOf(x));
     });
     if (dup.length > 0) {
         $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.join());
@@ -327,14 +350,14 @@ var make_quiz = function(is_unsort)
     
     //語使用歴チェック
     var words = $(".wordstat").map(function() { return $(this).text(); }).get();
-
+    
     var worddup = quiz.q.split("/").reduce(function(dup, w) {
         if (words.join(",").split(",").indexOf(w) == -1) return dup;
         var n = words.findIndex((word, i) => (word.split(",").indexOf(w) != -1));
         dup.push(w + "(" + (n + 1) + ")");
         return dup;
     }, []);
-
+    
     if (worddup.length > 0) {
         $("<span>").css({"display":"inline-block","color":"blue"}).appendTo("#quiz").text(" [既出語]" + worddup.join(", "));
     }
@@ -346,11 +369,6 @@ var make_quiz = function(is_unsort)
         $("#knjdef").text(c + ":" + kanjifrag.db(c));
     });
 
-    $("#main .qid").text("投稿");
-    //ソート
-    if (!$("#wsort").prop("checked") || is_unsort) return;
-    wordsort();
-    $("#wsort").prop("checked", false);
 };
 
 // ソート
@@ -359,24 +377,22 @@ var wordsort = function()
     var qlists = [];
 
     $(".word").each(function(idx) {
-            var t = $(this).find(".glyph").size();
-            var c = $(this).find(".elm").size() - $(this).find(".qelm").size();
-            var txt = $(this).find(".correct").text();
-            qlists.push({n:t, ex:c, w:txt})
-        });
+        var t = $(this).find(".glyph").size();
+        var c = $(this).find(".elm").size() - $(this).find(".qelm").size();
+        var txt = $(this).find(".correct").text();
+        qlists.push({n:t, ex:c, w:txt})
+    });
 
-    var txt = "";
-    qlists.sort(function(a,b) {
-            if (a.n != b.n) return b.n - a.n;
-            if (a.ex != b.ex) return a.ex - b.ex;
-            return (Math.random() * 2 - 1);
-        }).forEach(function(q) {
-                txt += "/" + q.w;
-        });
+    var txt = qlists.sort((a,b) => {
+        if (a.n != b.n) return b.n - a.n;
+        if (a.ex != b.ex) return a.ex - b.ex;
+        return (Math.random() * 2 - 1);
+    }).map(q => q.w).join("/");
     
-    $("#wordlist").val(txt.substr(1));
+    $("#wordlist").val(txt);
+    $("#wsort").prop("checked", false);
     make_quiz(true);
-}
+};
 
 /* 既存問題と現行の漢字テーブルが一致しているかのチェック用 */
 var find_defchange = function(qid)
@@ -430,139 +446,93 @@ var partslist = function(is_counting) {
 // 統計
 var stats = function()
 {
-    var res = "";
     var q = quiztable.pop();
     var qs = quiztable.reduce((ret, quiz) => (ret + "/" + quiz.q.split("+").join("")), "");
     quiztable.push(q);
 
     // 語出現数
     var wordstat = function(ws) {
-        var occ = {};
-        ws.forEach(function(w) {
+	// {"語":n}
+        var occ = ws.reduce((occ, w) => {
             if (!occ[w]) occ[w] = 0;
             occ[w]++;
-        });
+	    return occ;
+        }, {});
 
-        var list = [];
-        Object.keys(occ).forEach(function(w) {
+	// {n:"語,語"}
+        return Object.keys(occ).reduce((list, w) => {
             if (list[occ[w]])
                 list[occ[w]] += "," + w;
             else
                 list[occ[w]] = w;
-        });
-
-        return list;
+	    return list;
+        }, []);
     }(qs.split("/"));
 
     // 字出現数
     var glyphstat = function(ws) {
-        var occ = {};
-        ws.join("").split("").forEach(function(c) {
+	// {"字":n}
+        var occ = ws.join("").split("").reduce((occ, c) => {
             if (!occ[c]) occ[c] = 0;
             occ[c]++;
-        });
-        var list = [];
-        Object.keys(occ).forEach(function(c) {
+	    return occ;
+        }, {});
+
+	// {n:"字字"}
+	return Object.keys(occ).reduce((list, c) => {
             if (list[occ[c]])
                 list[occ[c]] += c;
             else
                 list[occ[c]] = c;
-        });
-        return list;
+	    return list;
+        }, []);
     }(qs.split("/"));
 
     //結果表示
     var $statjigo = $("#statbox .result").text("");
     $("<p>").text("出題数:" + (quiztable.length - 1)).appendTo($statjigo);
     var $wordstat = $("<h4>").text("部首出現数").appendTo($statjigo);
-    var $pl = $("<div>").appendTo($statjigo).addClass("statparts").css("margin","0 0 30px  0");
+    var $pl = $("<div>").appendTo($statjigo).addClass("statparts")
+	.css({"margin":"0 0 30px 0", "line-height":"10px"});
     var $wordstat = $("<h4>").text("語出現数(2回以上)").appendTo($statjigo);
     var $wl = $("<ol>").appendTo($statjigo);
     var $glyphstat = $("<h4>").text("字出現数").appendTo($statjigo);
     var $gl = $("<ol>").appendTo($statjigo);
     
-    wordstat.forEach(function(v, i) {
-        var $list = $('<li>').appendTo($wl).prop("value", i).html('<span class="wordstat">' + v + "</span>");
+    wordstat.forEach((v, i) => {
+        var $list = $('<li>').appendTo($wl).prop("value", i);
+	$("<span>").text(v).addClass("wordstat").appendTo($list);
         if (i == 1) $list.hide();
     });
-    glyphstat.forEach((v, i) => { $("<li>").prop("value", i).appendTo($gl).text(v); });
+    glyphstat.forEach((v, i) => $("<li>").prop("value", i).appendTo($gl).text(v));
 
     // パーツ出現数
     var partappear = function() {
-        var occ = partslist();
-        var ans = "";
-        quiztable.forEach(function(q) {
+	// ["部首"...]
+        var ans = quiztable.map(q => {
             kanjifrag.definelocal(q.def);
+            return q.q.split("/").join("").split("")
+		.map(c => c.match(/^[!-ー]$/) ? "" : kanjifrag.split(c));
+        }).toString().split(",");
 
-            q.q.split("/").join("").split("").forEach(function(c) {
-                ans += kanjifrag.split(c).toString() + ",";
-            });
-        });
-
-        ans.split(",").forEach(function(p) {
-            if (p.length == 0 || p.match(/^[A-Z]$/)) return;
+	// {"部首":n}
+        var occ = ans.reduce((occ, p) => {
+            if (p.length == 0 || p.match(/^[A-Z＿]$/)) return occ;
             if (!occ[p]) occ[p] = 0;
             occ[p]++;
-        });
+	    return occ;
+        }, partslist());
 
-        var list = [];
-        Object.keys(occ).forEach(function(c) {
+	// {n:["部首"...]}
+        var list = Object.keys(occ).reduce((list, c) => {
             var n = occ[c];
-            if (list[n])
-                list[n].push(c);
-            else
-                list[n] = [c];
-        });
+            if (!list[n]) list[n] = [];
+	    list[n].push(c);
+	    return list;
+        }, []);
 
         //結果表示
-        var $list = $("div.statparts").append("<ul>").css("line-height","10px");
-        var ctypecolor = function(c) {
-            var ctype = possible_mojibake(c);
-            var colorcode = {
-                "kana": "#999",
-                "radical": "#f77",
-                "private": "#8c8",
-                "CDP": "#8c8",
-                "CJK1": "#ccc",
-                "CJK4": "#a7f",
-                "CJKA": "#fa7",
-                "CJKB": "#7af",
-            }[ctype];
-
-            return colorcode ? colorcode : "#f00";
-        };
-        
-        list.forEach(function(v, i) {
-            v.forEach(function(c) {
-                var $partbox = $("<div>").appendTo($pl).html(i).addClass("setpartbox");
-                var $part = $("<div>").addClass("setpart").appendTo($partbox).html(c);
-
-                $part.css("background-color", ctypecolor(c)).attr("id", c)
-                    .dblclick(function() {
-                        $("#parts").val($(this).attr("id"));
-                    });
-                //SVG
-                if (!c.match(/&[^;]+;/)) return;
-
-                if (c.indexOf("CDP") != -1) {
-                    $part.html(cdp2ucs(c)).addClass("cdpf");
-                    return;
-                }
-
-                if (c.indexOf("u") == 1) {
-                    var ucs = c.substr(1, c.length - 2).split("u").join("&#x");
-                    $part.html(ucs + ";");
-                    return;
-                }
-
-                var $svg = $("#" + c.substr(1, c.length - 2));
-                if ($svg.size() > 0) {
-                    $part.html($svg.clone().show());
-                    $part.css("background-color", "#7C7");
-                }
-            });
-
-        });
+        list.forEach((v, i) => v.forEach(c => draw_partbox(c, i, "div.statparts")));
     }();
 };
 

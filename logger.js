@@ -1,6 +1,7 @@
 $(function() {
 
-var LOGGERURL = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
+var LOGGERURL = $("#gasapi").prop("href");
+//var LOGGERURL = false;
 var scorelist = function()
 {
     var $lately = $("<div>").prependTo("#menu");
@@ -9,7 +10,7 @@ var scorelist = function()
     $("<hr>").insertAfter($lately);
 
     $.ajax({
-        url: LOGGERURL,
+	url: LOGGERURL || "evac/scorelist.json",
         type: 'get',
         data: {v: "score"},
         dataType: 'json',
@@ -99,7 +100,7 @@ var scorelist = function()
                 .animate({"opacity":".5"}, function() {
 
                     $.ajax({
-                        url: LOGGERURL,
+                        url: LOGGERURL || "evac/log.json",
                         type: 'get',
                         data: {logid: logid},
                         dataType: 'json',
@@ -163,70 +164,106 @@ var make_pulldown = function(log)
 
 var replay_log = function(qlist, callback)
 {
-    $("#srvlog option").each(function() {
+    var done = [];
+    var logs = [];
+    
+    $('#main .word').css("position", "relative");
+    $("#srvlog option").each(function(i) {
         var arr = $(this).text().split("|");
         if (arr.length != 3) return;
         var wid = parseInt(arr[1]);
         var time = arr[0];
         var input = arr[2];
-        if (wid == 0) {
-            var match = input.slice(-1) != "x" ? input : input.slice(0, -2);
-            if (match.length)
-                wid = qlist.split("/").findIndex(v => v.indexOf(match) != -1) + 1;
+	var match = input.slice(-1) != "x" ? input : input.slice(0, -2);
+
+	// 語番号の推定
+        if (wid == 0 && match.length) {
+            wid = qlist.split("/").findIndex(v => v.indexOf(match) != -1) + 1;
         }
+	// ログの書式化
         $(this).text(time + "s: [" + ("00" + wid).substr(-2) + "]" + input);
-    });
 
-    $("#srvlog").focus().change(function(e) {
-        e.stopPropagation();
-        
+	logs[i] = {wid:wid, time:time, input:input};
+	if (!wid || !match.length) return;
+
+	// 入力位置の特定
         $(".glyph").removeClass("selected");
-        $(".elm").css("background-color", "");
-        var n = $(this).prop("selectedIndex");
-        if (n == 0) {
-            $("#quiz").find(".kpart").show();
-            $("#quiz").find(".kidx").addClass("undone").show().next().hide();
-            $("#quiz").find(".correct").hide();
-            return;
-        }
-        var log = $(this).find("option:selected").text();
-        var ans = {
-            wid: parseInt(log.split("[").pop()),
-            input: log.split("]").pop(),
-        };
-        if (!ans.wid) return;
-
-	// select glyph
-        var $word = $('#main .word').eq(ans.wid-1).css("position", "relative");
-        $word.find('.correct').each(function() {
-            if($(this).text() == ans.input.substring(0,1)) {
+        var $word = $('#main .word').eq(wid - 1);
+	$word.find('.correct').each(function(i) {
+	    if ($(this).text() == input.substring(0,1)) {
                 $(this).parent().addClass('selected');
+		logs[logs.length - 1].glyph = i;
 		return false;
 	    }
         });
-        var $glyph = $(".glyph.selected");
-        var $ki = $("#keyinput").appendTo($word).show();
-        
-	// draw inputbox
-        $(".userans").show().css({"width": "100%"})
-            .prop('disabled', false)
-            .val(ans.input)
-            .prop('disabled', true);
-        if ($glyph.size() == 0)
-            $glyph = $word.find('.glyph').eq(0).addClass('selected');
-        $ki.css(
-            {"width": $word.width() - $glyph.position().left,
-             "left" : $glyph.position().left,
-             "bottom": ($word.height() - $glyph.position().top) });
+	// 判定
+	callback(input, true);
+
+	// 開いた番号の記録
+	var kidx = $word.find(".elm .kidx:not(.undone)").map(function() {
+	    return parseInt($(this).text());
+	}).get().filter((v, i, self) => (done.indexOf(v) < 0) && (self.indexOf(v) == i));
+
+	done = done.concat(kidx);
+	logs[i].kidx = kidx;
+	logs[i].point = $("#point").text();
     });
 
-    $("#srvlog").keydown(function(e) {
-	if (e.keyCode != 13) return;
+    var clearall = () => {
+	$("#quiz .kpart").show();
+	$("#quiz .kidx").addClass("undone").show().next().hide();
+	$("#quiz .correct").hide();
+        $("#quiz .glyph").removeClass("selected");
+        $("#quiz .elm").css("background-color", "");
+	$(".judge").remove();
+    };
+    clearall();
+    
+    $("#srvlog").focus().change(function(e) {
+        e.stopPropagation();
+	clearall();
+
+        var n = $(this).prop("selectedIndex");
+        if (n == 0) return;
+
+	//指定ログ以前の入力を反映
+        logs.slice(1, n).map(v => v.kidx).toString().split(",").forEach(p => {
+	    if (!p) return;
+	    $("#quiz .kidx" + p).removeClass("undone").hide().next().show();
+	});
 	
-        callback($(".userans").val());
+        //全パーツが開いたグリフを表示
+        $(".glyph").each(function() {
+            if ($(this).find(".undone").size() > 0) return;
+            $(this).find(".correct").show();
+            $(this).find(".elm div").hide();
+        });
+	
+	//指定ログ描画
+        var ans = logs[n];
+        if (!ans.wid) return;
+	
+	// select glyph
+        var $word = $('#main .word').eq(ans.wid-1);
+        var $glyph = $word.find('.glyph').eq(ans.glyph).addClass('selected');
+	if ($glyph.size() == 0)
+	    $glyph = $word.find('.glyph').eq(0).addClass('selected');
+	callback(ans.input);
+
+	// drawbox
+	$(".userans").show().css({"width": "100%"})
+	    .prop('disabled', false)
+	    .val(ans.input)
+	    .prop('disabled', true);
+	
+	$("#keyinput").appendTo($word).show().css(
+	    {"width": $word.width() - $glyph.position().left,
+	     "left" : $glyph.position().left,
+	     "bottom": ($word.height() - $glyph.position().top) });
+
+	$("#point").text(ans.point);
 	$("#g_log").val("").hide();
     });
-    
 
 };
 
