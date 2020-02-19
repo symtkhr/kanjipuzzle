@@ -120,7 +120,7 @@ $(function() {
 	    $qlist.text("");
 	    rawdata.forEach(function(factor, idx) {
 		if (!factor.date) return;
-		if (factor.date.toString().substring(0,1) != "#") return;
+		if (0 <= factor.qid) return;
 		if (!factor.q) return;
 		var q = factor.q;
 		var words = q.split("/");
@@ -183,8 +183,10 @@ $(function() {
             }
         });
     }
+    $("#qset").click(function() { qset(LOADURL); });
 
     return;
+    
    if(typeof find_defchange !== "undefined") {
         for (var i = 0; i < quiztable.length; i++)
             find_defchange(i+1);
@@ -199,7 +201,8 @@ $(function() {
             });
         $("body").append('<textarea>'+base.join("/")+'</textarea>');
 
-    }
+   }
+
 });
 
 //文字化けのおそれがあるパーツの判定
@@ -831,4 +834,28 @@ var find_max_soten = function()
     };
 
     pattern();
+};
+
+
+var qset = function(LOADURL)
+{
+    $("body").append("qset start");
+    if (quiztable.length == 0) return;
+    var post = quiztable.shift();
+    post.author = "2020-xx-xx Mt.Nest";
+    post.date = post.author.split(" ").shift();
+
+    if (post.genre) post.author += ("," + post.genre);
+    $.ajax({
+	url: LOADURL,
+	data: JSON.stringify(post),
+	type: 'post',
+	dataType: 'json',
+	timeout: 10000,
+    }).fail(function(data, status, error) {
+	$("body").append(" Post error");
+    }).done(function(data, status, error) {
+	qset(LOADURL);
+	$("body").append(-quiztable.length);
+    });
 };

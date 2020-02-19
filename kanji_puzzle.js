@@ -1,6 +1,7 @@
 // noprotect
 $(function() {
-    show_menu();
+    $("#rule, #sh, #continue, #main, #menu").hide();
+    load_qlist(null);
 });
 
 var TimeCounter = function()
@@ -542,8 +543,8 @@ var draw_puzzle = function(qwords, $quiz, options)
     var kidx = make_list(ans);
 
     if (0) {
-        $(".glyph").css({"width":"50px", "height":"50px"});
-        $(".correct").css({"font-size":"48px", "line-height":"48px"});
+        $(".glyph").css({"width":"45px", "height":"45px"});
+        $(".correct").css({"font-size":"43px", "line-height":"43px"});
     }
 
     // 分割DOM要素内に部首または番号を表示
@@ -664,6 +665,7 @@ var load_quiz = function(qid)
         $(".glyph").removeClass("selected");
         $(".elm").css("background-color", "");
         $("#keyinput").hide();
+	//glyph_expander(70, $(".word").show());
     });
 
     // カウントアップタイマのイベントハンドラ
@@ -673,9 +675,22 @@ var load_quiz = function(qid)
         $("#bonus").html(parseInt((bpm * bpm) * 20));
     });
 
+    var glyph_expander = (percent, $word) => {
+	var h = (percent * 60 / 100) + "px";
+        $word.find(".glyph").css({"width":h, "height":h});
+        $word.find(".correct").css({"font-size":h, "line-height":h});
+	$word.show().find(".kpart").each(function(){
+	    var style = {};
+	    var h = $(this).innerWidth() + 'px';
+	    style['font-size'] = h;
+	    style['height'] = h;
+	    style['line-height'] = h;
+	    $(this).css(style);
+	});
+    };
+
     //枠内クリックで入力欄表示
     $("#quiz .elm").unbind().click(function() {
-        console.log("nyuuryoku");
         var $glyph = $(this).parents(".glyph");
         var $word = $glyph.parents(".word").css("position", "relative");
         var classname = $(this).find(".kidx").html();
@@ -684,7 +699,15 @@ var load_quiz = function(qid)
         $("#judge").hide();
         $(".glyph").removeClass("selected");
         $glyph.addClass("selected");
-        
+
+	//ふせる
+	if (0) {
+	    $word.show().css({"position": "relative", "top": "-20px", "left":"-10px"});
+	    glyph_expander(70, $word.siblings().css({"left": 0,"top":0}));
+	    glyph_expander(100, $word);
+	    //$word.siblings().hide();
+	    //$(".kidx" + classname).parents(".word").show();
+        }
         var $ki = $("#keyinput").appendTo($word).show();
         $ki.css(
             {"width": $word.width() - $glyph.position().left,
@@ -725,7 +748,6 @@ var load_quiz = function(qid)
             var pos = 0;
             for (; pos < $glyphs.size() && "?・*".indexOf(value.charAt(pos)) != -1 ; pos++);
             $(".glyph").removeClass("selected");
-            console.log(pos);
             $glyphs.eq(pos).addClass("selected");
 
             answer_check(value);
@@ -860,7 +882,6 @@ var load_quiz = function(qid)
                 if (!c || !c.html()) return;
                 c = c.prop("class").match(/kidx([0-9]+)/);
                 if (!c) return;
-                //console.log(c);
                 $("." + c[0]).removeClass("undone");
                 $("." + c[0]).hide().next().show();
             });
@@ -949,7 +970,7 @@ var show_daily = function()
     var options = { display: iword };
 
     kanjifrag.definelocal(quiz.def);
-    draw_puzzle(qlist.split("/"), $("#daily"), options);
+    draw_puzzle(qlist.split("/"), $("#daily").text(""), options);
 
     $("#daily").css("position", "relative").click(function() {
         $(this).parent().css("background-color", "#bdc");
@@ -962,8 +983,46 @@ var show_daily = function()
     });
 };
 
+var quiztable = [];
+var load_qlist = (url) =>
+{
+    $.ajax({
+        url: url || $("#gasapi").prop("href"),
+        type: 'get',
+        dataType: 'json',
+	timeout: 10000,
+    }).success(function(data, status, error) {
+	quiztable = data.filter(q => {
+	    var p = q.date.substring(0,1);
+	    return (p != "*" && p != "#");
+	});
+	show_menu();
+    }).fail(
+	function(error) {
+	    load_qlist("qlist0.json");
+    });
+
+
+    $("#fragtable").load(function(){
+        var txt = $(this).contents().find("body").text();
+        kanjifrag.define(txt);
+        $(this).addClass("done");
+        show_menu();
+    });
+};
+
 var show_menu = function()
 {
+    var draw_top = () => {
+	$("#example, #example_answer").text("");
+        $("#top").show();
+        draw_puzzle(["徒競走"], $("#example"));
+        draw_puzzle(["徒競走"], $("#example_answer"), {open: true});
+    };
+
+    draw_top();
+
+    if (quiztable.length == 0) return;
     quiztable.forEach(function(factor, idx) {
         //var q = decodeURIComponent(escape(atob(factor[0])));
         var q = factor.q;
@@ -972,12 +1031,15 @@ var show_menu = function()
         var $option = $('<div>').addClass("qoption").appendTo("#qlists");
         var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
         $('<div>').addClass("qclear").appendTo($qid).text('✔');
-        $('<div>').addClass("qinfo").appendTo($option).html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" + factor.author);
+        $('<div>').addClass("qinfo").appendTo($option)
+	    .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
+		  factor.date.split("T").shift() + " " + factor.author);
         $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
         // if (quiztable.length == idx + 1)
     });
 
     if (!$('.qoption').size()) { return $('body').hide(); }
+
 
     var anchor_check = function() {
         if (location.href.indexOf("#archives") < 0) {
@@ -993,16 +1055,17 @@ var show_menu = function()
         $.getScript("./logger.js");
     };
 
+    show_daily();
     //$('body').append(document.cookie);
-    $("#rule, #sh, #continue").hide();
     load_status();
     anchor_check();
 
+    $("#newest").text('');
     $(".qoption").eq(-1).clone().appendTo("#newest");
     $(".qoption").eq(-2).clone().appendTo("#newest");
     $(".qoption").eq(-3).clone().appendTo("#newest");
     $("#newest .resume").hide();
-    
+
     $(".qoption").click(function() {
         if (!$("#fragtable").hasClass("done")) return;
         if ($(this).hasClass("resume")) return;
@@ -1050,25 +1113,6 @@ var show_menu = function()
 
     $("#showrule").click(function() {
         $('#rule').toggle();
-    });
-    $("#shen").click(function() {
-        $(this).hide();
-        $("#sh").show();
-    });
-
-    var draw_top = () => {
-        $("#top").show();
-        draw_puzzle(["徒競走"], $("#example"));
-        draw_puzzle(["徒競走"], $("#example_answer"), {open: true});
-        show_daily();
-        anchor_check();
-    };
-
-    $("#fragtable").load(function(){
-        var txt = $(this).contents().find("body").text();
-        kanjifrag.define(txt);
-        $(this).addClass("done");
-        draw_top();
     });
 
     if (location.href.indexOf("#debug") < 0 || makecache()) return;
