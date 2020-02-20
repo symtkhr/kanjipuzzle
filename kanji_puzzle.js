@@ -1,7 +1,7 @@
 // noprotect
 $(function() {
     $("#rule, #sh, #continue, #main, #menu").hide();
-    load_qlist(null);
+    load_qlist("qlist.json");
 });
 
 var TimeCounter = function()
@@ -996,10 +996,11 @@ var load_qlist = (url) =>
 	    var p = q.date.substring(0,1);
 	    return (p != "*" && p != "#");
 	});
-	show_menu();
+	if ($("#fragtable").hasClass("done"))
+	    show_menu();
     }).fail(
 	function(error) {
-	    load_qlist("qlist0.json");
+	    load_qlist("qlist.json");
     });
 
 
