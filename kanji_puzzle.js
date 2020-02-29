@@ -990,17 +990,17 @@ var load_qlist = (url) =>
         url: url || $("#gasapi").prop("href"),
         type: 'get',
         dataType: 'json',
-	timeout: 10000,
+        timeout: 10000,
     }).success(function(data, status, error) {
-	quiztable = data.filter(q => {
-	    var p = q.date.substring(0,1);
-	    return (p != "*" && p != "#");
-	});
-	if ($("#fragtable").hasClass("done"))
-	    show_menu();
+        quiztable = data.filter(q => {
+            var p = q.date.substring(0,1);
+            return (p != "*" && p != "#");
+        });
+        if ($("#fragtable").hasClass("done"))
+            show_menu();
     }).fail(
-	function(error) {
-	    load_qlist("qlist.json");
+        function(error) {
+            load_qlist("qlist.json");
     });
 
 
@@ -1015,7 +1015,7 @@ var load_qlist = (url) =>
 var show_menu = function()
 {
     var draw_top = () => {
-	$("#example, #example_answer").text("");
+        $("#example, #example_answer").text("");
         $("#top").show();
         draw_puzzle(["徒競走"], $("#example"));
         draw_puzzle(["徒競走"], $("#example_answer"), {open: true});
@@ -1024,6 +1024,7 @@ var show_menu = function()
     draw_top();
 
     if (quiztable.length == 0) return;
+    $("#qlists").text("");
     quiztable.forEach(function(factor, idx) {
         //var q = decodeURIComponent(escape(atob(factor[0])));
         var q = factor.q;
@@ -1033,8 +1034,8 @@ var show_menu = function()
         var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
         $('<div>').addClass("qclear").appendTo($qid).text('✔');
         $('<div>').addClass("qinfo").appendTo($option)
-	    .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
-		  factor.date.split("T").shift() + " " + factor.author);
+            .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
+                  factor.date.split("T").shift() + " " + factor.author);
         $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
         // if (quiztable.length == idx + 1)
     });
@@ -1093,19 +1094,19 @@ var show_menu = function()
     });
 
     $(".closer").click(function() {
-	var $parent = $(this).parent().hide();
-	var title = $parent.find("h2,h4").eq(0).text();
-	if($parent.hasClass("helper")) return;
-	$("<span>").text(title).addClass("minimized")
-	    .insertAfter($parent).click(function() {
-		$(this).prev().show();
-		$(this).remove();
-	    });
+        var $parent = $(this).parent().hide();
+        var title = $parent.find("h2,h4").eq(0).text();
+        if($parent.hasClass("helper")) return;
+        $("<span>").text(title).addClass("minimized")
+            .insertAfter($parent).click(function() {
+                $(this).prev().show();
+                $(this).remove();
+            });
     });
     $(".help").click(function() {
-	if ($(this).prop("id") == "showrule") return;
-	var $helper = $(this).parent().find(".helper");
-	if ($helper.is(":visible")) $helper.hide(); else $helper.show();
+        if ($(this).prop("id") == "showrule") return;
+        var $helper = $(this).parent().find(".helper");
+        if ($helper.is(":visible")) $helper.hide(); else $helper.show();
     });
     $("#menu a, button.anch").click(function() {
         location.href = $(this).attr("href");
