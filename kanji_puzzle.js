@@ -926,13 +926,13 @@ var load_quiz = function(qid)
         // Ctrl + 左右キー
         if (e.keyCode == 39 || e.keyCode == 37) {
             light = 0;
-            var max = $(".glyph").size();
+            var max = $("#quiz .glyph").size();
             for(var i = 0; i < max; i++) {
-                var n = $(".glyph").index($(".glyph.selected"));
+                var n = $("#quiz .glyph").index($(".glyph.selected"));
                 if (e.keyCode == 39){ n++; }
                 if (e.keyCode == 37){ n--; }
                 n = (n + max) % max;
-                $(".glyph").eq(n).find(".kidx").eq(0).click();
+                $("#quiz .glyph").eq(n).find(".kidx").eq(0).click();
                 if (!$("#keyinput").is(":hidden")) break;
             }
         }
@@ -1033,9 +1033,10 @@ var show_menu = function()
         var $option = $('<div>').addClass("qoption").appendTo("#qlists");
         var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
         $('<div>').addClass("qclear").appendTo($qid).text('✔');
+        var d = new Date(factor.date.split("T").shift() + "T12:00+0900");
         $('<div>').addClass("qinfo").appendTo($option)
             .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
-                  factor.date.split("T").shift() + " " + factor.author);
+                  d.toJSON().split("T").shift() + " " + factor.author);
         $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
         // if (quiztable.length == idx + 1)
     });
