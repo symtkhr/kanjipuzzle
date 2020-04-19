@@ -6,7 +6,7 @@ var scorelist = function()
 {
     var $lately = $("<div>").prependTo("#menu");
     $("<h4>").text("●最近の解かれ").appendTo($lately);
-    $lately.append("<br>");
+    $lately.append("<br/>");
     $("<hr>").insertAfter($lately);
 
     $.ajax({
@@ -43,6 +43,7 @@ var scorelist = function()
     var dump_logs = function(logs) {
         logs.forEach(function(r, i) {
             var $qopt = $("#qlists .qoption").eq(r.qid - 1);
+            if (!$qopt.size()) return;
             var $rec = $("<div>").addClass("log").appendTo($qopt)
                 .click(function(e) {
                     e.stopPropagation();

@@ -450,7 +450,7 @@ var load_status = function()
     if (!res.qid) return false;
 
     // 再開時のデータ展開
-    $("#continue").show();
+    $("#continue").show().find(".resume").remove();
     $("#menu .qoption").eq(res.qid - 1).addClass("resume").clone().appendTo("#continue");
     //if (res.qid == quiztable.length) $("#newest").hide();
 
@@ -957,6 +957,7 @@ var load_quiz = function(qid)
 
 var show_daily = function()
 {
+    if ($("#daily .word").size()) return;
     var today = new Date();
     var seed = today.getFullYear() * 12 +
         today.getMonth() * 35 + today.getDate();
@@ -986,22 +987,27 @@ var show_daily = function()
 var quiztable = [];
 var load_qlist = (url) =>
 {
-    $.ajax({
-        url: url || $("#gasapi").prop("href"),
-        type: 'get',
-        dataType: 'json',
-        timeout: 10000,
-    }).success(function(data, status, error) {
-        quiztable = data.filter(q => {
-            var p = q.date.substring(0,1);
-            return (p != "*" && p != "#");
+    var files = [$("#gasapi").prop("href"), "qlist.json"];
+
+    var loadfile = function() {
+        if (files.length == 0) return;
+        var file = files.shift();
+        $.ajax({
+            url: file,
+            type: 'get',
+            dataType: 'json',
+            timeout: 10000,
+        }).success(function(data, status, error) {
+            quiztable = data.filter(q => {
+                var p = q.date.substring(0,1);
+                return (p != "*" && p != "#");
+            });
+            if ($("#fragtable").hasClass("done"))
+                show_menu();
+        }).fail(function(){
+            loadfile();
         });
-        if ($("#fragtable").hasClass("done"))
-            show_menu();
-    }).fail(
-        function(error) {
-            load_qlist("qlist.json");
-    });
+    };
 
 
     $("#fragtable").load(function(){
@@ -1010,11 +1016,14 @@ var load_qlist = (url) =>
         $(this).addClass("done");
         show_menu();
     });
+
+    loadfile();
 };
 
 var show_menu = function()
 {
     var draw_top = () => {
+        if ($("#example .word").size()) return;
         $("#example, #example_answer").text("");
         $("#top").show();
         draw_puzzle(["徒競走"], $("#example"));
