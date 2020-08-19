@@ -368,11 +368,10 @@ var timer = new TimeCounter();
 //これはload_quiz内に取り込むべき関数
 var make_list = function(ans, openlist)
 {
-    if (!openlist) openlist = "";
     var count = {};
     ans.split(",").forEach(function(val) {
         if (val.length == 0 || val.match(/^[A-Z]$/)) return;
-        if (("一丨亅丿乙乚丶＿" + openlist).indexOf(val) != -1) return;
+        if (("＿" + openlist).indexOf(val) != -1) return;
 
         if (!count[val]) count[val] = 0;
         count[val]++;
@@ -540,7 +539,8 @@ var draw_puzzle = function(qwords, $quiz, options)
     });
 
     // ansから番号リストを生成する
-    var kidx = make_list(ans);
+    var onestrokes = "一丨亅丿ノ乙乚𠃊丶";
+    var kidx = make_list(ans, options.openlist || onestrokes);
 
     if (0) {
         $(".glyph").css({"width":"45px", "height":"45px"});
@@ -577,6 +577,10 @@ var draw_puzzle = function(qwords, $quiz, options)
             if (boxclass.indexOf("hiragana") != -1 ) {
                 $npart.css({"top":"20px", "bottom":"auto"});
             }
+            // 1画パーツは色変更
+            else if (onestrokes.indexOf(c) != -1) {
+                $(this).addClass("onestroke");
+            };
          }
 
         // 部首表示: 枠内目一杯に表示
@@ -650,7 +654,9 @@ var load_quiz = function(qid)
     }
 
     // パズル描画
-    var qlen = draw_puzzle(qlist.split("/"), $("#quiz"));
+    var qlen = draw_puzzle(qlist.split("/"), $("#quiz"),
+                           {openlist: quiz.def.split("/").filter(def => def.indexOf("x:") != -1).join("")}
+                          );
 
     // 中断時の保存
     $(window).unbind().on('pagehide', function(event) {
@@ -968,8 +974,10 @@ var show_daily = function()
     var qlist = quiz.q;
     var wlen = qlist.split("/").length;
     var iword = wlen - 1 - random.next() % parseInt(wlen * 0.3);
-    var options = { display: iword };
-
+    var options = {
+        display: iword,
+        openlist: quiz.def.split("/").filter(def => def.indexOf("x:") != -1).join(""),
+    };
     kanjifrag.definelocal(quiz.def);
     draw_puzzle(qlist.split("/"), $("#daily").text(""), options);
 

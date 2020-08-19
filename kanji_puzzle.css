@@ -76,6 +76,10 @@ div.qelm {
   background-color: #cce;
 }
 
+div.qelm.onestroke {
+    background-color: #cec;
+}
+
 div.glyph {
   font-family: MS Gothic;
   position:relative;
@@ -192,6 +196,12 @@ div.glyph.selected {
 div.kidx {
     width:100%; position:absolute; text-align:center; color:blue; z-index:2;
     top:0; height:16px; line-height:16px;
+}
+
+.elm.L1 div.kidx, .elm.U1 div.kidx {
+    top:auto;
+    bottom:0;
+    text-align:left;
 }
 
 div.kpart {
