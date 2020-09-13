@@ -807,7 +807,7 @@ var load_quiz = function(qid)
         }
 
         var $selecteds = $selected.nextAll(".glyph").filter(function() {
-            return (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana");
+            return (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana .qelm");
         });
 
         //枠外の入力を無視
