@@ -1,7 +1,7 @@
 // noprotect
 $(function() {
     $("#rule, #sh, #continue, #main, #menu").hide();
-    load_qlist("qlist.json");
+    load_qlist("../qlist.json");
 });
 
 var TimeCounter = function()
@@ -368,10 +368,11 @@ var timer = new TimeCounter();
 //これはload_quiz内に取り込むべき関数
 var make_list = function(ans, openlist)
 {
+    if (!openlist) openlist = "";
     var count = {};
     ans.split(",").forEach(function(val) {
         if (val.length == 0 || val.match(/^[A-Z]$/)) return;
-        if (("＿" + openlist).indexOf(val) != -1) return;
+        if (("一丨亅丿乙乚丶＿" + openlist).indexOf(val) != -1) return;
 
         if (!count[val]) count[val] = 0;
         count[val]++;
@@ -449,7 +450,7 @@ var load_status = function()
     if (!res.qid) return false;
 
     // 再開時のデータ展開
-    $("#continue").show().find(".resume").remove();
+    $("#continue").show();
     $("#menu .qoption").eq(res.qid - 1).addClass("resume").clone().appendTo("#continue");
     //if (res.qid == quiztable.length) $("#newest").hide();
 
@@ -539,8 +540,7 @@ var draw_puzzle = function(qwords, $quiz, options)
     });
 
     // ansから番号リストを生成する
-    var onestrokes = "一丨亅丿ノ乙乚𠃊丶";
-    var kidx = make_list(ans, options.openlist || onestrokes);
+    var kidx = make_list(ans);
 
     if (0) {
         $(".glyph").css({"width":"45px", "height":"45px"});
@@ -577,10 +577,6 @@ var draw_puzzle = function(qwords, $quiz, options)
             if (boxclass.indexOf("hiragana") != -1 ) {
                 $npart.css({"top":"20px", "bottom":"auto"});
             }
-            // 1画パーツは色変更
-            else if (onestrokes.indexOf(c) != -1) {
-                $(this).addClass("onestroke");
-            };
          }
 
         // 部首表示: 枠内目一杯に表示
@@ -654,9 +650,7 @@ var load_quiz = function(qid)
     }
 
     // パズル描画
-    var qlen = draw_puzzle(qlist.split("/"), $("#quiz"),
-                           {openlist: quiz.def.split("/").filter(def => def.indexOf("x:") != -1).join("")}
-                          );
+    var qlen = draw_puzzle(qlist.split("/"), $("#quiz"));
 
     // 中断時の保存
     $(window).unbind().on('pagehide', function(event) {
@@ -807,7 +801,7 @@ var load_quiz = function(qid)
         }
 
         var $selecteds = $selected.nextAll(".glyph").filter(function() {
-            return (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana .qelm");
+            return (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana");
         });
 
         //枠外の入力を無視
@@ -932,13 +926,13 @@ var load_quiz = function(qid)
         // Ctrl + 左右キー
         if (e.keyCode == 39 || e.keyCode == 37) {
             light = 0;
-            var max = $("#quiz .glyph").size();
+            var max = $(".glyph").size();
             for(var i = 0; i < max; i++) {
-                var n = $("#quiz .glyph").index($(".glyph.selected"));
+                var n = $(".glyph").index($(".glyph.selected"));
                 if (e.keyCode == 39){ n++; }
                 if (e.keyCode == 37){ n--; }
                 n = (n + max) % max;
-                $("#quiz .glyph").eq(n).find(".kidx").eq(0).click();
+                $(".glyph").eq(n).find(".kidx").eq(0).click();
                 if (!$("#keyinput").is(":hidden")) break;
             }
         }
@@ -963,7 +957,6 @@ var load_quiz = function(qid)
 
 var show_daily = function()
 {
-    if ($("#daily .word").size()) return;
     var today = new Date();
     var seed = today.getFullYear() * 12 +
         today.getMonth() * 35 + today.getDate();
@@ -974,10 +967,8 @@ var show_daily = function()
     var qlist = quiz.q;
     var wlen = qlist.split("/").length;
     var iword = wlen - 1 - random.next() % parseInt(wlen * 0.3);
-    var options = {
-        display: iword,
-        openlist: quiz.def.split("/").filter(def => def.indexOf("x:") != -1).join(""),
-    };
+    var options = { display: iword };
+
     kanjifrag.definelocal(quiz.def);
     draw_puzzle(qlist.split("/"), $("#daily").text(""), options);
 
@@ -995,28 +986,22 @@ var show_daily = function()
 var quiztable = [];
 var load_qlist = (url) =>
 {
-    var files = [$("#gasapi").prop("href"), "qlist.json"];
-
-    var loadfile = function() {
-        if (files.length == 0) return;
-        var file = files.shift();
-        $.ajax({
-            url: file,
-            type: 'get',
-            dataType: 'json',
-            timeout: 10000,
-        }).success(function(data, status, error) {
-            quiztable = data.filter(q => {
-                var p = q.date.substring(0,1);
-                return (p != "*" && p != "#");
-            });
-            if ($("#fragtable").hasClass("done"))
-                show_menu();
-        }).fail(function(){
-            $("#example, #daily, #newest").text("(読込失敗)");
-            loadfile();
+    $.ajax({
+        url: url || $("#gasapi").prop("href"),
+        type: 'get',
+        dataType: 'json',
+        timeout: 10000,
+    }).success(function(data, status, error) {
+        quiztable = data.filter(q => {
+            var p = q.date.substring(0,1);
+            return (p != "*" && p != "#");
         });
-    };
+        if ($("#fragtable").hasClass("done"))
+            show_menu();
+    }).fail(
+        function(error) {
+            load_qlist("../qlist.json");
+    });
 
 
     $("#fragtable").load(function(){
@@ -1025,14 +1010,11 @@ var load_qlist = (url) =>
         $(this).addClass("done");
         show_menu();
     });
-
-    loadfile();
 };
 
 var show_menu = function()
 {
     var draw_top = () => {
-        if ($("#example .word").size()) return;
         $("#example, #example_answer").text("");
         $("#top").show();
         draw_puzzle(["徒競走"], $("#example"));
@@ -1051,10 +1033,9 @@ var show_menu = function()
         var $option = $('<div>').addClass("qoption").appendTo("#qlists");
         var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
         $('<div>').addClass("qclear").appendTo($qid).text('✔');
-        var d = new Date(factor.date.split("T").shift() + "T12:00+0900");
         $('<div>').addClass("qinfo").appendTo($option)
             .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
-                  d.toJSON().split("T").shift() + " " + factor.author);
+                  factor.date.split("T").shift() + " " + factor.author);
         $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
         // if (quiztable.length == idx + 1)
     });
@@ -1073,7 +1054,7 @@ var show_menu = function()
         if ($("#qlists").hasClass("logs")) return;
         if (location.href.slice(-3) != "log") return;
         $("#qlists").addClass("logs");
-        $.getScript("./logger.js");
+        $.getScript("../logger.js");
     };
 
     show_daily();
@@ -1140,8 +1121,8 @@ var show_menu = function()
 
     draw_top = () => 0;
     $("#top").hide();
-    $.getScript("./makequiz_tool.js");
-    $.getScript("./jisho_tool.js");
+    $.getScript("../makequiz_tool.js");
+    $.getScript("../jisho_tool.js");
 };
 
 
