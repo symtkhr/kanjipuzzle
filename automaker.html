@@ -4,14 +4,15 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
 <meta name="viewport" content="width=600,initial-scale=1.0">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="kanji_puzzle.js?20200913"></script>
+<script src="frontend_kpuzzle.js?20200913"></script>
+<script src="automaker.js?20220716"></script>
 <link rel="stylesheet" type="text/css" href="kanji_puzzle.css">
-<title>Kanji Puzzle</title>
+<title>自動部首部</title>
 </head>
 
 <body>
   <button id="showrule" class="help">?</button>
-  <h2>部首部</h2>
+  <h2>自動部首部</h2>
   <div id="top">
     <div class="topbox">
         <h4>●例題</h4> 同じ数字のところに同じ漢字パーツが入って熟語が完成します。
@@ -25,16 +26,11 @@
         <h4>●日替わりアーカイブ</h4>
         クリックで開始します。
         <div id="daily">(読込中...)</div>
-      </div>
-      <div class="topbox helper" id="continue">
-        <h4>●解きかけ</h4>
-        <button id="erase_resume" class="closer">X</button>
-        <div style='margin-top:6px;'></div>
+        <span id="qlen"></span>
       </div>
       <div class="topbox">
-        <h4>●最近の出題</h4>
+        <h4>●出題</h4>
         問題を選んでください。
-        <button class='anch' href='#archives' style="float:right; height:22px;">バックナンバー</button>
         <div id="newest" style='margin-top:6px;'>(読込中...)</div>
       </div>
   </div>
@@ -259,7 +255,7 @@
       <div id="qposts">読込中...</div>
     </div>
   </div>
-  <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
+  <iframe src="fragtable.txt?20220716" id="fragtable" style="display:none;"></iframe>
   <pre id="redefinelist" style="display:none;">
 #1画切り出し/主:Z丶王/勺:K勹丶/&amp;CDP-89F3;:O夂丶/亼:Z𠆢一/亘:Z一旦/成:H戊𠃌/百:Z一白/直:Z十L𠃊目/至:E一厶土/系:Zノ糸/血:Zノ皿/久:Fク㇏/
 #2画切り出し/云:Z二厶/示:Z二小/市:Z亠巾/文:Z亠乂/玄:Z亠幺/衣:Z亠𧘇/亦:Z亠&#xF5ca;/介:Z𠆢&amp;CDP-8bf5;/食:Z𠆢良/谷:E八𠆢口/穴:Z宀八/父:Z八乂/四:O口儿/其:Z&#xf50c;八/肉:H内人/爻:Zメメ/尓:Z𠂉小/反:F厂又/𦍌:Z丷王/面:Z丆O口&amp;CDP-89CC;/石:F丆口/頁:Z丆貝/免:Eク&#x2ba4f;儿/魚:Eク田灬/争:Zク&amp;CDP-8BFE;/鬲:Z𠮛H冂Z儿丅/鬼:Z甶L儿厶/叚:N&amp;CDP-8C7A;Zコ又/㡀:Z⺌H冂小/巨:C匚コ/后:F𠂆𠮛/
@@ -268,7 +264,6 @@
 #1画包含/旧:/旦:/氐:/丕:/具:/戌:/戍:/叉:/太:/凡:/巠:/㞢:/同:H冂𠮛/睘:E罒𠮛𧘇/畐:Z𠮛田/司:K𠃌𠮛/獣:NZ畄𠮛犬/或:K戈&#xF55A;/監:ZN臣&amp;CDP-8C74;皿/覧:ZN臣&amp;CDP-8C74;見/寅:E㝉由八/賓:E㝉少貝/呂:Z口&amp;CDP-8CC8;/向:H&#xf54e;口/奥:ZH&#xf54e;米大/延:L廴&#xF636;/差:F&#xF5E1;工/着:F&#xF5E1;目/攸:N&amp;CDP-8B7A;攵/備:NイF&#x20017;用/備:NイZ艹F厂用/拝:N扌/
 #2画以上包含/凶:/𠫓:/見:/午:/关:/&CDP-89AE;:/幸:Z土&#x22189;/南:Z十H冂&#x22189;/帝:Z&#xF564;巾/帝:E&#xF526;冖巾/旁:Z&#xF564;方/啇:Z&#xF526;H冂古/
 #QJ分割採用に伴う新定義/幾:Q戈ZM幺＿幺K＿人/幽:U山M幺＿幺/氷:J水丶/図:O口Jメ⺀/坐:Q土ZM人＿人＿/嗇:ZQ土E＿M人＿人＿回/喪:ZQ十Z＿M口＿口&prv01;/爽:Q大E＿M爻＿爻＿/兩:Q帀H＿M入＿入/函:U凵Q丂Z＿M冫＿く/亟:ZQ丂Z＿M口＿又一/&amp;CDP-8CB8;:J弋一/𢦏:J戈十/
-#思いつき/具:Z目&amp;u2ff1-u4e00-u516b;/虍:Z⺊F&amp;cdp-88e2;七/鼡:Z⺍𠂡
   </pre>
 </body>
 </html>

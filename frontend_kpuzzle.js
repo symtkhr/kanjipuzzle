@@ -1,7 +1,7 @@
 // noprotect
 $(function() {
     $("#rule, #sh, #continue, #main, #menu").hide();
-    load_qlist("qlist.json");
+    load_qlist();
 });
 
 var TimeCounter = function()
@@ -226,170 +226,7 @@ var splitbox = function($c, elm)
     return div;
 };
 
-var stringToArray = function(str) {
-    var ret = str.match(/&[^;]+;|[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\uD800-\uDFFF]/g) || [];
-    return ret.map(c => cdp2ucs(c));
-};
-
-var cdp2ucs = function(cdpref)
-{
-    var m = cdpref.match(/&CDP-([^;]+);/);
-    if (!m) return cdpref;
-    var cdp = parseInt(m[1], 16);
-    var upper = (cdp >> 8) & 0x7f;
-    var lower = (cdp & 0xff);
-    lower -= (lower <= 62 + 64) ? 64 : 98;
-    return String.fromCharCode(upper * 157 + lower + 0xee1b);
-};
-
-//漢字分解ツール
-var kanjiFragment = function()
-{
-    var dbglobal = {};
-    var dblocal = {};
-
-    this.define = function(globaldb) {
-        globaldb.split("/").forEach(function(frag) {
-            var k = frag.trim().split(":");
-            var key = cdp2ucs(k[0]);
-            dbglobal[key] = k[1];
-        });
-    };
-    
-    this.definelocal = function(localdb) {
-        dblocal = {};
-        if (!localdb) {
-            return;
-        }
-        localdb.split("/").forEach(function(frag) {
-            var k = frag.trim().split(":");
-            var key = cdp2ucs(k[0]);
-            dblocal[key] = k[1];
-        });
-    };
-
-    var referdb = function(c) {
-        if (typeof dblocal[c] !== "undefined")
-            return dblocal[c];
-        return dbglobal[c];
-    };
-
-    this.db = referdb;
-    
-    var kumikae = function(ret) {
-        var ide = ret[0];
-        var outer = ret[1];
-        var inner = ret[2];
-        var idechild = outer[0];
-	
-        var kumikaeTable =  {
-            "FF": ["F", outer[1], ["Z", outer[2], inner]], // 腐鹿摩
-            "FN": ["N", outer[1], ["Z", outer[2], inner]], // 乾修族
-            "FZ": ["Z", outer[1], ["F", outer[2], inner]], // 危産厳
-            "HN": ["N", outer[1], ["K", outer[2], inner]], // 臧
-            "HZ": ["Z", outer[1], ["H", outer[2], inner]], // 向蔵贏
-            "HH": ["H", outer[1], ["Z", outer[2], inner]], // 同威
-            "OH": ["O", outer[1], ["Z", outer[2], inner]], // 冏咸
-            "OO": ["O", outer[1], ["Z", outer[2], inner]], // 囧圀
-            "KK": ["K", outer[1], ["Z", outer[2], inner]], // 貳
-            "KZ": ["Z", outer[1], ["K", outer[2], inner]], // 耉
-            "KN": ["N", ["Z", outer[1], inner], outer[2]], // 殼毀
-            "UE": ["E", ["O", outer[1], inner], outer[2], outer[3]], // 興輿
-            "UZ": ["Z", ["O", outer[1], inner], outer[2]], // 舋爨
-            "LL": null, // 嚺
-            "ON": ["M", outer[1], inner, outer[2]], // 術辯
-            "OZ": ["E", outer[1], inner, outer[2]], // 囟囱褒
-            "HE": null, // 高
-        };
-        return kumikaeTable[ide + idechild];
-    };
-    
-
-    this.split = function(knjf)
-    {
-        var fragments = [];
-
-        var idesymbol = function(c) {
-            var ide = "NZMEOHUCFKLQJ".indexOf(c);
-            if (ide < 0) return false;
-            return c;
-        };
-    
-        var subparts_fragment = function(knj) {
-            var idestr = referdb(knj);
-            if (!idestr) {
-                fragments.push(knj);
-                return;
-            }
-        
-            var idearray = stringToArray(idestr);
-        
-            while (idearray.length > 0) {
-                var c = idearray.shift();
-                if ("NZMEOHUCFKLQJ".indexOf(c) != -1) {
-                    fragments.push(c);
-                } else {
-                    subparts_fragment(c);
-                }
-            }
-        };
-
-        var make_combination = function(idep) {
-            var ret = [idep];
-            var n_parts = (idep == "E" || idep == "M") ? 3 : 2;
-            while (ret.length < n_parts + 1)  {
-                if (fragments.length == 0) return ret;
-                var c = fragments.shift();
-                
-                var idechild = idesymbol(c);
-                
-                if (idechild) {
-                    ret.push(make_combination(idechild));
-                } else {
-                    ret.push(c);
-                }
-            }
-
-            if (Array.isArray(ret[1]) && "OHUCFKL".indexOf(idep) != -1) {
-                var ret0 = kumikae(ret);
-                return ret0 ? ret0 : ret;
-            }
-            return ret;
-        };
-
-        subparts_fragment(knjf);
-        return make_combination(fragments.shift());
-    };
-};
-
-var kanjifrag = new kanjiFragment();
 var timer = new TimeCounter();
-
-//これはload_quiz内に取り込むべき関数
-var make_list = function(ans, openlist)
-{
-    var count = {};
-    ans.split(",").forEach(function(val) {
-        if (val.length == 0 || val.match(/^[A-Z]$/)) return;
-        if (("＿" + openlist).indexOf(val) != -1) return;
-
-        if (!count[val]) count[val] = 0;
-        count[val]++;
-    });
-
-    var kidx = {};
-    var idx = 0;
-    for (var key in count) {
-        if (count[key] <= 1) continue;
-        idx++;
-        kidx[key] = idx;
-    }
-
-    if (typeof dump_partstable !== "undefined")
-        dump_partstable(kidx, count);
-    
-    return kidx;
-};
 
 var save_status = function(qid)
 {
@@ -540,7 +377,7 @@ var draw_puzzle = function(qwords, $quiz, options)
 
     // ansから番号リストを生成する
     var onestrokes = "一丨亅丿ノ乙𠃌⺄乚𠃊丶";
-    var kidx = make_list(ans, options.openlist || onestrokes);
+    var kidx = partquiz.make_list(ans, options.openlist || onestrokes);
 
     if (0) {
         $(".glyph").css({"width":"45px", "height":"45px"});
@@ -635,13 +472,13 @@ var draw_puzzle = function(qwords, $quiz, options)
     return (Object.keys(kidx).length);
 }
 
-var load_quiz = function(qid)
+var load_quiz = function(quiz)
 {
-    var quiz = quiztable[(qid || quiztable.length) - 1];
     var qlist = quiz.q;
     kanjifrag.definelocal(quiz.def);
+    var qid = 1;
 
-    $("#main .qid").text(qid);
+    $("#main .qid").text(quiz.qid);
     $("#knjtb").val('');
     $("#quiz").text('');
     $("#main").show();
@@ -680,6 +517,7 @@ var load_quiz = function(qid)
         var bpm = qlen * 60 / (count);
         $("#bonus").html(parseInt((bpm * bpm) * 20));
     });
+    $("#qlen").text(qlen);
 
     var glyph_expander = (percent, $word) => {
 	var h = (percent * 60 / 100) + "px";
@@ -827,7 +665,7 @@ var load_quiz = function(qid)
                 if (t < 0) return c;
                 return "アイウエオカケヤユヨツワ".substring(t, t + 1);
             };
-            
+
             //JISが変更した字形を同一視する
             String.prototype.jischange = function() {
                 if (!this) return "";
@@ -963,6 +801,7 @@ var load_quiz = function(qid)
 
 var show_daily = function()
 {
+    return $("#daily").parent().hide();
     if ($("#daily .word").size()) return;
     var today = new Date();
     var seed = today.getFullYear() * 12 +
@@ -1026,7 +865,7 @@ var load_qlist = (url) =>
         show_menu();
     });
 
-    loadfile();
+    //loadfile();
 };
 
 var show_menu = function()
@@ -1041,74 +880,46 @@ var show_menu = function()
 
     draw_top();
 
-    if (quiztable.length == 0) return;
-    $("#qlists").text("");
-    quiztable.forEach(function(factor, idx) {
-        //var q = decodeURIComponent(escape(atob(factor[0])));
-        var q = factor.q;
-        quiztable[idx].q = q;
-        var words = q.split("/");
-        var $option = $('<div>').addClass("qoption").appendTo("#qlists");
-        var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
-        $('<div>').addClass("qclear").appendTo($qid).text('✔');
-        var d = new Date(factor.date.split("T").shift() + "T12:00+0900");
-        $('<div>').addClass("qinfo").appendTo($option)
-            .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
-                  d.toJSON().split("T").shift() + " " + factor.author);
-        $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
-        // if (quiztable.length == idx + 1)
-    });
-
-    if (!$('.qoption').size()) { return $('body').hide(); }
-
+    $("#newest").text("");
+    var $option = $('<div>').addClass("qoption").appendTo("#newest");
+    var $qid = $('<div>').addClass("qid").appendTo($option).text("00");
+    $('<div>').addClass("qclear").appendTo($qid).text('✔');
+    $('<div>').addClass("qinfo").appendTo($option).html("40語 120字 x部首<br/>(自動生成)");
+    $('<div>').addClass("qdesc").appendTo($option).html("問題を自動生成します。");
 
     var anchor_check = function() {
-        if (location.href.indexOf("#archives") < 0) {
-            $("#menu, #main").hide();
-            $("#top").show();
+        try {
+            let str = decodeURIComponent(escape(window.atob(location.hash.slice(1))));
+            if (!str) return;
+            let q = str.split("@@");
+
+            getfile("fragtable.plus.txt", (txt) => {
+                kanjifrag.define(txt);
+                load_quiz({qid:"00", q:q[0], def:q[1]});
+            });
+
+        } catch (e) {
+            console.log(e);
             return;
         }
-        $("#top, #main").hide();
-        $("#menu").show();
-        if ($("#qlists").hasClass("logs")) return;
-        if (location.href.slice(-3) != "log") return;
-        $("#qlists").addClass("logs");
-        $.getScript("./logger.js");
     };
+    window.addEventListener("hashchange", () => { anchor_check(); }, false);
 
-    show_daily();
-    //$('body').append(document.cookie);
-    load_status();
     anchor_check();
-
-    $("#newest").text('');
-    $(".qoption").eq(-1).clone().appendTo("#newest");
-    $(".qoption").eq(-2).clone().appendTo("#newest");
-    $(".qoption").eq(-3).clone().appendTo("#newest");
-    $("#newest .resume").hide();
+    show_daily();
 
     $(".qoption").click(function() {
         if (!$("#fragtable").hasClass("done")) return;
         if ($(this).hasClass("resume")) return;
+        $(this).unbind();
+
         var qid = parseInt($(this).addClass("selected").find(".qid").text());
         $(this).siblings(".qoption").animate({"opacity": "0"});
         var cleared = $(this).hasClass("cleared");
     
         $('<div>').addClass("loading").text("読込中").appendTo(this)
             .animate({"opacity":".5"}, function() {
-                $("#top").hide();
-                load_quiz(qid);
-                if (!cleared) return;
-
-                $("<button>").text("正解表示")
-                    .css({"background":"#f99"})
-                    .click(function() {
-                        $(this).hide();
-                        timer.stop();
-                        $("#quiz .kpart").hide();
-                        $("#quiz .kidx").removeClass("undone");
-                        $("#quiz").find(".correct").show();
-                    }).insertAfter("#main .qid");
+                return main();
             });
     });
 
@@ -1136,6 +947,7 @@ var show_menu = function()
         $('#rule').toggle();
     });
 
+
     if (location.href.indexOf("#debug") < 0 || makecache()) return;
 
     draw_top = () => 0;
@@ -1147,6 +959,8 @@ var show_menu = function()
 
 var save_result = function(qid, pt, tpt, name)
 {
+    return;
+    
     var param = {
         qid: (qid + 1),
         score: (pt + ";" + tpt),
@@ -1154,7 +968,6 @@ var save_result = function(qid, pt, tpt, name)
         name: name,
     };
     var url = $("#gasapi").prop("href");
-    
     $.ajax({
         url: url,
         data: JSON.stringify(param),
@@ -1174,7 +987,7 @@ var show_ending = function()
     $(document).unbind();
     var qid = parseInt($(".qid:last").text()) - 1;
 
-    var bpm = quiztable[qid].n * 60 / timer.count();
+    var bpm = parseInt($("#qlen").text()) * 60 / timer.count();
     var pt = parseInt($("#point").text(), 10);
     var tpt = parseInt((bpm * bpm) * 20);
     
@@ -1190,6 +1003,7 @@ var show_ending = function()
         if (p[0].trim() != "uname") return false;
         uname = decodeURIComponent(p[1]);
     });
+    
 
     save_result(qid, pt, tpt, uname);
     
