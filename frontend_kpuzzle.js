@@ -572,7 +572,7 @@ var load_quiz = function(quiz)
     });
 
     $("#sh input").unbind().keypress(function(e){
-        if (e.which != 13) return;
+        if (e.which != 13 && e.key != "Enter") return;
         //全角半角
         var val = $(this).val().replace(/[！-ｚ]/g, function(s) {
             return String.fromCharCode(s.charCodeAt(0) + 0x20 - 0xff00);
@@ -609,8 +609,8 @@ var load_quiz = function(quiz)
     });
     
     $(".userans").unbind().keypress(function(e){
-        if (e.which != 13) return;
-
+        if (e.which != 13 && e.key != "Enter") return;
+        
         //数字入力は語番号選択扱い
         var val = $(this).val().replace(/[０-９：]/g, function(s) {
             return String.fromCharCode(s.charCodeAt(0) + 0x20 - 0xff00);
@@ -1008,7 +1008,7 @@ var show_ending = function()
     save_result(qid, pt, tpt, uname);
     
     $("#message input").val(uname).focus().unbind().keypress(function(e){
-        if (e.which != 13) return;
+        if (e.which != 13 && e.key != "Enter") return;
         save_result(qid, pt, tpt, $(this).val());
         document.cookie = "uname=" + $(this).val();
         $("#message").fadeOut();
