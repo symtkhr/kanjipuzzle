@@ -1,6 +1,7 @@
 $(function() {
-    var LOADURL = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
+    const LOADURL = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
     quiztable.push({q:""});
+    $.get("fragtable.plus.txt", function(txt) { kanjifrag.define(txt); });
     $("#makequiz").show();
 
     //単語リスト・再定義文字
@@ -16,7 +17,7 @@ $(function() {
     });
 
     $("#untempo").click(function() {
-        var list = $("#wordlist").val().split("(").join("").split(")").join("");
+        let list = $("#wordlist").val().split("(").join("").split(")").join("");
         $("#wordlist").val(list);
         $(this).hide();
     });
@@ -427,22 +428,6 @@ var find_defchange = function(qid)
 
     console.log(additional);
 
-};
-
-// パーツリスト
-var partslist = function(is_counting) {
-    var ans = "";
-    var list = {};
-    
-    skktable.split("").forEach(function(c) {
-        kanjifrag.split(c).toString().split(",").forEach(function(p) {
-            if (p.length == 0 || p.match(/^[A-Z]$/)) return;
-            if (!list[p]) list[p] = 0;
-            if (is_counting) list[p]++;
-        });
-    });
-
-    return list;
 };
 
 

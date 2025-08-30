@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <head>
-<meta http-equiv="pragma" content="no-cache"></meta>
-<meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
-<meta name="viewport" content="width=600,initial-scale=1.0">
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=600,initial-scale=1.0" />
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="kanji_puzzle.js?20200913"></script>
-<link rel="stylesheet" type="text/css" href="kanji_puzzle.css">
+<script src="kanji_puzzle.js?20250831"></script>
+<link rel="stylesheet" type="text/css" href="kanji_puzzle.css?20250831">
 <title>Kanji Puzzle</title>
 </head>
 
@@ -70,8 +70,11 @@
         <li> <a href="http://openlab.ring.gr.jp/skk/wiki/wiki.cgi?page=SKK%BC%AD%BD%F1">SKK辞書</a>
 	<li> <a href="https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec" id="gasapi">GAS</a>
       </ul>
-      <h4>作問ツール</h4>
-      <a href="#debug" target="_blank">こちら</a>
+      <h4>ツール</h4>
+      <ul>
+        <li><a href="automaker.html" target="_blank">出題自動生成版</a></li>
+        <li><a href="#debug" target="_blank">作問ツール</a></li>
+      </ul>
     </div>    </div>
   </div>
 
@@ -121,9 +124,9 @@
 	<br/>
 	<h4>再定義文字</h4>
 	気に入らない分割があったときは「●再定義文字」に定義しなおしてから[作成]。
-	以下リストからも選べる。
+	以下リストからも選べる。(クリックすると追加 or 削除)
 	<div style="background-color:#eee;" id="frequents">
-	  (文字:[NMZEFLOHUCKQJ]パーツ, 「/」区切り, クリックすると追加 or 削除)
+	  (N=⿰, M=⿲, Z=⿱, E=⿳, F=⿸, L=⿺, O=⿴, H=⿵, U=⿶, C=⿷, K=⿹, J=⿽, Q=⿻ の意)
 	</div>
       </div>
       <div>
@@ -140,7 +143,7 @@
       </div>
       <div>
         ●再定義文字
-        <textarea id="redefine" style="width: calc( 100% - 200px ); height:25px;">備:NイZ艹F厂用/市:Z亠巾/&amp;CDP-89F3;:O夂丶/介:Z𠆢&amp;CDP-8bf5;/食:Z𠆢良/谷:E八𠆢口/四:O口儿/尓:Z𠂉小/反:F厂又/免:Eク&#x2ba4f;儿/争:Zク&amp;CDP-8BFE;/鬲:Z𠮛H冂Z儿丅/巨:C匚コ/合:Z亼口/光:Z⺌兀/単:Z⺍&amp;CDP-8BD9;/赤:Z土&#xF5ca;/咸:H戊𠮛/骨:Z冎月/斉:Z文&#xf404;/</textarea>
+        <textarea id="redefine" style="width: calc( 100% - 200px ); height:25px;"></textarea>
       </div>
       <div style="display:flex;">
         ●フラグメント結果
@@ -153,13 +156,26 @@
     <div style="position:relative;">
       <button class="closer">X</button>
       <button class="help">?</button>
-      <div style="float:right;">
-        <button id="dicloaded"></button>
-        <button id="showparts">部品一覧</button>
-      </div>
-      <h2>辞書ツール</h2>
+      <h2>辞書ツール<span id="dicloaded">(読込中...)</span></h2>
+      <div id="partlist" class="topbox" style="display:none; background-color:#eee;"><button class="closer">X</button></div>
       <div class="topbox helper" style="display:none;">
         <button class="closer">X</button>
+        <div style="float:right;margin-right:5px;z-index:3;">
+          <button id="dicloaderopen">辞書一覧</button>
+          <button id="showparts">部品一覧</button>
+        </div>
+        <div id="dicloader" style="background-color:#eee; display:none;">
+          <h4>辞書選択</h4> <button  id="dicload">読込</button>
+          <ul>
+            <li>テンプレート:
+              <label><input type="checkbox" checked />SKK-JISYO.ML.utf8</label>
+              <label><input type="checkbox"/>SKK-JISYO.L.filter</label>
+              <label><input type="checkbox"/>SKK-JISYO.fullname.filter</label>
+              <label><input type="checkbox"/>SKK-JISYO.geo.filter</label>
+              <label><input type="checkbox"/>railwiki.txt</label>
+            </li>
+            <li><label>自前ファイル: <input type="file"/></label>(書式は <code>よみ /表記/表記/表記;注釈/</code>)</li></ul>
+        </div>
 	<p>
 	  <h4>字検索</h4>
 	  「●部品」のボックスでEnterを押すと、入力した部品すべてを含む漢字一覧が出る(出現頻度の低い順)
@@ -173,7 +189,6 @@
           <li>単語内に「but」欄の文字を含まないもの
           <li>「文字数」に該当するもの（"3-5"とかけば3文字以上5文字以下）
         </ul>
-      
         <h4>TIPS</h4>
         <ul>
           <li>「色付き」にチェックを入れて単語探しすると、既存パーツのみで構成される漢字に色がつく。<br/>
@@ -185,21 +200,9 @@
 	    </ul>
           <li>「複合語ソート」にチェックを入れて単語探しすると、構成要素の2字熟語が一致する語同士をグループ化して表示する。
           <li>「かな表示」にチェックを入れるとふりがな表示。人名辞典を使った場合は簡単なプロフィールも出たり。
-          <li>[部品一覧]をダブルクリックすると部品一覧が表示され、部品をクリックすると漢字検索する。
-          <li>[辞書ロード済]をダブルクリックすると使う辞書を選択できる。
+          <li>本ヘルプ右上の「辞書一覧」で SKK-JISYO.L.filter を入れると語数が増える(が、元が変換辞書なので微妙な候補も多め)。
         </ul>
       </div>
-    <div id="dicloader" class="topbox" style="background-color:#eee;">
-      ●辞書選択: 
-      <label><input type="checkbox">SKK-JISYO.L.filter</label>
-      <label><input type="checkbox">SKK-JISYO.fullname.filter</label>
-      <label><input type="checkbox">SKK-JISYO.geo.filter</label>
-      <label><input type="checkbox" checked>SKK-JISYO.ML.utf8</label>
-      <label><input type="checkbox">railwiki.txt</label>
-      <input type="button" value="辞書リロード" id="dicload">
-    </div>
-    <div id="partlist" class="topbox helper" style="display:none; background-color:#eee;"><button class="closer">X</button>
-    </div>
     <div style="display:flex;">
       <span style="margin-top: auto; white-space:nowrap;">
         ●部品:
@@ -261,14 +264,13 @@
   </div>
   <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
   <pre id="redefinelist" style="display:none;">
-#1画切り出し/主:Z丶王/勺:K勹丶/&amp;CDP-89F3;:O夂丶/亼:Z𠆢一/亘:Z一旦/成:H戊𠃌/百:Z一白/直:Z十L𠃊目/至:E一厶土/系:Zノ糸/血:Zノ皿/久:Fク㇏/
-#2画切り出し/云:Z二厶/示:Z二小/市:Z亠巾/文:Z亠乂/玄:Z亠幺/衣:Z亠𧘇/亦:Z亠&#xF5ca;/介:Z𠆢&amp;CDP-8bf5;/食:Z𠆢良/谷:E八𠆢口/穴:Z宀八/父:Z八乂/四:O口儿/其:Z&#xf50c;八/肉:H内人/爻:Zメメ/尓:Z𠂉小/反:F厂又/𦍌:Z丷王/面:Z丆O口&amp;CDP-89CC;/石:F丆口/頁:Z丆貝/免:Eク&#x2ba4f;儿/魚:Eク田灬/争:Zク&amp;CDP-8BFE;/鬲:Z𠮛H冂Z儿丅/鬼:Z甶L儿厶/叚:N&amp;CDP-8C7A;Zコ又/㡀:Z⺌H冂小/巨:C匚コ/后:F𠂆𠮛/
-#3画切り出し/合:Z亼口/倉:Z亼F&#xf40c;口/並:Z䒑业/豆:Z𠮛䒑/龸:Z⺌冖/光:Z⺌兀/単:Z⺍&amp;CDP-8BD9;/糸:Z幺小/赤:Z土&#xF5ca;/走:Z土龰/足:Z口龰/羽:N习习/
-#4画切り出し/咸:H戊𠮛/骨:Z冎月/斉:Z文&#xf404;/齊:E亠M刀丫&#xf404;/鳥:K&amp;CDP-8CBB;灬/馬:K灬/興:U同/長:Z&amp;CDP-884A;&amp;u5140-itaiji-001;/革:Z廿&amp;CDP-875C;/
-#1画包含/旧:/旦:/氐:/丕:/具:/戌:/戍:/叉:/太:/凡:/巠:/㞢:/同:H冂𠮛/睘:E罒𠮛𧘇/畐:Z𠮛田/司:K𠃌𠮛/獣:NZ畄𠮛犬/或:K戈&#xF55A;/監:ZN臣&amp;CDP-8C74;皿/覧:ZN臣&amp;CDP-8C74;見/寅:E㝉由八/賓:E㝉少貝/呂:Z口&amp;CDP-8CC8;/向:H&#xf54e;口/奥:ZH&#xf54e;米大/延:L廴&#xF636;/差:F&#xF5E1;工/着:F&#xF5E1;目/攸:N&amp;CDP-8B7A;攵/備:NイF&#x20017;用/備:NイZ艹F厂用/拝:N扌/
-#2画以上包含/凶:/𠫓:/見:/午:/关:/&CDP-89AE;:/幸:Z土&#x22189;/南:Z十H冂&#x22189;/帝:Z&#xF564;巾/帝:E&#xF526;冖巾/旁:Z&#xF564;方/啇:Z&#xF526;H冂古/
-#QJ分割採用に伴う新定義/幾:Q戈ZM幺＿幺K＿人/幽:U山M幺＿幺/氷:J水丶/図:O口Jメ⺀/坐:Q土ZM人＿人＿/嗇:ZQ土E＿M人＿人＿回/喪:ZQ十Z＿M口＿口&prv01;/爽:Q大E＿M爻＿爻＿/兩:Q帀H＿M入＿入/函:U凵Q丂Z＿M冫＿く/亟:ZQ丂Z＿M口＿又一/&amp;CDP-8CB8;:J弋一/𢦏:J戈十/
-#思いつき/具:Z目&amp;u2ff1-u4e00-u516b;/虍:Z⺊F&amp;cdp-88e2;七/鼡:Z⺍𠂡
+#1画切り出し/主:Z丶王/勺:K勹丶/亼:Z𠆢一/旦:Z日一/亘:Z一旦/𠮛:Z一口/&amp;CDP-8C74;:Z𠂉一/𠫔:Z一厶/百:Z一白/&amp;CDP-8CB8;:J弋一/成:H戊𠃌/系:Zノ糸/血:Zノ皿/久:Fク㇏/&amp;k5-026c;:Z一由/
+#2画切り出し/云:Z二厶/示:Z二小/午:Z𠂉十/文:Z亠乂/玄:Z亠幺/&#xF526;:Z亠丷/衣:Z亠𧘇/亦:Z亠&#xF5ca;/穴:Z宀八/父:Zハ乂/其:Z&#xf50c;ハ/肉:H内人/𦍌:Z丷王/面:Z丆O口&amp;CDP-89CC;/石:F丆口/頁:Z丆貝/魚:Eク田灬/鬼:Z甶L儿厶/𢦏:J戈十/
+#3画切り出し/豆:Z𠮛䒑/龸:Z⺌冖/糸:Z幺小/走:Z土龰/足:Z口龰/羽:N习习/鼡:Z⺍𠂡/
+#4画切り出し/齊:E亠M刀丫&#xf404;/鳥:K&amp;CDP-8CBB;灬/馬:K灬/長:Z&amp;CDP-884A;&amp;u5140-itaiji-001;/革:Z廿&amp;CDP-875C;/
+#1画包含/旧:/氐:/丕:/具:/戌:/戍:/叉:/太:/凡:/巠:/或:K戈&#xF55A;/寅:E㝉由八/賓:E㝉少貝/呂:Z口&amp;CDP-8CC8;/差:F&#xF5E1;工/着:F&#xF5E1;目/攸:N&amp;CDP-8B7A;攵/候:N&amp;CDP-8B7A;Zユ矢/拝:N扌/
+#2画以上包含/凶:/𠫓:/見:/关:/&CDP-89AE;:/幸:Z土&#x22189;/南:Z十H冂&#x22189;/帝:Z&#xF564;巾/備:NイF&#x20017;用/
+#思いつき/具:Z目&amp;u2ff1-u4e00-u516b;/虍:Z⺊F&amp;CDP-88E2;七
   </pre>
 </body>
 </html>

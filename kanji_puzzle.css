@@ -1,3 +1,6 @@
+html {
+    scroll-snap-type: y proximity;
+}
 body {
   padding:0;
   margin:0;
@@ -174,6 +177,7 @@ div.word {
     padding: 0 0 0 5px;
     margin: 5px;
     background-color: #eee;
+    scroll-snap-align: start;
 }
 
 div.word div.wid {
@@ -226,6 +230,7 @@ div.kpart {
     padding:0; 
     position: absolute;
     z-index:4;
+    scroll-snap-align: start;
 }
 .userans, .usercmd {
     width:300px;
@@ -386,6 +391,10 @@ h2 {
     white-space:nowrap;
 }
 
+#dicloader label {
+    display:inline-block;
+    white-space:nowrap;
+}
 .setpartbox {
     margin:0 1px 1px 0;
     line-height:10px;

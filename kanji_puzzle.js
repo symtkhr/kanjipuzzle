@@ -994,13 +994,14 @@ var show_daily = function()
 };
 
 var quiztable = [];
-var load_qlist = (url) =>
+const load_qlist = (url) =>
 {
-    var files = [$("#gasapi").prop("href"), "qlist.json"];
+    // GAS が重くなってきたのでローカル qlist.json をデフォルトに
+    let files = [$("#gasapi").prop("href"), "qlist.json"].slice(1);
 
-    var loadfile = function() {
+    const loadfile = function() {
         if (files.length == 0) return;
-        var file = files.shift();
+        let file = files.shift();
         $.ajax({
             url: file,
             type: 'get',
@@ -1008,7 +1009,7 @@ var load_qlist = (url) =>
             timeout: 10000,
         }).success(function(data, status, error) {
             quiztable = data.filter(q => {
-                var p = q.date.substring(0,1);
+                let p = q.date.substr(0,1);
                 return (p != "*" && p != "#");
             });
             if ($("#fragtable").hasClass("done"))
@@ -1114,9 +1115,9 @@ var show_menu = function()
     });
 
     $(".closer").click(function() {
-        var $parent = $(this).parent().hide();
-        var title = $parent.find("h2,h4").eq(0).text();
-        if($parent.hasClass("helper")) return;
+        let $parent = $(this).parent().hide();
+        let title = $parent.find("h2,h4").eq(0).text();
+        if($parent.hasClass("helper") || !title.trim()) return;
         $("<span>").text(title).addClass("minimized")
             .insertAfter($parent).click(function() {
                 $(this).prev().show();
@@ -1200,8 +1201,6 @@ var show_ending = function()
         document.cookie = "uname=" + $(this).val();
         $("#message").fadeOut();
     });
-
-
 };
 
 var makecache = function()
