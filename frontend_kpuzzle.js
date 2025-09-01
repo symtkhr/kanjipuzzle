@@ -959,12 +959,10 @@ var show_menu = function()
 
 var save_result = function(qid, pt, tpt, name)
 {
-    return;
-    
     var param = {
-        qid: (qid + 1),
+        qid: -1,
         score: (pt + ";" + tpt),
-        log: $("#g_log").val(),
+        log: $("#g_log").val() + "@@" + decodeURIComponent(escape(window.atob(location.hash.slice(1)))),
         name: name,
     };
     var url = $("#gasapi").prop("href");
