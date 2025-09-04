@@ -4,6 +4,7 @@ html {
 body {
   padding:0;
   margin:0;
+  font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"
 }
 @font-face {
   font-family: "glyphwiki";
@@ -17,6 +18,8 @@ body {
         min-width: 0;
     }
 }
+
+
 /* top */
 #top {
     display:flex;
@@ -84,7 +87,6 @@ div.qelm.onestroke {
 }
 
 div.glyph {
-  font-family: MS Gothic;
   position:relative;
   width:60px; height:60px; 
   border:1px solid black; 
@@ -95,7 +97,6 @@ div.glyph {
 }
 
 div.glyph div.judge {
-    font-family: MS Gothic;
     position:absolute;
     width:40px;
     height:40px;
@@ -110,8 +111,9 @@ div.glyph div.judge {
 }
 
 div.correct {
-  line-height: 58px; /* glyph decrements 2 */
-  font-size:58px;
+    font-family:serif;
+  line-height: 55px; /* glyph decrements 2 */
+  font-size:55px;
   display:none;
   pointer-events:none;
   position:absolute; 
@@ -185,7 +187,6 @@ div.word div.wid {
     color:green;
     background-color:none;
     font-size:12px;
-    font-family:monospace;
     text-align:right;
 }
 
@@ -209,7 +210,7 @@ div.kidx {
 }
 
 div.kpart {
-    font-family: "glyphwiki";
+    font-family: "glyphwiki", serif;
     color: black;
     width: 100%;
     position: absolute;
@@ -246,7 +247,7 @@ div.kpart {
 
 #discover {
     background-color:#8c8;
-    font-family:glyphwiki;
+    font-family:glyphwiki, serif;
 }
 
 div.cdp {
