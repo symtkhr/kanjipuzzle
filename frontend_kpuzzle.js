@@ -256,7 +256,7 @@ var save_status = function(qid)
     document.cookie = cookie + expired;
 };
 
-var load_status = function()
+var load_status = function(direct_run)
 {
     var is_valid = false;
     var res = {};
@@ -285,6 +285,26 @@ var load_status = function()
     if (!is_valid) return false;
     if (!res.qid) return false;
 
+    console.log(direct_run,res);
+    const runresume = () => {
+        $(".kidx").removeClass("undone").hide().next().show();
+        res.undone.forEach(function(kid) {
+            $(".kidx" + kid).addClass("undone").show().next().hide();
+        });
+        //全パーツが開いたグリフを表示
+        $(".glyph").each(function() {
+            if ($(this).find(".undone").size() > 0) return;
+            var n = $(this).parent().find(".glyph").index($(this));
+            $(this).find(".correct").show();
+            $(this).find(".elm div").hide();
+        });
+        $("#g_log").val(res.logs);
+        $("#point").text(res.pt);
+        timer.start(res.time + 1);
+    };
+
+    if (direct_run) return runresume();
+
     // 再開時のデータ展開
     $("#continue").show().find(".resume").remove();
     $("#menu .qoption").eq(res.qid - 1).addClass("resume").clone().appendTo("#continue");
@@ -298,23 +318,9 @@ var load_status = function()
         $('<div>').addClass("loading").text("再開").appendTo(this)
             .animate({"opacity":".5"}, function() {
                 load_quiz(qid);
-                $(".kidx").removeClass("undone").hide().next().show();
-                res.undone.forEach(function(kid) {
-                    $(".kidx" + kid).addClass("undone").show().next().hide();
-                });
-                //全パーツが開いたグリフを表示
-                $(".glyph").each(function() {
-                    if ($(this).find(".undone").size() > 0) return;
-                    var n = $(this).parent().find(".glyph").index($(this));
-                    $(this).find(".correct").show();
-                    $(this).find(".elm div").hide();
-                });
-                $("#g_log").val(res.logs);
-                $("#point").text(res.pt);
-                timer.start(res.time + 1);
+                runresume();
             });
     });
-
     $("#erase_resume").show().click(function() {
         save_status(-1);
         $(this).hide();
@@ -896,6 +902,7 @@ var show_menu = function()
             getfile("fragtable.plus.txt", (txt) => {
                 kanjifrag.define(txt);
                 load_quiz({qid:"00", q:q[0], def:q[1]});
+                load_status(true);
             });
 
         } catch (e) {
