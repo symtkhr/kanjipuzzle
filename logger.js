@@ -10,7 +10,7 @@ var scorelist = function()
     $("<hr>").insertAfter($lately);
 
     $.ajax({
-	url: LOGGERURL || "evac/scorelist.json",
+        url: LOGGERURL || "evac/scorelist.json",
         type: 'get',
         data: {v: "score"},
         dataType: 'json',
