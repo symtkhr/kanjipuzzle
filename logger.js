@@ -10,7 +10,7 @@ var scorelist = function()
     $("<hr>").insertAfter($lately);
 
     $.ajax({
-	url: LOGGERURL || "evac/scorelist.json",
+        url: LOGGERURL || "evac/scorelist.json",
         type: 'get',
         data: {v: "score"},
         dataType: 'json',
@@ -21,7 +21,8 @@ var scorelist = function()
         console.log(data, status, error);
     }).done(function(rawdata, status, error) {
         // sort & merge data
-        var data = rawdata.reduce(function(ret, v) {
+        let data = rawdata.reduce(function(ret, v) {
+            if (v.qid < 0) return ret;
             if (v.time.toString().indexOf("-") != -1) {
                 var d = v.time.split("-").map(v => parseInt(v));
                 v.time = (new Date(d[0], d[1]-1, d[2], 0, 0)).getTime();
@@ -35,8 +36,7 @@ var scorelist = function()
             else
                 ret[idx] = v;
             return ret;
-        }, []);
-        data.sort((a, b) => (b.time - a.time));
+        }, []).sort((a, b) => (b.time - a.time));
         dump_logs(data);
     });
 
