@@ -63,6 +63,26 @@ span.minimized {
 }
 
 /* #quiz */
+#quiz {
+  background: linear-gradient(30deg, #efe, #aca, #595);
+  //background-image: url('p0499_m.jpg');
+}
+#quiz::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+
+  display: block;
+  //background-size:cover;
+  width: 100%;
+  height: 100%;
+  filter: brightness(80%);
+  opacity:.4;
+}
+
 div.sbox {
    position:absolute;
    width:100%;
@@ -84,14 +104,14 @@ div.qelm.onestroke {
 }
 
 div.glyph {
-  font-family: MS Gothic;
-  position:relative;
-  width:60px; height:60px; 
-  border:1px solid black; 
-  box-sizing: border-box;
-  display:inline-block;
-  margin-right: 5px;
-  cursor: pointer;
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, MS Gothic, sans-serif;
+    position:relative;
+    width:60px; height:60px; 
+    border:1px solid black; 
+    box-sizing: border-box;
+    display:inline-block;
+    margin-right: 5px;
+    cursor: pointer;
 }
 
 div.glyph div.judge {
@@ -171,18 +191,22 @@ div.glyph.hiragana div.correct {
     font-size:40px;
 }
 
-div.word {
-    border: 1px solid green;
+.word {
+    border: 1px solid #555;
     display:inline-block;
-    padding: 0 0 0 5px;
+    border-radius: 4px;
+    box-shadow: 2px 2px 2px gray;
+    padding: 1px 0 0 5px;
     margin: 5px;
     background-color: #eee;
+    background: linear-gradient(to left, #eee, #ccd);
+    //background-image: url(p0499_m.jpg);
     scroll-snap-align: start;
 }
 
-div.word div.wid {
+.word .wid {
     width:100%;
-    color:green;
+    color:#555;
     background-color:none;
     font-size:12px;
     font-family:monospace;
@@ -200,6 +224,7 @@ div.glyph.selected {
 div.kidx {
     width:100%; position:absolute; text-align:center; color:blue; z-index:2;
     top:0; height:16px; line-height:16px;
+    font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif
 }
 
 .elm.L1 div.kidx, .elm.U1 div.kidx {
@@ -407,7 +432,7 @@ h2 {
 }
 
 .setpart {
-    font-family: glyphwiki;
+    font-family: glyphwiki, serif;
     cursor: pointer;
     line-height:20px;
     font-size: 18px;
@@ -446,7 +471,7 @@ h2 {
     display:inline-block;
     color:#008;
     /* text-decoration: underline; */
-    font-family:glyphwiki;
+    font-family:glyphwiki, serif;
     height:24px;
     line-height:24px;
     cursor:pointer;
