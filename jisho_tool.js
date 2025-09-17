@@ -42,6 +42,11 @@ $(function() {
         let gettext = async (blob) => {
             const dic = await blob.text();
             ongetfile(dic);
+            let undef = Object.keys(wordDb).reduce((ret,w) =>
+                [...ret, ...Array.from(w).filter(c => ("\u2e80" <= c) && !c.match(/[ぁ-ー！-￮]/) && ret.indexOf(c) < 0 && _SKKTABLE.indexOf(c) < 0 && !kanjifrag.db(c))],
+                []).sort();
+            if (!undef.length) return $("#dicalert").hide();
+            $("#dicalert").show().text("\n未定義文字=" + undef.map(c=>c+":").join("/"));
         };
         return gettext(new Blob([file], { type: "text/plain" }));
     }).click();
