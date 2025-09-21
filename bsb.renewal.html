@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=650,initial-scale=1.0" />
+<script src="jquery.min.js"></script>
+<script src="frontend_kpuzzle.js?20200913"></script>
+<script src="automaker.js?20220716"></script>
+<link rel="stylesheet" type="text/css" href="kanji_puzzle.css?20250831">
+<title>自動部首部</title>
+<style>
+
+  #main {
+      
+      display: flex;
+      flex-direction: column;
+            width:100vw;
+            height:100vh;
+  }
+
+        #quiz {
+            flex: 1;
+            min-height: 100px;
+            overflow:hidden;
+            scroll:y;
+        }
+
+    </style>
+</head>
+
+<body>
+  <div id="main">
+    <div style="min-width:300px; width:100%;z-index:3;  background:#dca; height:50px; overflow:hidden;">
+      <button id="showrule" class="help">?</button>
+      <button id="config" class="help">⚙️</button>
+      <h2>自動部首部</h2>
+      <span id="status">
+        [Status] 素点 <span id="point">0</span>点 + タイムボーナス <span id="bonus">0</span>点 (<span id="time">0</span>秒経過) <span id="score">= <span class="tpoint"></span>点</span>
+      </span>
+      <input id="g_log" style="display:none;"/>
+      <div style="float:right;">
+        <span id="discover"></span>
+        <span id="knjdef"></span>
+      </div>
+    </div>
+    <div id="quiz"></div>
+  </div>
+  <div style="display:none;">
+    <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
+    <div id="example"></div>
+    <div id="example_answer"></div>
+  </div>
+</body>
+</html>

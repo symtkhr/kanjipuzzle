@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="initial-scale=1.0" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="frontend_kpuzzle.js?20200913"></script>
+<script src="automaker.js?20250831"></script>
+<link rel="stylesheet" type="text/css" href="bushubu.css" />
+<title>部首パズル</title>
+<style>
+  #main {
+      display: flex;
+      flex-direction: column;
+      width:100vw;
+      height:100vh;
+  }
+  #title .correct, h2.sampleword .correct {
+      text-shadow: -1px -1px 2px #522, 1px 1px 1px #c77;
+  }
+  #title {
+      height:50vh;
+      width:100%;
+      text-align:center;
+      min-width:360px;
+      color: rgba(170,90,40,.8);
+  }
+  h2.sampleword {
+      color: rgba(100,40,20,.8);
+  }
+  #menu {
+      display:flex; flex-wrap:wrap;height:100vh;
+      background-image:url(p0499_m.jpg);
+      background-color:rgba(0,80,0,.8);
+      background-blend-mode:multiply;
+  }
+  #head {
+      min-width:300px; width:100%;z-index:2;
+      height:40px; overflow:hidden;
+      background-image:url(p0499_m.jpg);
+      background-color:rgba(0,80,0,.8);
+      background-blend-mode:multiply;
+  }
+  #quiz {
+      flex: 1;
+      min-height: 100px;
+  }
+  #quiz.scroll {
+      padding-top:30px;
+      overflow:hidden scroll;
+  }
+  #hint {
+      border:3px #156 dotted;position:fixed;
+      background:rgba(128,128,128,.8);
+      display:none;
+      z-index:5;bottom:0;right:0;zoom:.64;
+  }
+  #overlap {
+      opacity:.9;
+      overflow:hidden;
+      position:absolute; text-align:center; bottom:0; left:0; right:0; top:0;
+      background-color: rgba(0,0,0,0.5);
+      margin:auto; border:2px solid gray;
+      padding-top:40px;
+      display:flex;
+      z-index:4;
+  }
+  .withheld {
+      opacity:.5;
+  }
+  .menu {
+      text-align:center;
+      width:100%;
+  }
+  button.gonext, button.submit {
+      cursor:pointer;
+      width:200px;font-size:20px; height:50px;
+      background-image:url(p0499_m.jpg);
+  }
+  button.userrecord {
+      width:150px;height:30px;background-image:url(p0499_m.jpg);
+      cursor:pointer;
+  }
+</style>
+</head>
+
+<body>
+  <div id="menu">
+    <button class="help showrule" style="height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;">&#x2753;</button><!--&#x2699;&#xFe0F;-->
+    <div id="title" class="sampleword" style="height:50vh; width:100%;text-align:center; min-width:360px;">部首パズル</div>
+    <div id="qlists" style="width:100%; overflow:hidden auto; height:50vh;background-image:url(p0499_m.jpg)"></div>
+    <div class="menu sampleword" id="newstart">新規開始</div>
+    <div class="menu sampleword" id="archives">問題集</div>
+    <div class="menu sampleword" id="resume">中断再開</div>
+  </div>
+  <div id="main">
+    <div id="head">
+      <h2 class="sampleword" style="cursor:pointer; display:inline-block;">部首パズル</h2>
+      <button class="showrule help" style="height:30px;overflow:hidden;">&#x2753;&#x2699;&#xFe0F;</button>
+      <span id="status" style="float:right;color:white; font-size:15px;">
+        <span style="display:inline-block; line-height:14px;text-align:center;"><span style="font-size:10px;">素点</span><br/>
+          <span id="point" style="font-size:20px">0</span></span> +
+        <span style="display:inline-block; line-height:14px;text-align:center;"><span style="font-size:10px;">タイムボーナス</span><br/>
+          <span id="bonus" style="font-size:20px;">0</span>
+          (&#x23f0;<span id="time">0</span></span>)
+        <span id="score">= <span class="tpoint"></span>点</span>
+      </span>
+      <input id="g_log" style="display:none;"/>
+      <div style="float:right;">
+        <span id="discover"></span>
+        <span id="knjdef"></span>
+      </div>
+    </div>
+    <div id="hint"></div>
+    <div id="keyinput" style="z-index:3;">
+      <input class="userans" enterkeyhint="done"  style="z-index:3;" placeholder="漢字を入力" />
+      <div id="judge"></div>
+    </div>
+    <div id="message">
+      <div style="margin:10px; text-align:center;font-size:20pt;">
+        クリア！<br />
+        おつかれさまでした。
+        <div style="text-align:center;font-size:12pt; width:100%;">
+          名前:<input style="width:200px;" enterkeyhint="done" /><br/>
+          <span class="tpoint"></span>点
+        </div>
+      </div>
+    </div>
+    <div id="quiz"></div>
+  </div>
+  <div id="overlap" style="display:none;">
+    <div id="control">
+      <button class="closer">X</button>
+      <div class="topbox helper" style="background-color:#bcc; top:0px;">
+        <button class="gonext">トップに戻る</button>
+        <br/><br/>
+        <button class="gonext">次の問題へ</button>
+      </div>
+    </div>
+    <div style="margin:auto; margin-right:10px; margin-top:0;; display:flex; flex-wrap:wrap;" id="howto">
+      <div class="topbox helper" style="background-color:#bcc;" id="rule">
+      <h4>●例題</h4>
+      同じ数字のところに同じ漢字パーツが入って熟語が完成します。
+      <div id='qex'>
+        <div class="sampleword qex" style="display:inline-block;">徒競走</div>
+        →
+        <div class="sampleword qex" style="display:inline-block;">徒競走</div>
+      </div>
+      盤面をクリックして黄色く光るマスの漢字を入力してください。<br/>(まとめて「競走」とも打てます)
+      <div id='qex2' style="padding-top:15px;position:relative;">
+        <input class="helpuserans" value="競" disabled style="position:absolute; top:0px; left:75px; width:120px;"/>
+        <div id="example2" class="sampleword qex">徒競走</div>
+      </div>
+      わからないときは「?」入力でヒントが出るかもしれません。
+      <div style="text-align:center;display:none;" id="q1st">
+        <button class="submit">パズル開始</button>
+      </div>
+    </div>
+    <div class="topbox helper" style="background-color:#bcc;" id="config">
+      <h4>●設定</h4><br/>
+      <label><input type="checkbox" checked />SE</label><br/>
+      <label><input type="checkbox" checked />語番号表示</label> <br/>
+      <label>サイズ自動調整:
+        <select><option selected>-4</option><option>-3</option><option>-2</option><option>-1</option><option>0</option></select>
+      </label><br/>
+      これまでの記録:<br/>
+      <button class="userrecord">ダウンロードする</button><br/>
+      <button class="userrecord">削除する</button>
+    </div>
+    <button class="closer">X</button>
+
+    </div>
+  </div>
+  </div>
+  <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
+  <iframe src="fragtable.plus.txt" id="fragtablep" style="display:none;"></iframe>
+</body>
+</html>
