@@ -420,12 +420,12 @@ let PartQuiz = function() {
         
         // ansから番号リストを生成する
         const onestrokes = "一丨亅丿ノ乙乚𠃊丶";
-        const kidx = this.make_list(ret.ans, options.openlist || onestrokes);
+        var kidx = this.make_list(ret.ans, options.openlist || onestrokes);
         this.ans = ret.ans;
         this.n = Object.keys(kidx).length;
         //console.log(this.ans);
         //console.log(qwords.length);
-        return this.n;
+        return (Object.keys(kidx).length);
     };
     
     //これはload_quiz内に取り込むべき関数

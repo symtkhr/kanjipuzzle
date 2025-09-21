@@ -994,6 +994,12 @@ const TopMenu = function() {
                     i = (i + 1) % 90;
                     let loop = Math.sin(i * 2 * Math.PI/90);
                     $("#title .word").css("transform",`rotate(${4*loop}deg) translate(0,30px)`);
+                    if (i % 18 == 0)
+                        $("#title .glyph").each(function() {
+                            const $elms = $(this).find(".elm").removeClass("pselected");
+                            if (($elms.length == 1) && (1 < Math.random() * 3)) return;
+                            $elms.eq(parseInt(Math.random() * $elms.length)).addClass("pselected");
+                        });
                 }, 50);
             }
             $(".qex").each(function(i) {
