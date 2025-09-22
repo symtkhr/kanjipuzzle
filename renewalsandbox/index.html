@@ -9,6 +9,9 @@
 <link rel="stylesheet" type="text/css" href="bushubu.css" />
 <title>部首パズル</title>
 <style>
+  body {
+      overflow:hidden;
+  }
   #main {
       display: flex;
       flex-direction: column;
@@ -25,6 +28,9 @@
       min-width:360px;
       color: rgba(170,90,40,.8);
   }
+  #title .glyph {zoom:2.5;};
+  #title .glyph.hiragana {zoom:1.7; }
+  h2.sampleword .glyph.hiragana {zoom: 0.8; }
   h2.sampleword {
       color: rgba(100,40,20,.8);
   }
@@ -54,6 +60,9 @@
       background:rgba(128,128,128,.8);
       display:none;
       z-index:5;bottom:0;right:0;zoom:.64;
+      pointer-events:none;
+      max-height:30vh;
+      overflow:hidden;
   }
   #overlap {
       opacity:.9;
@@ -81,14 +90,27 @@
       width:150px;height:30px;background-image:url(p0499_m.jpg);
       cursor:pointer;
   }
+  #status {
+      position:absolute;
+      right:25px;
+      color:white; font-size:15px;
+  }
+  #status .pointtype {
+      display:inline-block; line-height:14px;text-align:center;
+  }
+  #point, #bonus, .tpoint {
+      font-size:20px;
+  }
+  .showrule {
+      height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;
+  }
 </style>
 </head>
 
 <body>
   <div id="menu">
-    <button class="help showrule" style="height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;">&#x2753;</button><!--&#x2699;&#xFe0F;-->
-    <div id="title" class="sampleword" style="height:50vh; width:100%;text-align:center; min-width:360px;">部首パズル</div>
-    <div id="qlists" style="width:100%; overflow:hidden auto; height:50vh;background-image:url(p0499_m.jpg)"></div>
+    <button class="help showrule">&#x2753;</button><!--&#x2699;&#xFe0F;-->
+    <div id="title" class="sampleword">部首パズル</div>
     <div class="menu sampleword" id="newstart">新規開始</div>
     <div class="menu sampleword" id="archives">問題集</div>
     <div class="menu sampleword" id="resume">中断再開</div>
@@ -96,12 +118,10 @@
   <div id="main">
     <div id="head">
       <h2 class="sampleword" style="cursor:pointer; display:inline-block;">部首パズル</h2>
-      <button class="showrule help" style="height:30px;overflow:hidden;">&#x2753;&#x2699;&#xFe0F;</button>
-      <span id="status" style="float:right;color:white; font-size:15px;">
-        <span style="display:inline-block; line-height:14px;text-align:center;"><span style="font-size:10px;">素点</span><br/>
-          <span id="point" style="font-size:20px">0</span></span> +
-        <span style="display:inline-block; line-height:14px;text-align:center;"><span style="font-size:10px;">タイムボーナス</span><br/>
-          <span id="bonus" style="font-size:20px;">0</span>
+      <button class="showrule help" style="">&#x2753;</button>
+      <span id="status">
+        <span class="pointtype"><span style="font-size:10px;">素点</span><br/><span id="point">0</span></span> +
+        <span class="pointtype"><span style="font-size:10px;">タイムボーナス</span><br/><span id="bonus">0</span>
           (&#x23f0;<span id="time">0</span></span>)
         <span id="score">= <span class="tpoint"></span>点</span>
       </span>
@@ -112,9 +132,22 @@
       </div>
     </div>
     <div id="hint"></div>
-    <div id="keyinput" style="z-index:3;">
+    <div id="keyinput" class="keyinput" style="z-index:3;">
       <input class="userans" enterkeyhint="done"  style="z-index:3;" placeholder="漢字を入力" />
       <div id="judge"></div>
+    </div>
+    <div id="quiz"></div>
+  </div>
+  <div id="overlap" style="display:none;">
+    <div id="qlists" style="width:250px; padding:30px; position:relative; overflow:hidden auto; margin:auto; height:50vh;background-image:url(p0499_m.jpg)">
+    </div>
+    <div id="control" style="position:relative;">
+      <button class="closer">X</button>
+      <div class="topbox helper" style="background-color:#bcc; top:0px; padding:20px;">
+        <button class="gonext">トップに戻る</button>
+        <br/><br/>
+        <button class="gonext">次の問題へ</button>
+      </div>
     </div>
     <div id="message">
       <div style="margin:10px; text-align:center;font-size:20pt;">
@@ -126,18 +159,8 @@
         </div>
       </div>
     </div>
-    <div id="quiz"></div>
-  </div>
-  <div id="overlap" style="display:none;">
-    <div id="control">
+    <div style="margin:auto; margin-right:10px; margin-top:10px; position:relative;display:flex; flex-wrap:wrap;" id="howto">
       <button class="closer">X</button>
-      <div class="topbox helper" style="background-color:#bcc; top:0px;">
-        <button class="gonext">トップに戻る</button>
-        <br/><br/>
-        <button class="gonext">次の問題へ</button>
-      </div>
-    </div>
-    <div style="margin:auto; margin-right:10px; margin-top:0;; display:flex; flex-wrap:wrap;" id="howto">
       <div class="topbox helper" style="background-color:#bcc;" id="rule">
       <h4>●例題</h4>
       同じ数字のところに同じ漢字パーツが入って熟語が完成します。
@@ -161,13 +184,16 @@
       <label><input type="checkbox" checked />SE</label><br/>
       <label><input type="checkbox" checked />語番号表示</label> <br/>
       <label>サイズ自動調整:
-        <select><option selected>-4</option><option>-3</option><option>-2</option><option>-1</option><option>0</option></select>
+        <select id="zoomer">
+          <option>-4</option><option>-3</option><option>-2</option><option>-1</option>
+          <option selected>0</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
       </label><br/>
       これまでの記録:<br/>
-      <button class="userrecord">ダウンロードする</button><br/>
-      <button class="userrecord">削除する</button>
+      <button class="userrecord withheld">ダウンロードする</button><br/>
+      <button class="userrecord" id="rmrec">削除する</button>
     </div>
-    <button class="closer">X</button>
 
     </div>
   </div>

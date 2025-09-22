@@ -126,7 +126,7 @@ const UserRecord = function() {
         let savedata = localStorage.getItem("savepartway");
         if (!savedata) return;
         let res = JSON.parse(savedata);
-        $("#config").append(`<div class="debug" style="width:200px;"><textarea>${savedata}</textare></div>`); // for debug
+        $("#config").append(`<div class="debug"><textarea style="width:15px;height:15px;">${savedata}</textarea></div>`); // for debug
 
         // 再開時のデータ展開
         let q = menu.quiztable().find(q=>q.qid == res.qid);
@@ -536,6 +536,7 @@ const draw_puzzle = function(qwords, $quiz, options)
     }
     $quiz.find(".hiragana .elm .kpart").css("font-size", "");
 
+    $quiz.find(".wid").css("font-size","0");
     return (Object.keys(kidx).length);
 }
 
@@ -593,7 +594,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             if ($(e.target).closest('#keyinput').length != 0) return;
             $("#quiz .glyph").removeClass("selected");
             $("#quiz .elm").removeClass("pselected");
-            $("#keyinput").hide();
+            $("#keyinput, #hint").hide();
         });
         
         const popup_otheruses = (cname) => {
@@ -605,8 +606,8 @@ const draw_puzzle = function(qwords, $quiz, options)
             let outs = wids.filter(wid => !isHeightViewable($("#quiz .word").eq(wid).get(0), true));
             if (outs.length == 0) return;
             $("#hint").css("zoom",$("#quiz").css("zoom")*0.8).html(`<span style="background:#58a;">Hint:</span><br/>`).show();
-            $("#hint .userans").remove();
             outs.map(wid => $("#quiz .word").eq(wid).clone().appendTo("#hint"));
+            $("#hint .keyinput").remove();
         };
         //枠内クリックで入力欄表示
         $("#quiz .elm").unbind().click(function() {
@@ -694,6 +695,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             
             let wid = val.match(/[0-9]+/);
             if (wid) {
+                $("#quiz .wid").css("font-size","");
                 $("#quiz .word").eq(wid - 1).find(".glyph:first").find(".elm:first").click();
                 return;
             }
@@ -805,6 +807,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             
             // Ctrl + Shift
             if (e.shiftKey && $("#quiz .pselected .kidx").size()) {
+                $("#quiz .wid").css("font-size","");
                 let kids = $("#quiz .selected .kidx").get().map($v => [...$v.classList].find(v=>v.match(/^kidx[0-9]/)))
                     .filter((v,i,self) => self.indexOf(v) == i);
                 if (kids.length < 2) return;
@@ -817,6 +820,7 @@ const draw_puzzle = function(qwords, $quiz, options)
 
             // Ctrl + 左右キー
             if (e.key == "ArrowRight" || e.key == "ArrowLeft") {
+                $("#quiz .wid").css("font-size","");
                 let $glyphs = $("#quiz .word")
                     .filter(function() { return $(this).find(".undone").size() || $(this).find(".glyph.selected").size(); })
                     .find(".glyph");
@@ -845,9 +849,12 @@ const draw_puzzle = function(qwords, $quiz, options)
             $("#bonus").text(parseInt((bpm * bpm) * 20));
         });
         // 画面内に収まるように縮小
-        let rate = Array(10).fill(0).map((_,i) => 170 - i * 10).find(rate => {
+        let rate = Array(10).fill(0).map((_,i) => 150 - i * 10).find(rate => {
             $("#quiz").css("zoom", rate/100);
             return isHeightViewable($("#quiz .word:last-child").get(0));
+        });
+        $("#zoomer").val((rate / 10) - 10).unbind().change(function() {
+            $("#quiz").css("zoom", $(this).val() / 10 + 1);
         });
         $("#top").hide();
         $("#pt").text(0);
@@ -882,6 +889,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             });
             if (_n < _nmax) return setTimeout(() => { startup(_n + 1); }, 30);
             $("#quiz").css("overflow", "").addClass(isHeightViewable($("#quiz .word:last-child").get(0)) ? "":"scroll");
+            $("#quiz .word").css("transform","");
             if (!notimer) timer.start(0);
         };
         setTimeout(() => { startup(0); }, 30);
@@ -900,9 +908,9 @@ const draw_puzzle = function(qwords, $quiz, options)
         
         $("#point").text(pt);
         $(".tpoint").text(pt + tpt);
-        $("#score").show();
-        $("#message").fadeIn();
-        $("#keyinput").hide();
+        $("#message, #score, #control").show();
+        $("#keyinput, #howto, #qlists").hide();
+        $("#overlap").fadeIn();
 
         se.play("clear");
         userdata.save_result(qid, pt, tpt, $("#message input").val());
@@ -912,11 +920,8 @@ const draw_puzzle = function(qwords, $quiz, options)
         $("#message input").focus().unbind().keypress(function(e) {
             if (e.which != 13 && e.key != "Enter") return;
             userdata.save_result(qid, pt, tpt, $(this).val());
-            $("#message").fadeOut();
-            $("#control").show();
-            $("#howto").hide();
-            $("#overlap").fadeIn();
             $("#quiz .word").css({"opacity":"1"});
+            $("#message").fadeOut();
         });
     };
     
@@ -947,6 +952,7 @@ const TopMenu = function() {
                 show_menu("frg");
             }).fail(function(){
                 $("#example, #daily, #newest").text("(読込失敗)");
+                console.log("fail toload")
                 loadfile();
             });
         };
@@ -965,98 +971,56 @@ const TopMenu = function() {
     const show_menu = (arg) => {
         if (!quiztable.length || !$("#fragtable").hasClass("done") || !$("#fragtablep").hasClass("done")) return;
         console.log("showmenu",arg);
-        $("#qlists").hide();
-        const draw_top = () => {
-            if ($(".menu .word").size()) return;
-            //$("#example, #example_answer").text("");
-            $("#overlap").show();
-            $(".sampleword").each(function() {
-                let w = $(this).text().split("/");
-                $(this).text("");
-                qscreen.draw(w, $(this), {open: !$(this).hasClass("qex")});
-                if ($(this).hasClass("qex")) return;
-                $(this).find(".wid").text("");
-                $(this).find(".glyph").each(function() {
-                    const $elms = $(this).find(".elm");
+
+        // draw the sample quiz
+        $("#overlap").show();
+        $(".sampleword").each(function() {
+            let w = $(this).text().split("/");
+            $(this).text("");
+            qscreen.draw(w, $(this), {open: !$(this).hasClass("qex")});
+            if ($(this).hasClass("qex")) return;
+            $(this).find(".wid").text("");
+            $(this).find(".glyph").each(function() {
+                const $elms = $(this).find(".elm");
+                if (($elms.length == 1) && (1 < Math.random() * 3)) return;
+                $elms.eq(parseInt(Math.random() * $elms.length)).addClass("pselected");
+            });
+        });
+        {
+            let i = 0;
+            setInterval(() => {
+                i = (i + 1) % 90;
+                let loop = Math.sin(i * 2 * Math.PI/90);
+                $("#title .word").css("transform",`rotate(${4*loop}deg) translate(0,30px)`);
+                if (i % 18 != 0) return;
+                $("#title .glyph").each(function() {
+                    const $elms = $(this).find(".elm").removeClass("pselected");
                     if (($elms.length == 1) && (1 < Math.random() * 3)) return;
                     $elms.eq(parseInt(Math.random() * $elms.length)).addClass("pselected");
                 });
-            });
-            $("#title .glyph").css("zoom","2.5");
-            $("#title .glyph.hiragana").css("zoom","1.7");
-            $("h2.sampleword .glyph.hiragana").css("zoom","0.8");
-            $("#title .correct, h2.sampleword .correct").css("text-shadow","-1px -1px 2px #522, 1px 1px 1px #c77")
-                .css("color","rgba(170,90,40,.8)");
-            $("h2.sampleword .correct").css("color","rgba(100,40,20,.8)");
-            {
-                let i = 0;
-                setInterval(() => {
-                    i = (i + 1) % 90;
-                    let loop = Math.sin(i * 2 * Math.PI/90);
-                    $("#title .word").css("transform",`rotate(${4*loop}deg) translate(0,30px)`);
-                    if (i % 18 == 0)
-                        $("#title .glyph").each(function() {
-                            const $elms = $(this).find(".elm").removeClass("pselected");
-                            if (($elms.length == 1) && (1 < Math.random() * 3)) return;
-                            $elms.eq(parseInt(Math.random() * $elms.length)).addClass("pselected");
-                        });
-                }, 50);
+            }, 50);
+        }
+        $(".qex").each(function(i) {
+            if (i == 1) {
+                $(this).find(".correct").show();
+                $(this).find(".elm div").hide();
             }
-            $(".qex").each(function(i) {
-                if (i == 1) {
-                    $(this).find(".correct").show();
-                    $(this).find(".elm div").hide();
-                }
-                if (i == 2) {
-                    $(this).find(".glyph").eq(1).addClass("selected");
-                    $(this).find(".kidx2").parent().addClass("pselected");
-                }
-            });
-
-            $("#overlap").hide();
-            //if ($("#overlap .topbox").width() < $("body").width())
-            //    $("#overlap .topbox").css("width",$("body").width()*0.9);
-            $("#resume").hide();
-            try {
-                userdata.loadpartway(true);
-            } catch (e) {
-                
+            if (i == 2) {
+                $(this).find(".glyph").eq(1).addClass("selected");
+                $(this).find(".kidx2").parent().addClass("pselected");
             }
-            $("#newstart").click(function() {
-                se.play("tap");
-                $("#quiz").text("");
-                $("#overlap, #howto, #q1st, #main").show();
-                $("#control, #config, .closer, #menu, #keyinput").hide();
-                $("#q1st").show().css("opacity",1).find("button").click(function() {
-                    se.play("tap");
-                    $("#menu, #howto").hide();
-                    $("#main").show();
-                    $(this).fadeOut(function() {
-                        $(".qoption").eq(0).click();
-                        $(".closer").show();
-                    });
-                });
-            });
-
-        };
-
-        
-        draw_top();
-        $("#qlists").html('<div style="display:none;pointer-events:none;" id="qdesc">starts</div>');
-        $("#control .gonext").eq(0).unbind().click(function() {
-            se.play("tap");
-            $("#main,#overlap").hide();
-            $("#menu,.menu").show();
-            $("#resume").hide();
-            $(".loading").remove();
-            $("#keyinput").appendTo("#main");
-            $(".qoption").css("opacity","");
-            quiztable.map(v=>v.resume=false);
-            $(window).unbind();
-            localStorage.removeItem("savepartway");
-            userdata.loadpartway();
         });
+        $("#overlap,#resume").hide();
+        // start the resumed quiz
+        try {
+            userdata.loadpartway(true);
+        } catch (e) {
+        }
+        
+        // draw the quiztable
         console.log(quiztable);
+        
+        $("#qlists").html('<button class="closer">X</button><div style="display:none;pointer-events:none;" id="qdesc">starts</div>');
         quiztable.slice(0,30).forEach(function(factor, idx) {
             let q = factor.q;
             let words = q.split("/");
@@ -1109,7 +1073,84 @@ const TopMenu = function() {
             $("#qdesc").show().css(p).html($(this).html()).find(".qdesc,.qinfo").show();
         });
 
-        if (0) {
+        // clickevents in #menu
+        $("#newstart").click(function() {
+            se.play("tap");
+            $("#quiz").text("");
+            $("#overlap, #howto, #q1st, #main").show();
+            $("#control, #qlists, #config, .closer, #menu, #keyinput").hide();
+            $("#q1st").show().css("opacity",1).find("button").show().click(function() {
+                se.play("tap");
+                $("#menu, #howto").hide();
+                $("#main").show();
+                $(this).fadeOut(function() {
+                    $(".qoption").eq(0).click();
+                    $(".closer, #config").show();
+                });
+            });
+        });
+        $(".menu .word").unbind().hover(function() {
+            se.play("gselect");
+            $(this).css("background-color","rgba(90,90,90,.5)").css("background-blend-mode","multiply").find(".glyph").addClass("selected");
+        }, function() {
+            $(this).css("background-color","").find(".glyph").removeClass("selected")
+        });
+        
+        $("#archives").click(function() {
+            $("#control, #message, #howto").hide();
+            $("#overlap").show();
+            $("#qlists").fadeIn();
+            //$("#title").hide();
+        });
+
+        // clickevents in #main
+        $(".showrule").unbind().click(function() {
+            $("#control, #message, #qlists").hide();
+            $("#overlap, #howto").show();
+        });
+
+        $("#main h2").unbind().click(function() {
+            $("#howto, #message, #qlists").hide();
+            $("#overlap,#control").show();
+        });
+
+        // clickevents in #overlap
+        $("#control .gonext").eq(0).unbind().click(function() {
+            se.play("tap");
+            $("#main,#overlap").hide();
+            $("#menu,.menu").show();
+            $("#resume").hide();
+            $(".loading").remove();
+            $("#keyinput").appendTo("#main");
+            $(".qoption").css("opacity","");
+            quiztable.map(v=>v.resume=false);
+            $(window).unbind();
+            localStorage.removeItem("savepartway");
+            userdata.loadpartway();
+        });
+        $(".closer").click(function() {
+            $("#overlap").hide();
+        });
+        $("#rmrec").click(function() {
+            confirm("やっちまうか");
+            localStorage.removeItem("qclear");
+            userdata.loadpartway();
+        });
+
+        return;
+    };
+    const unsed = () => {  // 使ってないかも
+        $(".help").click(function() {
+            if ($(this).prop("id") == "showrule") return;
+            let $helper = $(this).parent().find(".helper");
+            if ($helper.is(":visible")) $helper.hide(); else $helper.show();
+        });
+        $("#menu a, button.anch").click(function() {
+            location.href = $(this).attr("href");
+            anchor_check();
+        });
+
+        // 自動生成用
         $("#menu").show();
         $("#newest").text("");
         let $option = $('<div>').addClass("qoption").appendTo("#qlists");
@@ -1149,57 +1190,11 @@ const TopMenu = function() {
             $('<div>').addClass("loading").text("読込中").appendTo(this)
                 .animate({"opacity":".5"}, () => { main(); });
             });
-        }
 
-        $(".closer").click(function() {
-            return $("#overlap").hide();
-            let $parent = $(this).parents("#overlap").hide();
-            let title = $parent.find("h2,h4").eq(0).text();
-            if($parent.hasClass("helper")) return;
-            $("<span>").text(title).addClass("minimized")
-                .insertAfter($parent).click(function() {
-                    $(this).prev().show();
-                    $(this).remove();
-                });
-        });
-        $(".help").click(function() {
-            if ($(this).prop("id") == "showrule") return;
-            let $helper = $(this).parent().find(".helper");
-            if ($helper.is(":visible")) $helper.hide(); else $helper.show();
-        });
-        $("#menu a, button.anch").click(function() {
-            location.href = $(this).attr("href");
-            anchor_check();
-        });
-
-        $("#main h2").unbind().click(function() {
-            $("#howto").hide();
-            $("#overlap,#control").show();
-        });
-
-        $(".showrule").unbind().click(function() {
-            $("#control").hide();
-            $("#overlap, #howto").show();
-        });
-
-        $("#archives").click(function() {
-            $("#qlists").fadeIn();
-            $("#title").hide();
-        });
-        $(".menu .word").unbind().hover(function() {
-            se.play("gselect");
-            $(this).css("background-color","rgba(90,90,90,.5)").css("background-blend-mode","multiply").find(".glyph").addClass("selected");
-        }, function() {
-            $(this).css("background-color","").find(".glyph").removeClass("selected")
-        });
-
-        return;
-        
         if (location.href.indexOf("#debug") < 0 || userdata.makeup_save()) return;
 
         $("#top").hide();
 
-        return;
         $.getScript("./makequiz_tool.js");
         $.getScript("./jisho_tool.js");
     };

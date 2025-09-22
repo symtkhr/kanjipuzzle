@@ -55,7 +55,10 @@ span.minimized {
     display:inline-block;
 }
 .help, .closer {
-    float:right;
+    position:absolute;
+    z-index:2;
+    right:0;
+    top:0;
     height:22px;
     width:22px;
     padding:0px;
