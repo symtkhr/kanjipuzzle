@@ -19,6 +19,7 @@
       height:100vh;
   }
   #title .correct, h2.sampleword .correct {
+      color: rgba(170,90,40,.8);
       text-shadow: -1px -1px 2px #522, 1px 1px 1px #c77;
   }
   #title {
@@ -26,14 +27,14 @@
       width:100%;
       text-align:center;
       min-width:360px;
-      color: rgba(170,90,40,.8);
   }
-  #title .glyph {zoom:2.5;};
   #title .glyph.hiragana {zoom:1.7; }
-  h2.sampleword .glyph.hiragana {zoom: 0.8; }
-  h2.sampleword {
+  #title .glyph { zoom:2.5; }
+
+  h2.sampleword .correct {
       color: rgba(100,40,20,.8);
   }
+  h2.sampleword .glyph.hiragana { zoom: 0.8; }
   #menu {
       display:flex; flex-wrap:wrap;height:100vh;
       background-image:url(p0499_m.jpg);
@@ -54,6 +55,9 @@
   #quiz.scroll {
       padding-top:30px;
       overflow:hidden scroll;
+  }
+  #quiz.nowid .wid, #menu .wid, #howto .wid {
+      font-size:0px;
   }
   #hint {
       border:3px #156 dotted;position:fixed;
@@ -104,6 +108,11 @@
   .showrule {
       height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;
   }
+  #greet {
+      text-shadow:0 0 5px #3cc;
+      color: #008;
+      font-weight: bold;
+  }
 </style>
 </head>
 
@@ -149,14 +158,13 @@
         <button class="gonext">次の問題へ</button>
       </div>
     </div>
-    <div id="message">
-      <div style="margin:10px; text-align:center;font-size:20pt;">
-        クリア！<br />
-        おつかれさまでした。
-        <div style="text-align:center;font-size:12pt; width:100%;">
-          名前:<input style="width:200px;" enterkeyhint="done" /><br/>
-          <span class="tpoint"></span>点
-        </div>
+    <div id="message"  style="display: block; display:flex; flex-direction:column; border-radius: 40px; height: 200px; overflow: hidden;">
+      <div style="flex-grow:1; font-size:15pt; display: flex;  justify-content: center;  align-items: center;">
+        <div id="greet">Greetings</div></div>
+      <div style="text-align: center; font-size: 12pt; width: 100%; height: 110px;">
+        名前:<input style="width:200px; font-size:15pt; background-color:#010; color: #8c8; font-family:monospace;" enterkeyhint="done"><br />
+        <span class="tpoint"></span>点<br />
+        <button class="submit">記録(Enter)</button>
       </div>
     </div>
     <div style="margin:auto; margin-right:10px; margin-top:10px; position:relative;display:flex; flex-wrap:wrap;" id="howto">
@@ -165,14 +173,14 @@
       <h4>●例題</h4>
       同じ数字のところに同じ漢字パーツが入って熟語が完成します。
       <div id='qex'>
-        <div class="sampleword qex" style="display:inline-block;">徒競走</div>
+        <div class="sampleword qex" style="display:inline-block;">花模様</div>
         →
-        <div class="sampleword qex" style="display:inline-block;">徒競走</div>
+        <div class="sampleword qex" style="display:inline-block;">花模様</div>
       </div>
-      盤面をクリックして黄色く光るマスの漢字を入力してください。<br/>(まとめて「競走」とも打てます)
+      盤面をクリックして黄色く光るマスの漢字を入力してください。<br/>(まとめて「模様」とも打てます)
       <div id='qex2' style="padding-top:15px;position:relative;">
-        <input class="helpuserans" value="競" disabled style="position:absolute; top:0px; left:75px; width:120px;"/>
-        <div id="example2" class="sampleword qex">徒競走</div>
+        <input class="helpuserans" disabled style="position:absolute; top:0px; left:75px; width:120px;"/>
+        <div id="example2" class="sampleword qex">花模様</div>
       </div>
       わからないときは「?」入力でヒントが出るかもしれません。
       <div style="text-align:center;display:none;" id="q1st">
@@ -181,8 +189,8 @@
     </div>
     <div class="topbox helper" style="background-color:#bcc;" id="config">
       <h4>●設定</h4><br/>
-      <label><input type="checkbox" checked />SE</label><br/>
-      <label><input type="checkbox" checked />語番号表示</label> <br/>
+      <label><input type="checkbox" id="onse" checked />SE</label><br/>
+      <label><input type="checkbox" id="onwid" />語番号表示</label> <br/>
       <label>サイズ自動調整:
         <select id="zoomer">
           <option>-4</option><option>-3</option><option>-2</option><option>-1</option>

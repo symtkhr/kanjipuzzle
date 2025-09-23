@@ -287,10 +287,10 @@ div.cdp {
 }
 
 #message {
-    display:none; width:300px; height:130px; 
+    display:none; width:300px; height:200px; 
     position:absolute; bottom:0; left:0; right:0; top:0;
     background-color:#bcc; margin:auto; border:2px solid gray; 
-    border-radius:100px; line-height:25px; z-index:4;
+    border-radius:40px; line-height:25px; z-index:4;
 }
 
 /* #menu */

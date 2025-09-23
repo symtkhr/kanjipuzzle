@@ -60,6 +60,7 @@ String.prototype.jischange = function() {
 String.prototype.toHalfWidth = function() {
     return this.replace(/[！-ｚ]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x20 - 0xff00));
 };
+
 //かな・カナの大小を同一視する
 String.prototype.kanachange = function() {
     if (!this) return "";
@@ -78,7 +79,15 @@ const SoundEffect = function() {
         "correct": "decision51.mp3",
         "clear": "koto-kasso.mp3",
     };
-    this.play = (e) => { (new Audio("sounds/" + (file[e] || file.start))).play(); };
+    const audio = Object.entries(file).reduce((ret, [key, file]) => {
+        ret[key] = new Audio("sounds/" + file);
+        return ret;
+    }, {});
+    let enabled = true;
+    this.enable = (val) => { enabled = val; };
+    this.play = (e) => {
+        if (enabled) (audio[e] || audio.start).play();
+    };
 };
 
 const UserRecord = function() {
@@ -91,9 +100,11 @@ const UserRecord = function() {
             localStorage.removeItem("savepartway");
             return;
         }
-        let undone = $('.kidx.undone').map(function() {
+        let undone = $('#quiz .kidx.undone').map(function() {
             return parseInt($(this).text());
         }).get().filter((x, i, self) => (self.indexOf(x) == i));
+        if (!undone.length) return;
+        
         let pt = parseInt($("#point").text(), 10);
         const val = {
             date: (new Date()).getTime(),
@@ -536,7 +547,7 @@ const draw_puzzle = function(qwords, $quiz, options)
     }
     $quiz.find(".hiragana .elm .kpart").css("font-size", "");
 
-    $quiz.find(".wid").css("font-size","0");
+    if (!$("#onwid").prop("checked")) $quiz.addClass("nowid");
     return (Object.keys(kidx).length);
 }
 
@@ -560,6 +571,7 @@ const draw_puzzle = function(qwords, $quiz, options)
         $("#main .qid").text(quiz.qid);
         $("#knjtb").val('');
         $("#quiz").text('');
+        $("#point,#bonus").text(0);
         $("#main").show();
         $("#top").hide();
         $("#wordlist").val(qlist);
@@ -580,10 +592,11 @@ const draw_puzzle = function(qwords, $quiz, options)
         });
         
         // パズル描画
-        let qlen = draw_puzzle(
+        this.quiz.qlen = draw_puzzle(
             qlist.split("/"), $("#quiz"),
             {openlist: quiz.def.split("/").filter(def => def.indexOf("x:") != -1).join("")}
         );
+        let qlen = this.quiz.qlen;
         
         // 中断時の保存
         $(window).unbind().on('pagehide', (e) => userdata.savepartway(qid));
@@ -641,44 +654,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             }
             popup_otheruses(".kidx" + classname);
         });
-        
-        // もう要らないかも
-        $("#sh input").unbind().keypress(function(e){
-            if (e.which != 13 && e.key != "Enter") return;
-            //全角半角
-            let val = $(this).val().toHalfWidth().trim();
-            // 入力判定
-            var m = val.trim().match(/^p([0-9]+)/i);
-            if (m) {
-                let classname = m[1];
-                $("#quiz .elm").removeClass("pselected");
-                $("#quiz .kidx" + classname).parent().addClass("pselected");
-                $(this).select();
-                return;
-            }
-            var m = val.trim().match(/^([0-9]+)([^0-9-]+)$/);
-            if (m) {
-                let value = m[2];
-                let $glyphs = $(".word").eq(m[1]-1).find(".glyph");
-                let pos = 0;
-                for (; pos < $glyphs.size() && "?・*".indexOf(value.charAt(pos)) != -1 ; pos++);
-                $("#quiz .glyph").removeClass("selected");
-                $glyphs.eq(pos).addClass("selected");
-                
-                answer_check(value);
-            }
-            var m = val.trim().match(/^([0-9]+)([^0-9]+)([0-9]+)([^0-9]+)$/);
-            if (m) {
-                let value = m[4];
-                let $glyphs = $(".word").eq(m[1]-1).find(".glyph");
-                $("#quiz .glyph").removeClass("selected");
-                console.log(pos);
-                $glyphs.eq(m[3]-1).addClass("selected");
-                answer_check(value);
-            }
-            $(this).select();
-        });
-        
+
         $(".userans").unbind().keypress(function(e){
             if (e.which != 13 && e.key != "Enter") return;
             
@@ -695,7 +671,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             
             let wid = val.match(/[0-9]+/);
             if (wid) {
-                $("#quiz .wid").css("font-size","");
+                $("#onwid").prop("checked", true).trigger("change");
                 $("#quiz .word").eq(wid - 1).find(".glyph:first").find(".elm:first").click();
                 return;
             }
@@ -746,60 +722,70 @@ const draw_puzzle = function(qwords, $quiz, options)
                 return false;
             });
 
-        //伏せられていた割合に応じて加点
-        trate = trate / $word.find(".glyph").size();
-        let pt = parseInt($("#point").text(), 10) + trate * trate * 9;
+            //伏せられていた割合に応じて加点
+            trate = trate / $word.find(".glyph").size();
+            let pt = parseInt($("#point").text(), 10) + trate * trate * 9;
+            
+            if (!undraw) {
+                $("#g_log").val(g_log);
+                userdata.savepartway(qid);
+                $(".judge").show().animate({"left":"-120px","font-size":"300px","opacity":"0"}, function() {
+                    $(this).remove();
+                });
+                se.play(trate ? "correct" : "incorrect");
+            }
 
-        if (!undraw) {
-            $(".judge").show();
-            $("#g_log").val(g_log);
-            userdata.savepartway(qid);
+            if (0 == $word.find(".toopen").size()) {
+                return;
+            }
 
-            setTimeout(() => {
-                $(".judge").fadeOut(200, function() {
-                    $(this).remove(); }); }, 300);
-            se.play(trate ? "correct" : "incorrect");
-        }
-
-        if (0 == $word.find(".toopen").size()) {
-            return;
-        }
-
-        //パーツ開け
-        let opened = 0;
-        $word.find(".toopen").each(function() {
-            $(this).removeClass("toopen").find(".elm").each(function() {
-                let c = $(this).find(".kidx");
-                if (c.hasClass("undone")) opened++;
-                if (!c || !c.html()) return;
-                c = c.prop("class").match(/kidx([0-9]+)/);
-                if (!c) return;
-                $("." + c[0]).removeClass("undone");
-                $("." + c[0]).hide().next().show();
+            //パーツ開け
+            let opened = 0;
+            $word.find(".toopen").each(function() {
+                $(this).removeClass("toopen").find(".elm").each(function() {
+                    let c = $(this).find(".kidx");
+                    if (c.hasClass("undone")) opened++;
+                    if (!c || !c.html()) return;
+                    c = c.prop("class").match(/kidx([0-9]+)/);
+                    if (!c) return;
+                    $("#quiz ." + c[0]).removeClass("undone").hide().next().show();
+                });
             });
-        });
-        //開けたパーツの数に応じて加点
-        pt += opened * opened;
-        $("#point").text(parseInt(pt, 10));
-
-        if (undraw) return;
-        //全パーツが開いたグリフを表示
-        $(".glyph").each(function() {
-            if ($(this).find(".undone").size() > 0) return;
-            let n = $(this).parent().find(".glyph").index($(this));
-            $(this).find(".correct").show();
-            $(this).find(".elm div").hide();
-        });
-        // 全パーツが開いた単語を半透明化
-        $("#quiz .word").filter(function() { return $(this).find(".undone").size() == 0 }).animate({"opacity":".5"});
-        $(".userans").select();
-        userdata.savepartway(qid);
-        if ($("#quiz .kidx.undone").size() == 0) show_ending(qlen);
-    };
+            //開けたパーツの数に応じて加点
+            pt += opened * opened;
+            $("#point").text(parseInt(pt, 10));
+            
+            if (undraw) return;
+            //全パーツが開いたグリフを表示
+            $("#quiz .glyph").each(function() {
+                if ($(this).find(".undone").size() > 0) return;
+                let n = $(this).parent().find(".glyph").index($(this));
+                $(this).find(".correct").show();
+                $(this).find(".elm div").hide();
+            });
+            // 全パーツが開いた単語を発光
+            let $w = $("#quiz .word").filter(function() {
+                return !$(this).hasClass("wdone") && ($(this).find(".undone").size() == 0);
+            }).addClass("wdone");
+            const cb = (n) => {
+                $w.find(".correct").css({"text-shadow":`0 0 ${n}px #c00`,"color":`rgb(${20*n+50},${20*n},${13*n})`})
+                    .parent().find(".elm").css({
+                        "box-shadow":`0 0 ${n/2}px #f99,  inset 0 0 ${n/2}px #f00`,
+                        "border":`rgb(${144+(255-144)*n/10},${34+(160-34)*n/10},${8*n}) solid 1px`,
+                    });
+                if (n < 10) return setTimeout(() => { cb(n+1); }, 50);
+                $(".wdone .elm").css("box-shadow","");
+                $(".wdone .correct").css({"text-shadow":"0 0 4px #500","color":"#fc9"});
+            };
+            cb(0);
+            $(".userans").select();
+            userdata.savepartway(qid);
+            if ($("#quiz .kidx.undone").size() == 0) show_ending(qlen);
+        };
 
         $(document).keydown(function(e) {
             if (e.ctrlkey && $("#quiz .glyph.selected").size() == 0)
-                $(".glyph").eq(0).find(".kidx").eq(0).click();
+                $("#quiz .glyph").eq(0).find(".kidx").eq(0).click();
             
             if (!e.ctrlKey) return;
             if (e.key == "Enter") return;
@@ -807,7 +793,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             
             // Ctrl + Shift
             if (e.shiftKey && $("#quiz .pselected .kidx").size()) {
-                $("#quiz .wid").css("font-size","");
+                $("#onwid").prop("checked", true).trigger("change");
                 let kids = $("#quiz .selected .kidx").get().map($v => [...$v.classList].find(v=>v.match(/^kidx[0-9]/)))
                     .filter((v,i,self) => self.indexOf(v) == i);
                 if (kids.length < 2) return;
@@ -820,14 +806,11 @@ const draw_puzzle = function(qwords, $quiz, options)
 
             // Ctrl + 左右キー
             if (e.key == "ArrowRight" || e.key == "ArrowLeft") {
-                $("#quiz .wid").css("font-size","");
-                let $glyphs = $("#quiz .word")
-                    .filter(function() { return $(this).find(".undone").size() || $(this).find(".glyph.selected").size(); })
-                    .find(".glyph");
+                $("#onwid").prop("checked", true).trigger("change");
+                let $glyphs = $("#quiz .word:not(.wdone) .glyph, #quiz .glyph.selected")
+                let n = $glyphs.index($("#quiz .glyph.selected")) + (e.key == "ArrowRight" ? 1 : -1);
                 let max = $glyphs.size();
-                console.log(max, e.key);
-                let n = $glyphs.index($("#quiz .glyph.selected"));
-                $glyphs.eq((n + (e.keyCode == 39 ? 1 : -1) + max) % max).find(".kidx").eq(0).click();
+                $glyphs.eq((n + max) % max).find(".kidx").eq(0).click();
             }
         }).keyup(function(e) {
             if (!e.ctrlKey) return;
@@ -848,6 +831,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             let bpm = qlen * 60 / (count || 0.5);
             $("#bonus").text(parseInt((bpm * bpm) * 20));
         });
+
         // 画面内に収まるように縮小
         let rate = Array(10).fill(0).map((_,i) => 150 - i * 10).find(rate => {
             $("#quiz").css("zoom", rate/100);
@@ -857,7 +841,6 @@ const draw_puzzle = function(qwords, $quiz, options)
             $("#quiz").css("zoom", $(this).val() / 10 + 1);
         });
         $("#top").hide();
-        $("#pt").text(0);
 
         if (quiz.resume) return;
         start_animation(qlen);
@@ -895,34 +878,54 @@ const draw_puzzle = function(qwords, $quiz, options)
         setTimeout(() => { startup(0); }, 30);
     };
 
-    const show_ending = (qlen) => {
+    const show_ending = () => {
 
         if ($("#srvlog").size()) return;
         
         timer.stop();
         $(document).unbind();
-        let qid = this.quiz.qid;//parseInt($(".qid:last").text()) - 1;
+
+        let qid = this.quiz.qid;
+        let qlen = this.quiz.qlen;
         let bpm = qlen * 60 / timer.count();
         let pt = parseInt($("#point").text(), 10);
         let tpt = parseInt((bpm * bpm) * 20);
+
+        const message = [
+            "クリア!\nおつかれさまでした。",
+            "すばらしい\n非常にすばらしい!",
+            "お見事!\nよくできました。",
+            "でかした!\nよくやった!",
+            "お楽しみいただけました\nでしょうか！",
+            "完成！\nお上手ですね",
+        ];
+        $("#greet").get(0).innerText = message[parseInt(Math.random() * message.length)];
         
+        userdata.save_result(qid, pt, tpt, $("#message input").val());
         $("#point").text(pt);
         $(".tpoint").text(pt + tpt);
-        $("#message, #score, #control").show();
-        $("#keyinput, #howto, #qlists").hide();
-        $("#overlap").fadeIn();
-
-        se.play("clear");
-        userdata.save_result(qid, pt, tpt, $("#message input").val());
+        $("#keyinput, #howto, #qlists, #control").hide();
+        $("#message").css("left",$("#overlap").width()+"px");
         $(".gonext").eq(1).removeClass("withheld");
-        $(".qoption.withheld").eq(0).removeClass("withheld");
-        
-        $("#message input").focus().unbind().keypress(function(e) {
-            if (e.which != 13 && e.key != "Enter") return;
-            userdata.save_result(qid, pt, tpt, $(this).val());
-            $("#quiz .word").css({"opacity":"1"});
-            $("#message").fadeOut();
-        });
+        let n = menu.quiztable().findIndex(q => q.qid == qid) + 2;
+        $(".qoption").filter(function(i) { return i < n; }).removeClass("withheld");
+
+        setTimeout(() => {
+            se.play("clear");
+            $("#overlap, #score, #message").show();
+            $("#message").animate({"left":0},function() {
+                $("#message .submit").click(function() {
+                    userdata.save_result(qid, pt, tpt, $("#message input").val());
+                    $("#quiz .word").css({"opacity":"1"});
+                    $("#message").fadeOut();
+                });
+                $("#message input").focus().unbind().keypress(function(e) {
+                    if (e.which != 13 && e.key != "Enter") return;
+                    $("#message .submit").click();
+                });
+                $("#control").show();
+            });
+        }, 1000);
     };
     
     this.draw = draw_puzzle;
@@ -951,12 +954,10 @@ const TopMenu = function() {
                 });
                 show_menu("frg");
             }).fail(function(){
-                $("#example, #daily, #newest").text("(読込失敗)");
                 console.log("fail toload")
                 loadfile();
             });
         };
-
 
         $("#fragtable,#fragtablep").load(function(){
             let txt = $(this).contents().find("body").text();
@@ -973,6 +974,7 @@ const TopMenu = function() {
         console.log("showmenu",arg);
 
         // draw the sample quiz
+        kanjifrag.definelocal("化:/莫:Z艹旲/旲:");
         $("#overlap").show();
         $(".sampleword").each(function() {
             let w = $(this).text().split("/");
@@ -986,6 +988,19 @@ const TopMenu = function() {
                 $elms.eq(parseInt(Math.random() * $elms.length)).addClass("pselected");
             });
         });
+        kanjifrag.definelocal("");
+        $(".qex").each(function(i) {
+            if (i == 1) {
+                $(this).find(".correct").show();
+                $(this).find(".elm div").hide();
+            }
+            if (i == 2) {
+                let $g = $(this).find(".glyph").eq(1).addClass("selected");
+                $(this).find(".kidx2").parent().addClass("pselected");
+                $(this).siblings("input").val($g.find(".correct").text());
+            }
+        });
+        $("#overlap,#resume").hide();
         {
             let i = 0;
             setInterval(() => {
@@ -1000,17 +1015,6 @@ const TopMenu = function() {
                 });
             }, 50);
         }
-        $(".qex").each(function(i) {
-            if (i == 1) {
-                $(this).find(".correct").show();
-                $(this).find(".elm div").hide();
-            }
-            if (i == 2) {
-                $(this).find(".glyph").eq(1).addClass("selected");
-                $(this).find(".kidx2").parent().addClass("pselected");
-            }
-        });
-        $("#overlap,#resume").hide();
         // start the resumed quiz
         try {
             userdata.loadpartway(true);
@@ -1025,12 +1029,8 @@ const TopMenu = function() {
             let q = factor.q;
             let words = q.split("/");
             let $option = $('<div>').addClass("qoption").appendTo("#qlists");
-            let $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
-            console.log(q.done);
+            let $qid = $('<div>').addClass("qid").appendTo($option).text(factor.qid);
 
-            if(0) return  $('<div>').addClass("qinfo").appendTo($option)
-                .text(JSON.stringify(quiztable[idx],null,2));
-            
             $('<div>').addClass("qclear").appendTo($qid).text('✔');
             let d = new Date(factor.date.split("T").shift() + "T12:00+0900");
             $('<div>').addClass("qinfo").appendTo($option)
@@ -1038,19 +1038,22 @@ const TopMenu = function() {
                       d.toJSON().split("T").shift());// + " " + factor.author);
             $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
             if (factor.done) $option.addClass('cleared');
-            else $option.addClass("withheld");
-            // if (quiztable.length == idx + 1)
         });
-        $(".qoption.withheld").eq(0).removeClass("withheld");
+        {
+            let n = quiztable.findLastIndex(q => q.done);
+            $(".qoption").filter(function(i) { return n + 1 < i; }).addClass("withheld");
+        }
         $(".qoption").click(function(i) {
             if ($(this).hasClass("withheld")) return;
             let qid = parseInt($(this).addClass("selected").find(".qid").text());
+            let quiz = quiztable.find(q => qid == q.qid);
+            console.log(i,quiz);
             $(this).siblings(".qoption").animate({"opacity": "0"});
             let cleared = $(this).hasClass("cleared");
             
             $('<div>').addClass("loading").text("読込中").appendTo(this)
                 .animate({"opacity":".5"}, function() {
-                    qscreen.start(quiztable[qid - 1]);
+                    qscreen.start(quiz);
                     if (!cleared) return;
                     
                     $("<button>").text("正解表示")
@@ -1078,7 +1081,7 @@ const TopMenu = function() {
             se.play("tap");
             $("#quiz").text("");
             $("#overlap, #howto, #q1st, #main").show();
-            $("#control, #qlists, #config, .closer, #menu, #keyinput").hide();
+            $("#control, #qlists, #config, .closer, #menu, #keyinput, #message").hide();
             $("#q1st").show().css("opacity",1).find("button").show().click(function() {
                 se.play("tap");
                 $("#menu, #howto").hide();
@@ -1131,10 +1134,16 @@ const TopMenu = function() {
         $(".closer").click(function() {
             $("#overlap").hide();
         });
+        $("#onse").change(function() {
+            se.enable($("#onse").prop("checked"));
+        });
         $("#rmrec").click(function() {
-            confirm("やっちまうか");
+            if (!confirm("やっちまうか")) return;
             localStorage.removeItem("qclear");
             userdata.loadpartway();
+        });
+        $("#onwid").change(function() {
+            $("#quiz")[$("#onwid").prop("checked") ? "removeClass":"addClass"]("nowid");
         });
 
         return;
