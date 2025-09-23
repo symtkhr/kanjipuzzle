@@ -573,7 +573,7 @@ const draw_puzzle = function(qwords, $quiz, options)
         $("#quiz").text('');
         $("#point,#bonus").text(0);
         $("#main").show();
-        $("#top").hide();
+        $("#top, #score").hide();
         $("#wordlist").val(qlist);
         $("#redefine").val(quiz.def);
 
@@ -974,7 +974,7 @@ const TopMenu = function() {
         console.log("showmenu",arg);
 
         // draw the sample quiz
-        kanjifrag.definelocal("化:/莫:Z艹旲/旲:");
+        kanjifrag.definelocal("尌:/洛:");
         $("#overlap").show();
         $(".sampleword").each(function() {
             let w = $(this).text().split("/");
@@ -1070,7 +1070,8 @@ const TopMenu = function() {
             if ($(this).hasClass("withheld")) return;
             let p = $(this).position();
             p.top += 40;
-            if (200 < p.left) p.left -= 200;
+            if ($("#qlists").height() < p.top + $("#qdesc").height()) { p.top -= $("#qdesc").height() + 40; }
+            if ($("#qlists").width()  < p.left + $("#qdesc").width()) { p.left = 0; }
             p.position = "absolute";
             p.background = "rgba(192,192,192,.8)";
             $("#qdesc").show().css(p).html($(this).html()).find(".qdesc,.qinfo").show();
