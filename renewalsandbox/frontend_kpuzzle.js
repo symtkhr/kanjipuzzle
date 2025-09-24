@@ -91,6 +91,7 @@ const SoundEffect = function() {
 };
 
 const UserRecord = function() {
+    let playerlog = "";
     const savepartway = (qid) => {
         console.log(timer.is_running, qid);
         if ((!timer.is_running)) {// ($(".qoption").eq(qid - 1).hasClass("resume"))) {
@@ -112,7 +113,7 @@ const UserRecord = function() {
             pt: pt,
             time: timer.count(),
             undone: undone,
-            log: $("#g_log").val(),
+            log: playerlog,
         };
         console.log("save",val);
         localStorage.setItem("savepartway", JSON.stringify(val));
@@ -131,7 +132,7 @@ const UserRecord = function() {
             console.log(localStorage.qclear)
         }
         // ユーザ名
-        $("#message input").val(localStorage.getItem("uname") || "");
+        $("#message input").val(localStorage.uname || "");
 
         // 再開データ
         let savedata = localStorage.getItem("savepartway");
@@ -165,7 +166,7 @@ const UserRecord = function() {
                 $(this).find(".elm div").hide();
             });
 
-            $("#g_log").val(res.log);
+            playerlog = res.log;
             $("#point").text(res.pt);
             timer.start(res.time + 1);
 
@@ -186,8 +187,9 @@ const UserRecord = function() {
         let param = {
             qid: qid,
             score: (pt + ";" + tpt),
-            log: $("#g_log").val() + "@@" + decodeURIComponent(escape(window.atob(location.hash.slice(1)))),
+            log: playerlog + "@@" + decodeURIComponent(escape(window.atob(location.hash.slice(1)))),
             name: name,
+            date: (new Date()).getTime(),
         };
         {
             localStorage.setItem("uname", name);
@@ -232,6 +234,11 @@ const UserRecord = function() {
         return true;
     };
 
+    this.logappend = (applog) => {
+        if (applog) playerlog += ";" + applog;
+        return playerlog;
+    };
+    this.resetlog = () => { playerlog = ""; };
     this.savepartway = savepartway;
     this.loadpartway = loadpartway;
     this.save_result = save_result;
@@ -567,6 +574,7 @@ const draw_puzzle = function(qwords, $quiz, options)
         let qlist = quiz.q;
         kanjifrag.definelocal(quiz.def);
         let qid = quiz.qid;
+        userdata.resetlog();
         
         $("#main .qid").text(quiz.qid);
         $("#knjtb").val('');
@@ -696,7 +704,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             value = value.slice(0, $selected.size() + $selecteds.size());
             $(".userans").val(value);
             
-            let g_log = $("#g_log").val() + ";" + timer.count() + "=";
+            let g_log = timer.count() + "=";
             let trate = 0;
             const is_same = (a, b) => a.kanachange().jischange() == b.kanachange().jischange();
             
@@ -707,7 +715,8 @@ const draw_puzzle = function(qwords, $quiz, options)
                 
                 //正解判定
                 if (!is_same(c, $selected.find(".correct").text())) {
-                    g_log += "x" + $word.find(".wid").text();
+                    let n = $word.find(".glyph").index($("#quiz .glyph.selected"));
+                    g_log += "x[" + $word.find(".wid").text() + "]" + n;
                     $("<div class='judge'>").text("×").appendTo($selected);
                     return true;
                 }
@@ -727,7 +736,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             let pt = parseInt($("#point").text(), 10) + trate * trate * 9;
             
             if (!undraw) {
-                $("#g_log").val(g_log);
+                userdata.logappend(g_log);
                 userdata.savepartway(qid);
                 $(".judge").show().animate({"left":"-120px","font-size":"300px","opacity":"0"}, function() {
                     $(this).remove();
@@ -1000,6 +1009,12 @@ const TopMenu = function() {
                 $(this).siblings("input").val($g.find(".correct").text());
             }
         });
+        // サイズ調整
+        if ($(window).height() < $("#howto").height()) {
+            let r = $(window).height() / $("#howto").height();
+            console.log(r,$(window).height(),$("#howto").height());
+            $("#overlap").css("zoom", r < 0.8 ? 0.8 : r);
+        }
         $("#overlap,#resume").hide();
         {
             let i = 0;
@@ -1025,11 +1040,11 @@ const TopMenu = function() {
         console.log(quiztable);
         
         $("#qlists").html('<button class="closer">X</button><div style="display:none;pointer-events:none;" id="qdesc">starts</div>');
-        quiztable.slice(0,30).forEach(function(factor, idx) {
+        quiztable.slice(0,30).forEach(function(factor, i) {
             let q = factor.q;
             let words = q.split("/");
             let $option = $('<div>').addClass("qoption").appendTo("#qlists");
-            let $qid = $('<div>').addClass("qid").appendTo($option).text(factor.qid);
+            let $qid = $('<div>').addClass("qid").appendTo($option).text(i + 1);//(factor.qid);
 
             $('<div>').addClass("qclear").appendTo($qid).text('✔');
             let d = new Date(factor.date.split("T").shift() + "T12:00+0900");
@@ -1046,7 +1061,7 @@ const TopMenu = function() {
         $(".qoption").click(function(i) {
             if ($(this).hasClass("withheld")) return;
             let qid = parseInt($(this).addClass("selected").find(".qid").text());
-            let quiz = quiztable.find(q => qid == q.qid);
+            let quiz = quiztable[qid-1];//.find(q => qid == q.qid);
             console.log(i,quiz);
             $(this).siblings(".qoption").animate({"opacity": "0"});
             let cleared = $(this).hasClass("cleared");
@@ -1141,7 +1156,17 @@ const TopMenu = function() {
         $("#rmrec").click(function() {
             if (!confirm("やっちまうか")) return;
             localStorage.removeItem("qclear");
-            userdata.loadpartway();
+            location.reload();
+        });
+        $("#dlrec").click(function() {
+            let save = localStorage.qclear;
+            let save0 = JSON.parse(save);
+            //await sha256(save).then(hash => { save0.hash = hash; });
+            let blob = new Blob(JSON.stringify(save0).split(""), {type:"text/plan"});
+            let $link = document.createElement('a');
+            $link.href = URL.createObjectURL(blob);
+            $link.download = 'bushubu.save.dat';
+            $link.click();
         });
         $("#onwid").change(function() {
             $("#quiz")[$("#onwid").prop("checked") ? "removeClass":"addClass"]("nowid");

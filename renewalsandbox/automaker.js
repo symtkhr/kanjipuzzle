@@ -642,13 +642,14 @@ nodeapp.qlistcheck = () => {
     const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
     
     kanjifrag.define(getfile("fragtable.txt"));
-    let origin = JSON.parse(getfile("qlist.json")).map(q => {
+    let qlists = JSON.parse(getfile("qlist.json")).slice(0,30);
+    let origin = qlists.map(q => {
         kanjifrag.definelocal(q.def);
         partquiz.make(q.q.split("/"));
         return {q:q.q, def:q.def, kid:Object.keys(partquiz.kidx).join(""), json:JSON.stringify(partquiz.count)};
     });
     kanjifrag.define(getfile("fragtable.plus.txt"));
-    let remake = JSON.parse(getfile("qlist.json")).map(q => {
+    let remake = qlists.map(q => {
         kanjifrag.definelocal(q.def);
         partquiz.make(q.q.split("/"));
         return {kid:Object.keys(partquiz.kidx).join(""), json:JSON.stringify(partquiz.count)};

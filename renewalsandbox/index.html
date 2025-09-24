@@ -70,7 +70,7 @@
   }
   #overlap {
       opacity:.9;
-      overflow:hidden;
+      overflow:hidden auto;
       position:absolute; text-align:center; bottom:0; left:0; right:0; top:0;
       background-color: rgba(0,0,0,0.5);
       margin:auto; border:2px solid gray;
@@ -199,14 +199,17 @@
         </select>
       </label><br/>
       これまでの記録:<br/>
-      <button class="userrecord withheld">ダウンロードする</button><br/>
+      <button class="userrecord" id="dlrec">ダウンロードする</button><br/>
       <button class="userrecord" id="rmrec">削除する</button>
     </div>
 
     </div>
   </div>
-  </div>
-  <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
-  <iframe src="fragtable.plus.txt" id="fragtablep" style="display:none;"></iframe>
+</div>
+<div style="display:none;">
+  <iframe src="fragtable.txt" id="fragtable"></iframe>
+  <iframe src="fragtable.plus.txt" id="fragtablep"></iframe>
+  <a href="https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec" id="gasapi">GAS</a>
+</div>
 </body>
 </html>
