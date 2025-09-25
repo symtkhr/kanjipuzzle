@@ -923,7 +923,7 @@ const draw_puzzle = function(qwords, $quiz, options)
             se.play("clear");
             $("#overlap, #score, #message").show();
             $("#message").animate({"left":0},function() {
-                $("#message .submit").click(function() {
+                $("#message .submit").unbind().click(function() {
                     userdata.save_result(qid, pt, tpt, $("#message input").val());
                     $("#quiz .word").css({"opacity":"1"});
                     $("#message").fadeOut();
