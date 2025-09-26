@@ -315,7 +315,7 @@ div.cdp {
     position:relative;
     z-index:1;
 }
-.qoption.selected .loading, #daily .loading {
+.qoption.selected .loading, #qdesc .loading {
     position:absolute;
     left:0;
     right:0;

@@ -146,11 +146,11 @@ const UserRecord = function() {
         if (!q) return;
 
         $(".menu").hide();
-        $("#resume").show();
-
-        let _timer = setInterval(() => {
+        let _timer = setInterval(() => { $("#resume").click(); }, 400);
+        $("#resume").show().unbind().click(function() {
             if (!$("#fragtable").hasClass("done")) return;
             clearInterval(_timer);
+            $(this).unbind();
 
             q.resume = true;
             qscreen.start(q);
@@ -170,7 +170,7 @@ const UserRecord = function() {
             $("#point").text(res.pt);
             timer.start(res.time + 1);
 
-        }, 100);
+        });
 
         return;
         
@@ -828,13 +828,22 @@ const draw_puzzle = function(qwords, $quiz, options)
         });
         
         $("#main").show();
-        $("#menu, #keyinput").hide();
-        
-        if (0 < $("#srvlog").size()) {
-            replay_log(qlist, answer_check);
-            return;
+        $("#menu, #keyinput, .replay").hide();
+
+        $(".replay").unbind().click(function() {
+            let qclear = JSON.parse(localStorage.qclear);
+            let pvlog = qclear.findLast(q => q.qid == qid);
+            if (!pvlog) return;
+            let replay = new PlayerLog();
+            replay.draw_pulldown(pvlog.log, qlist);
+            replay.run_replay(answer_check);
+            console.log(replay.pvlog());
+        });
+
+        if (quiz.done) {
+            $(".replay").show();
         }
-        
+
         timer.set_handler(count => {
             $('#time').text(count);
             let bpm = qlen * 60 / (count || 0.5);
@@ -921,7 +930,7 @@ const draw_puzzle = function(qwords, $quiz, options)
 
         setTimeout(() => {
             se.play("clear");
-            $("#overlap, #score, #message").show();
+            $("#overlap, #score, #message, .replay").show();
             $("#message").animate({"left":0},function() {
                 $("#message .submit").unbind().click(function() {
                     userdata.save_result(qid, pt, tpt, $("#message input").val());
@@ -1015,7 +1024,7 @@ const TopMenu = function() {
             console.log(r,$(window).height(),$("#howto").height());
             $("#overlap").css("zoom", r < 0.8 ? 0.8 : r);
         }
-        $("#overlap,#resume").hide();
+        $("#overlap,#resume,#newstart,#continue").hide();
         {
             let i = 0;
             setInterval(() => {
@@ -1036,8 +1045,6 @@ const TopMenu = function() {
         } catch (e) {
         }
         
-        // draw the quiztable
-        console.log(quiztable);
         
         $("#qlists").html('<button class="closer">X</button><div style="display:none;pointer-events:none;" id="qdesc">starts</div>');
         quiztable.slice(0,30).forEach(function(factor, i) {
@@ -1057,29 +1064,17 @@ const TopMenu = function() {
         {
             let n = quiztable.findLastIndex(q => q.done);
             $(".qoption").filter(function(i) { return n + 1 < i; }).addClass("withheld");
+            if (n < 0) $("#newstart").show(); else $("#continue").show();
         }
-        $(".qoption").click(function(i) {
+        $(".qoption").click(function(e) {
             if ($(this).hasClass("withheld")) return;
             let qid = parseInt($(this).addClass("selected").find(".qid").text());
-            let quiz = quiztable[qid-1];//.find(q => qid == q.qid);
-            console.log(i,quiz);
+            if ((qid == 1) && !$(this).hasClass("cleared")) return $("#newstart").click();
+            let quiz = quiztable[qid - 1];//.find(q => qid == q.qid);
             $(this).siblings(".qoption").animate({"opacity": "0"});
-            let cleared = $(this).hasClass("cleared");
-            
-            $('<div>').addClass("loading").text("読込中").appendTo(this)
+            $('<div>').addClass("loading").text("読込中").appendTo("#qdesc")
                 .animate({"opacity":".5"}, function() {
                     qscreen.start(quiz);
-                    if (!cleared) return;
-                    
-                    $("<button>").text("正解表示")
-                        .css({"background":"#f99"})
-                        .click(function() {
-                            $(this).hide();
-                            timer.stop();
-                            $("#quiz .kpart").hide();
-                            $("#quiz .kidx").removeClass("undone");
-                            $("#quiz").find(".correct").show();
-                        }).insertAfter("#main .qid");
                 });
         }).hover(function() {
             if ($(this).hasClass("withheld")) return;
@@ -1103,10 +1098,15 @@ const TopMenu = function() {
                 $("#menu, #howto").hide();
                 $("#main").show();
                 $(this).fadeOut(function() {
-                    $(".qoption").eq(0).click();
+                    qscreen.start(quiztable[0]);
                     $(".closer, #config").show();
                 });
             });
+        });
+        $("#continue").click(function() {
+            se.play("tap");
+            let n = quiztable.findIndex(q => !q.done);
+            $(".qoption").eq(n).click();
         });
         $(".menu .word").unbind().hover(function() {
             se.play("gselect");
@@ -1119,7 +1119,6 @@ const TopMenu = function() {
             $("#control, #message, #howto").hide();
             $("#overlap").show();
             $("#qlists").fadeIn();
-            //$("#title").hide();
         });
 
         // clickevents in #main
@@ -1136,13 +1135,13 @@ const TopMenu = function() {
         // clickevents in #overlap
         $("#control .gonext").eq(0).unbind().click(function() {
             se.play("tap");
-            $("#main,#overlap").hide();
             $("#menu,.menu").show();
-            $("#resume").hide();
+            $("#main,#overlap,#resume,#newstart,#continue").hide();
             $(".loading").remove();
             $("#keyinput").appendTo("#main");
             $(".qoption").css("opacity","");
-            quiztable.map(v=>v.resume=false);
+            quiztable.map(v => v.resume = false);
+            $(quiztable.find(v => v.done) ? "#continue":"#newstart").show();
             $(window).unbind();
             localStorage.removeItem("savepartway");
             userdata.loadpartway();
@@ -1158,10 +1157,14 @@ const TopMenu = function() {
             localStorage.removeItem("qclear");
             location.reload();
         });
+        $("#makeuprec").click(function() {
+            if (!confirm("やっちまうか")) return;
+            $(".qoption").removeClass("withheld");
+            $("#overlap").hide();
+        });
         $("#dlrec").click(function() {
             let save = localStorage.qclear;
             let save0 = JSON.parse(save);
-            //await sha256(save).then(hash => { save0.hash = hash; });
             let blob = new Blob(JSON.stringify(save0).split(""), {type:"text/plan"});
             let $link = document.createElement('a');
             $link.href = URL.createObjectURL(blob);
@@ -1171,8 +1174,6 @@ const TopMenu = function() {
         $("#onwid").change(function() {
             $("#quiz")[$("#onwid").prop("checked") ? "removeClass":"addClass"]("nowid");
         });
-
-        return;
     };
     const unsed = () => {  // 使ってないかも
         $(".help").click(function() {

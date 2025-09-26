@@ -6,6 +6,7 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="frontend_kpuzzle.js?20200913"></script>
 <script src="automaker.js?20250831"></script>
+<script src="logger.js?20250926"></script>
 <link rel="stylesheet" type="text/css" href="bushubu.css" />
 <title>部首パズル</title>
 <style>
@@ -85,7 +86,7 @@
       text-align:center;
       width:100%;
   }
-  button.gonext, button.submit {
+  button.gonext, button.replay, button.submit {
       cursor:pointer;
       width:200px;font-size:20px; height:50px;
       background-image:url(p0499_m.jpg);
@@ -121,6 +122,7 @@
     <button class="help showrule">&#x2753;</button><!--&#x2699;&#xFe0F;-->
     <div id="title" class="sampleword">部首パズル</div>
     <div class="menu sampleword" id="newstart">新規開始</div>
+    <div class="menu sampleword" id="continue">継続開始</div>
     <div class="menu sampleword" id="archives">問題集</div>
     <div class="menu sampleword" id="resume">中断再開</div>
   </div>
@@ -154,7 +156,9 @@
       <button class="closer">X</button>
       <div class="topbox helper" style="background-color:#bcc; top:0px; padding:20px;">
         <button class="gonext">トップに戻る</button>
-        <br/><br/>
+        <br/>
+        <button class="replay">リプレイを見る</button>
+        <br/>
         <button class="gonext">次の問題へ</button>
       </div>
     </div>
@@ -200,6 +204,7 @@
       </label><br/>
       これまでの記録:<br/>
       <button class="userrecord" id="dlrec">ダウンロードする</button><br/>
+      <button class="userrecord" id="makeuprec">全問解禁する</button><br/>
       <button class="userrecord" id="rmrec">削除する</button>
     </div>
 
