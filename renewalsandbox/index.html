@@ -4,20 +4,25 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="initial-scale=1.0" />
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="frontend_kpuzzle.js?20200913"></script>
-<script src="automaker.js?20250831"></script>
-<script src="logger.js?20250926"></script>
+<script src="frontend_kpuzzle.js?20200929"></script>
+<script src="bushubumaker.js?2025929"></script>
+<script src="logger.js?20250929"></script>
 <link rel="stylesheet" type="text/css" href="bushubu.css" />
 <title>部首パズル</title>
 <style>
   body {
       overflow:hidden;
   }
-  #main {
-      display: flex;
-      flex-direction: column;
-      width:100vw;
-      height:100vh;
+  /* menu */
+  #menu {
+      display:flex; flex-wrap:wrap;height:100vh;
+      background-image:url(p0499_m.jpg);
+      background-color:rgba(0,80,0,.8);
+      background-blend-mode:multiply;
+  }
+  .menu {
+      text-align:center;
+      width:100%;
   }
   #title .correct, h2.sampleword .correct {
       color: rgba(170,90,40,.8);
@@ -32,23 +37,58 @@
   #title .glyph.hiragana {zoom:1.7; }
   #title .glyph { zoom:2.5; }
 
-  h2.sampleword .correct {
-      color: rgba(100,40,20,.8);
-  }
-  h2.sampleword .glyph.hiragana { zoom: 0.8; }
-  #menu {
-      display:flex; flex-wrap:wrap;height:100vh;
-      background-image:url(p0499_m.jpg);
-      background-color:rgba(0,80,0,.8);
-      background-blend-mode:multiply;
+  /* main */
+  #main {
+      display: flex;
+      flex-direction: column;
+      width:100vw;
+      height:100vh;
   }
   #head {
-      min-width:300px; width:100%;z-index:2;
+      z-index:2;
+      min-width:300px; width:100%;
       height:40px; overflow:hidden;
       background-image:url(p0499_m.jpg);
       background-color:rgba(0,80,0,.8);
       background-blend-mode:multiply;
   }
+  h2.sampleword .correct {
+      color: rgba(100,40,20,.8);
+  }
+  h2.sampleword .glyph.hiragana { zoom: 0.8; }
+  #discover
+  {
+      line-height:10px;
+      font-size:10px;
+      width: 25px;
+      text-align:center;
+      display:block;
+      margin:2px;
+      color: #300;
+
+  }
+  #discover .cdpf {
+      display:block;
+      font-size:20px;
+      line-height:20px;
+      font-weight: bold;
+  }
+  #status {
+      position:absolute;
+      right:25px;
+      color:white; font-size:15px;
+  }
+  #status .pointtype {
+      display:inline-block; line-height:14px;text-align:center;
+  }
+  #point, #bonus, .tpoint {
+      font-size:20px;
+  }
+  .showrule {
+      height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;
+  }
+
+  /* quiz */
   #quiz {
       flex: 1;
       min-height: 100px;
@@ -69,6 +109,7 @@
       max-height:30vh;
       overflow:hidden;
   }
+  /* overlap */
   #overlap {
       opacity:.9;
       overflow:hidden auto;
@@ -79,12 +120,43 @@
       display:flex;
       z-index:4;
   }
-  .withheld {
-      opacity:.5;
+  #qlists {
+      width:300px; padding:30px; position:relative; overflow:hidden auto; margin:auto; height:50vh;
+      background-image:url(p0499_m.jpg);
   }
-  .menu {
-      text-align:center;
-      width:100%;
+  #qlists .qid {
+      background-blend-mode:lighten;
+      background-color:rgba(255,240,224,0.3);
+      border-radius:0;
+      color: #900;
+      border: 2px solid #900;
+      position:relative; float:left;
+      width:40px; height:40px; line-height:40px; text-align:center;
+  }
+  #qlists .qbox {
+      cursor:pointer;
+  }
+  #qlists .qoption {
+      display:block;
+      position:relative;
+      border:1px solid gray;
+      width: 240px;
+      margin: 0 2px 5px 2px;
+      min-height:80px;
+      line-height: 20px;
+      opacity:.9;
+      text-align:left;
+      background-blend-mode:lighten;
+      background-color:rgba(255,240,224,1);
+      display:inline-block;
+      pointer-events:none;
+      z-index:1;
+  }
+
+  #qlists .qid:hover {
+      border: 2px yellow solid;
+      background-blend-mode:multiply;
+      background-color:rgba(128,128,255,0.5);
   }
   button.gonext, button.replay, button.submit {
       cursor:pointer;
@@ -95,30 +167,20 @@
       width:150px;height:30px;background-image:url(p0499_m.jpg);
       cursor:pointer;
   }
-  #status {
-      position:absolute;
-      right:25px;
-      color:white; font-size:15px;
-  }
-  #status .pointtype {
-      display:inline-block; line-height:14px;text-align:center;
-  }
-  #point, #bonus, .tpoint {
-      font-size:20px;
-  }
-  .showrule {
-      height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;
-  }
   #greet {
       text-shadow:0 0 5px #3cc;
       color: #008;
       font-weight: bold;
+  }
+  .withheld {
+      opacity:.5;
   }
 </style>
 </head>
 
 <body>
   <div id="menu">
+    <div style="position:absolute;top:0;"><a style="color:#9c9;" href="./earlier">オリジナル版</a></div>
     <button class="help showrule">&#x2753;</button><!--&#x2699;&#xFe0F;-->
     <div id="title" class="sampleword">部首パズル</div>
     <div class="menu sampleword" id="newstart">新規開始</div>
@@ -128,7 +190,11 @@
   </div>
   <div id="main">
     <div id="head">
-      <h2 class="sampleword" style="cursor:pointer; display:inline-block;">部首パズル</h2>
+      <h2 class="sampleword" style="cursor:pointer; display:inline-block;">部首パズル本体</h2>
+      <div style="display:inline-block;height:40px;vertical-align:top;">
+        <div id="discover" class="elm pselected"></div>
+        <span id="knjdef"></span>
+      </div>
       <button class="showrule help" style="">&#x2753;</button>
       <span id="status">
         <span class="pointtype"><span style="font-size:10px;">素点</span><br/><span id="point">0</span></span> +
@@ -136,11 +202,6 @@
           (&#x23f0;<span id="time">0</span></span>)
         <span id="score">= <span class="tpoint"></span>点</span>
       </span>
-      <input id="g_log" style="display:none;"/>
-      <div style="float:right;">
-        <span id="discover"></span>
-        <span id="knjdef"></span>
-      </div>
     </div>
     <div id="hint"></div>
     <div id="keyinput" class="keyinput" style="z-index:3;">
@@ -150,8 +211,7 @@
     <div id="quiz"></div>
   </div>
   <div id="overlap" style="display:none;">
-    <div id="qlists" style="width:250px; padding:30px; position:relative; overflow:hidden auto; margin:auto; height:50vh;background-image:url(p0499_m.jpg)">
-    </div>
+    <div id="qlists"></div>
     <div id="control" style="position:relative;">
       <button class="closer">X</button>
       <div class="topbox helper" style="background-color:#bcc; top:0px; padding:20px;">

@@ -263,7 +263,7 @@ div.kpart {
     z-index:4;
     scroll-snap-align: start;
 }
-.userans, .usercmd, .helpuserans {
+.userans, .usercmd, .helpuserans, #srvlog {
     width:300px;
     height:30px;
     font-size:30px;
@@ -277,7 +277,6 @@ div.kpart {
 }
 
 #discover {
-    background-color:#8c8;
     font-family:glyphwiki;
 }
 
@@ -303,18 +302,6 @@ div.cdp {
     display: flex;
     flex-wrap: wrap;
 }
-.qoption {
-    display:inline-block; border:1px solid gray;
-    cursor:pointer;
-}
-#qdesc {
-    width: 240px; margin: 0 2px 5px 2px;
-    display:block; border:1px solid gray; min-height:80px;
-    cursor:pointer;
-    line-height: 20px;
-    position:relative;
-    z-index:1;
-}
 .qoption.selected .loading, #qdesc .loading {
     position:absolute;
     left:0;
@@ -322,7 +309,7 @@ div.cdp {
     bottom:0;
     top:0;
     opacity:0;
-    line-height:20px;
+    line-height:60px;
     font-size:60px;
     text-align:center;
     z-index:0;
@@ -341,11 +328,6 @@ div.cdp {
     background-color: #fca;
     border: #f22 solid 1px;
 }
-.qid {
-    border-radius:20px; background-color:#9df;
-    position:relative; float:left;
-    width:40px; height:40px; line-height:40px;text-align:center;
-}
 
 .qclear {
     position:absolute;
@@ -358,7 +340,7 @@ div.cdp {
     display:none;
 }
 
-.qoption.cleared .qid .qclear {
+.qbox.cleared .qclear {
     display:block;
 }
 .qinfo {

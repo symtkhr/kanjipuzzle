@@ -32,7 +32,7 @@ $(function() {
         $("#dicloader label :checked").each(function() {
             let filename = $(this).parent().text().trim();
             if (!filename) return;
-            $.get(filename, dic => { ongetfile(dic); }).fail(function() {
+            $.get("../dicts/" + filename, dic => { ongetfile(dic); }).fail(function() {
                 $("#dicloaded").append("[失敗]");
             });
         });

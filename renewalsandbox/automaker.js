@@ -61,14 +61,6 @@ const _SKKTABLE = `
 //國龍澤
 `.trim().split("#").map(v=>v.split(":").pop().split("//").shift().trim()).filter(v=>v).join("");
 
-//JISが変更した字形を同一視する
-String.prototype.jischange = function() {
-    if (!this) return "";
-    let c = this.trim();
-    let t = "倶剥呑嘘妍屏并痩繋唖焔鴎噛侠躯鹸麹屡繍蒋醤蝉掻騨箪掴填顛祷涜嚢溌醗頬麺莱蝋攅".indexOf(c);
-    if (t < 0) return c;
-    return "俱剝吞噓姸屛幷瘦繫啞焰鷗嚙俠軀鹼麴屢繡蔣醬蟬搔驒簞摑塡顚禱瀆囊潑醱頰麵萊蠟攢".slice(t, t + 1);
-};
 
 var WordDictionary = function()
 {
@@ -661,7 +653,7 @@ nodeapp.qlistcheck = () => {
         let rem = remake[i];
         let remp = Object.keys(JSON.parse(rem.json));
         let orip = Object.keys(JSON.parse(ori.json)).map(c=>c=="八"?"ハ":c);
-        
+        if(i==28)console.log(rem) || console.log(ori);
         // parts in orip which remp does not include
         let notincl = orip.filter(c=>remp.indexOf(c)<0);
         if (!notincl.length) return;

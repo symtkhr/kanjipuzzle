@@ -61,16 +61,8 @@ const _SKKTABLE = `
 //國龍澤
 `.trim().split("#").map(v=>v.split(":").pop().split("//").shift().trim()).filter(v=>v).join("");
 
-//JISが変更した字形を同一視する
-String.prototype.jischange = function() {
-    if (!this) return "";
-    let c = this.trim();
-    let t = "倶剥呑嘘妍屏并痩繋唖焔鴎噛侠躯鹸麹屡繍蒋醤蝉掻騨箪掴填顛祷涜嚢溌醗頬麺莱蝋攅".indexOf(c);
-    if (t < 0) return c;
-    return "俱剝吞噓姸屛幷瘦繫啞焰鷗嚙俠軀鹼麴屢繡蔣醬蟬搔驒簞摑塡顚禱瀆囊潑醱頰麵萊蠟攢".slice(t, t + 1);
-};
 
-var WordDictionary = function()
+const WordDictionary = function()
 {
     let _wordDb = {};
 
@@ -117,7 +109,7 @@ var WordDictionary = function()
 
         //該当語の絞り込み
         let words = Object.keys(_wordDb).filter((word) => {
-            var knjmatch = word.match(/[一-龠々]/g);
+            let knjmatch = word.match(/[一-龠々]/g);
             if (!knjmatch) return;
             
             //文字数・除外文字の条件チェック
@@ -129,14 +121,14 @@ var WordDictionary = function()
                 //包含文字チェック
                 if (cs.some(c => (word.indexOf(c) == -1))) return;
             } else {
-                var target = cs.map(v => (ctypes[v] || "")).join("");
+                let target = cs.map(v => (ctypes[v] || "")).join("");
                 //赤青以外の文字がないかチェック
                 if (word.split("").some(d => (target.indexOf(d) == -1))) return;
             }
             
             // 包含部品チェック
             if (0 < ps.length) {
-                var frag = word.split("").reduce((frag, d) => frag + kanjifrag.split(d), "");
+                let frag = word.split("").reduce((frag, d) => frag + kanjifrag.split(d), "");
                 if (ps.some(p => (frag.indexOf(p) == -1))) return;
             }
             return true;
@@ -200,7 +192,7 @@ var WordDictionary = function()
     };
 };
 
-var KanjiTable = function()
+const KanjiTable = function()
 {
     // 指定された部首を持つ漢字を返す
     this.find = function(part) {
@@ -260,31 +252,31 @@ var KanjiTable = function()
 };
 
 //// from: kanji_puzzle.js
-var stringToArray = function(str) {
-    var ret = str.match(/&[^;]+;|[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\uD800-\uDFFF]/g) || [];
+Array.fromCdp = function(str) {
+    let ret = str.match(/&[^;]+;|[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\uD800-\uDFFF]/g) || [];
     return ret.map(c => cdp2ucs(c));
 };
 
-var cdp2ucs = function(cdpref)
+const cdp2ucs = function(cdpref)
 {
-    var m = cdpref.match(/&CDP-([^;]+);/);
+    let m = cdpref.match(/&CDP-([^;]+);/);
     if (!m) return cdpref;
-    var cdp = parseInt(m[1], 16);
-    var upper = (cdp >> 8) & 0x7f;
-    var lower = (cdp & 0xff);
+    let cdp = parseInt(m[1], 16);
+    let upper = (cdp >> 8) & 0x7f;
+    let lower = (cdp & 0xff);
     lower -= (lower <= 62 + 64) ? 64 : 98;
     return String.fromCharCode(upper * 157 + lower + 0xee1b);
 };
 
-var KanjiFragment = function()
+const KanjiFragment = function()
 {
     let dbglobal = {};
     let dblocal = {};
 
     this.define = function(globaldb) {
         globaldb.split("/").forEach(function(frag) {
-            var k = frag.trim().split(":");
-            var key = cdp2ucs(k[0]);
+            let k = frag.trim().split(":");
+            let key = cdp2ucs(k[0]);
             dbglobal[key] = k[1];
         });
     };
@@ -293,9 +285,9 @@ var KanjiFragment = function()
         dblocal = {};
         if (!localdb) return;
 
-        localdb.split("/").forEach(function(frag) {
-            var k = frag.trim().split(":");
-            var key = cdp2ucs(k[0]);
+        localdb.split("/").forEach(frag => {
+            let k = frag.trim().split(":");
+            let key = cdp2ucs(k[0]);
             dblocal[key] = k[1];
         });
     };
@@ -309,12 +301,12 @@ var KanjiFragment = function()
     this.db = referdb;
     
     let kumikae = function(ret) {
-        var ide = ret[0];
-        var outer = ret[1];
-        var inner = ret[2];
-        var idechild = outer[0];
+        let ide = ret[0];
+        let outer = ret[1];
+        let inner = ret[2];
+        let idechild = outer[0];
 	
-        var kumikaeTable =  {
+        const kumikaeTable =  {
             "FF": ["F", outer[1], ["Z", outer[2], inner]], // 腐鹿摩
             "FN": ["N", outer[1], ["Z", outer[2], inner]], // 乾修族
             "FZ": ["Z", outer[1], ["F", outer[2], inner]], // 危産厳
@@ -339,25 +331,25 @@ var KanjiFragment = function()
 
     this.split = function(knjf)
     {
-        var fragments = [];
+        let fragments = [];
 
-        var idesymbol = function(c) {
-            var ide = "NZMEOHUCFKLQJ".indexOf(c);
+        let idesymbol = function(c) {
+            let ide = "NZMEOHUCFKLQJ".indexOf(c);
             if (ide < 0) return false;
             return c;
         };
     
-        var subparts_fragment = function(knj) {
-            var idestr = referdb(knj);
+        let subparts_fragment = function(knj) {
+            let idestr = referdb(knj);
             if (!idestr) {
                 fragments.push(knj);
                 return;
             }
         
-            var idearray = stringToArray(idestr);
+            let idearray = Array.fromCdp(idestr);
         
             while (idearray.length > 0) {
-                var c = idearray.shift();
+                let c = idearray.shift();
                 if ("NZMEOHUCFKLQJ".indexOf(c) != -1) {
                     fragments.push(c);
                 } else {
@@ -399,16 +391,16 @@ var KanjiFragment = function()
 let PartQuiz = function() {
     this.make = function(qwords, options)
     {
-        var ret = {ans:"", tb:"", q:[]};
+        let ret = {ans:"", tb:"", q:[]};
         if (!options) options = {};
         
         qwords.map((qword, i) => {
-            return stringToArray(qword).map(c => {
+            return Array.fromCdp(qword).map(c => {
                 if (c.match(/^[ -~\s]?$/)) return;
                 
                 // 漢字分解
-                var n = kanjifrag.split(c);
-                var fragged = n.toString();
+                let n = kanjifrag.split(c);
+                let fragged = n.toString();
                 ret.ans += fragged + "/";
                 if (fragged == "X") n = [c];
                 
@@ -420,12 +412,12 @@ let PartQuiz = function() {
         
         // ansから番号リストを生成する
         const onestrokes = "一丨亅丿ノ乙乚𠃊丶";
-        var kidx = this.make_list(ret.ans, options.openlist || onestrokes);
+        const kidx = this.make_list(ret.ans, options.openlist || onestrokes);
         this.ans = ret.ans;
         this.n = Object.keys(kidx).length;
         //console.log(this.ans);
         //console.log(qwords.length);
-        return (Object.keys(kidx).length);
+        return this.n;
     };
     
     //これはload_quiz内に取り込むべき関数
@@ -494,8 +486,8 @@ let PartQuizMaker = function() {
     
     // 語を自動追加する(任意)
     this.select_random_words = () => {
-        var exc = this.nchars.split("");//.filter(c => (cs.indexOf(c) == -1));
-        var words = dic.find({num:[3,3], cs:[], ps:[], ctypes:{}, exc:exc}).shift();
+        let exc = this.nchars.split("");//.filter(c => (cs.indexOf(c) == -1));
+        let words = dic.find({num:[3,3], cs:[], ps:[], ctypes:{}, exc:exc}).shift();
         let ret = "";
         let i = 0;
         while (ret.length < 5 * 4 && i < 20) {
@@ -560,9 +552,9 @@ let PartQuizMaker = function() {
         // 検索された語を評価
         let result = words.shift().map(w => {
             let mask = w.split("").map(d => {
-                var key = "rbpc".split("").find(key => ctypes[key].indexOf(d) != -1);
+                let key = "rbpc".split("").find(key => ctypes[key].indexOf(d) != -1);
                 return key ? key : "-";
-        });
+            });
             let pt = mask.reduce((sum,m) => sum + ("rpbc-".indexOf(m)), 0); 
             return {w:w,t:mask,pt:pt};
         }).sort((a,b)=>a.pt-b.pt);
@@ -642,13 +634,14 @@ nodeapp.qlistcheck = () => {
     const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
     
     kanjifrag.define(getfile("fragtable.txt"));
-    let origin = JSON.parse(getfile("qlist.json")).map(q => {
+    let qlists = JSON.parse(getfile("qlist.json")).slice(0);
+    let origin = qlists.map(q => {
         kanjifrag.definelocal(q.def);
         partquiz.make(q.q.split("/"));
         return {q:q.q, def:q.def, kid:Object.keys(partquiz.kidx).join(""), json:JSON.stringify(partquiz.count)};
     });
     kanjifrag.define(getfile("fragtable.plus.txt"));
-    let remake = JSON.parse(getfile("qlist.json")).map(q => {
+    let remake = qlists.map(q => {
         kanjifrag.definelocal(q.def);
         partquiz.make(q.q.split("/"));
         return {kid:Object.keys(partquiz.kidx).join(""), json:JSON.stringify(partquiz.count)};

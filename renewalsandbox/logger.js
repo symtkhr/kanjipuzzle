@@ -1,5 +1,5 @@
-const PlayerLog = function() {
-    let pvlog = [];
+const PlayerLog = function(qclear = {}) {
+    let pvlog = qclear.log || [];
     const draw_pulldown = function(logstring, qlist)
     {
         let qwords = qlist.split("/");
@@ -24,25 +24,31 @@ const PlayerLog = function() {
             let wid = parseInt(log.wid);
             let time = log.time;
             let input = log.input;
-            let match = input.slice(-1) == "x" ? input.slice(0, -2) : input;
-            
+            let match = input.slice(-1) == "x" ? input.slice(0, -2) : input.kanachange().jischange();
+
             // 語番号の推定
             if (wid == 0 && match.length) {
-                //todo:"蝋人形"などjischange/kanachangeへの対応
-                wid = qwords.findIndex(w => w.indexOf(match) != -1) + 1;
+                wid = 1 + qwords.map(w => w.kanachange().jischange()).findIndex(w => {
+                    // 入力位置の特定(todo:"湯湯婆"(AAB型),"十人十色"(ABAC型)への対応)
+                    let glyph = w.indexOf(match);
+                    if (glyph < 0) return false;
+                    log.glyph = glyph;
+                    return true;
+                });
+                console.log(match,wid);
             }
 
             if (!wid || !match.length) return log;
-            console.log(log,qwords[wid-1]);
-            // 入力位置の特定(todo:"湯湯婆"(AAB型),"十人十色"(ABAC型)への対応)
             log.wid = wid;
-            log.glyph = Array.from(qwords[wid - 1]).findIndex(c => c == input[0]);
             return log;
         });
 
         timer.stop();
-        $("#bonus").text("");
-        let $pdown = $('<select id="srvlog">').appendTo("#bonus");
+        $("#bonus").text((qclear.score || "").split(";").pop());
+        let $pdown = $('<select id="srvlog">').appendTo("#keyinput").css({
+            left:"0",top:0,"position":"absolute", width:"auto",
+            "font-size":"20px",
+        });
         //.css("position","absolute").css("right","30px")
         [{}, ...pvlog].map(v => {
             let $opt = $("<option>").text("<Playlog>").appendTo($pdown);
@@ -107,27 +113,29 @@ const PlayerLog = function() {
             let $glyph = $word.find('.glyph').eq(ans.glyph).addClass('selected');
             if ($glyph.size() == 0)
                 $glyph = $word.find('.glyph').eq(0).addClass('selected');
-            answerchecker(ans.input);
 
             // drawbox
             $glyph.find(".kidx").eq(0).click();
-            $(".userans").prop('disabled', false)
-                .val(ans.input)
-                .prop('disabled', true);
-            $("#srvlog").focus();
-            $("#keyinput").show();
+            answerchecker(ans.input);
             $("#time").text(ans.time);
             $("#point").text(ans.point);
+            $("#srvlog").focus();
         });
 
-        $("#point").parent().css("cursor","pointer").unbind().click(function() {
-            let n = $("#srvlog").prop("selectedIndex");
-            $("#srvlog").prop("selectedIndex", n + 1).change();
+        $("#quiz .kidx").eq(0).click();
+        $(".userans").css({"visibility":"hidden"}).prop('disabled', true);
+        $("#keyinput").show();
+        $("#srvlog").focus();
+        $("#status").css("cursor","pointer").unbind().click(function() {
+            let n = $("#srvlog").prop("selectedIndex") + 1;
+            let max = $("#srvlog option").size();
+            $("#srvlog").prop("selectedIndex", n % max).change();
         });
         $(".gonext").eq(1).addClass("withheld");
         $(".gonext").eq(0).unbind().click(function() {
             location.reload();
         });
+        $(document).unbind();
     };
     this.draw_pulldown = draw_pulldown;
     this.run_replay = replay_log;
