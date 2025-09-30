@@ -618,7 +618,7 @@ const draw_puzzle = function(qwords, $quiz, options)
         });
         
         const popup_otheruses = (cname) => {
-            $("#hint").hide();
+            return $("#hint").hide();
             if (!$(cname).eq(0).hasClass("undone")) return;
             let wids = $("#quiz .word").map(function() {
                 return $(this).find(cname).size();
@@ -1184,14 +1184,14 @@ const TopMenu = function() {
             let d = new Date(quiz.date.split("T").shift() + "T12:00+0900");
             $('<div>').addClass("qinfo").appendTo($option).show()
                 .html(words.length + "語 " + words.join("").length + "字 " + quiz.n + "部首" + "<br />" +
-                      d.toJSON().split("T").shift() + " " + allopen ? (quiz.author || "") : "");
+                      d.toJSON().split("T").shift() + " " + (allopen ? (quiz.author || "") : ""));
             $('<div>').addClass("qdesc").appendTo($option).html(quiz.desc).show();
             $('<div>').addClass("loading").text("読込中").appendTo($option).hide();
             if (quiz.done) $qbox.addClass('cleared');
         });
 
         // for automake
-        if (0) {
+        if (1) {
             let $qbox = $('<div>').appendTo("#qlists").addClass("qbox automake").css({position:"relative",display:"inline-block",margin:"2px"});
             let $qid = $('<div>').addClass("qid").appendTo($qbox).text("生成");
             let $option = $('<div>').addClass("qoption").appendTo($qbox).hide().css({position:"absolute"});

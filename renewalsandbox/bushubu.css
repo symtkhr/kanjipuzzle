@@ -89,14 +89,14 @@ div.qelm {
     background-color:transparent;
     background-blend-mode:none;
 }
+div.qelm.onestroke:not(.pselected):has(.undone) {
+    background-color: rgba(64,255,64,0.5);
+}
 .elm.pselected {
     background-color:rgba(128,128,255,0.5);
     background-blend-mode:lighten;
 }
 
-div.qelm.onestroke {
-    background-color: #cec;
-}
 
 div.glyph {
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, MS Gothic, sans-serif;

@@ -300,11 +300,14 @@ const KanjiFragment = function()
 
     this.db = referdb;
     
-    let kumikae = function(ret) {
-        let ide = ret[0];
-        let outer = ret[1];
-        let inner = ret[2];
-        let idechild = outer[0];
+    const kumikae = function(ret) {
+        if (!Array.isArray(ret[1])) return ret;
+        if ("OHUCFKL".indexOf(ret[0]) < 0) return ret;
+
+        const ide = ret[0];
+        const outer = ret[1];
+        const inner = ret[2];
+        const idechild = outer[0];
 	
         const kumikaeTable =  {
             "FF": ["F", outer[1], ["Z", outer[2], inner]], // 腐鹿摩
@@ -325,63 +328,31 @@ const KanjiFragment = function()
             "OZ": ["E", outer[1], inner, outer[2]], // 囟囱褒
             "HE": null, // 高
         };
-        return kumikaeTable[ide + idechild];
+        return kumikaeTable[ide + idechild] || ret;
     };
     
 
     this.split = function(knjf)
     {
-        let fragments = [];
+        const isIDE = c => ("NZMEOHUCFKLQJ".indexOf(c) != -1);
 
-        let idesymbol = function(c) {
-            let ide = "NZMEOHUCFKLQJ".indexOf(c);
-            if (ide < 0) return false;
-            return c;
-        };
-    
-        let subparts_fragment = function(knj) {
+        // Apply IDEs recursively ("警" => [Z,敬,言] => [Z,N,Z,艹,K,勹,口,攵,言])
+        const subparts_fragment = (knj) => {
             let idestr = referdb(knj);
-            if (!idestr) {
-                fragments.push(knj);
-                return;
-            }
-        
-            let idearray = Array.fromCdp(idestr);
-        
-            while (idearray.length > 0) {
-                let c = idearray.shift();
-                if ("NZMEOHUCFKLQJ".indexOf(c) != -1) {
-                    fragments.push(c);
-                } else {
-                    subparts_fragment(c);
-                }
-            }
+            return (!idestr) ? [knj] :
+                Array.fromCdp(idestr).map(c => isIDE(c) ? c : subparts_fragment(c));
         };
+        let fragments = subparts_fragment(knjf).toString().split(",");
 
-        let make_combination = function(idep) {
-            let ret = [idep];
-            let n_parts = (idep == "E" || idep == "M") ? 3 : 2;
-            while (ret.length < n_parts + 1)  {
-                if (fragments.length == 0) return ret;
+        // Find combination recursively (=> [Z,[N,[Z,艹,[K,勹,口]],攵],言])
+        const make_combination = (idep) => {
+            let ret = Array((idep == "E" || idep == "M") ? 3 : 2).fill("").map(_ => {
                 let c = fragments.shift();
-                
-                let idechild = idesymbol(c);
-                
-                if (idechild) {
-                    ret.push(make_combination(idechild));
-                } else {
-                    ret.push(c);
-                }
-            }
-
-            if (Array.isArray(ret[1]) && "OHUCFKL".indexOf(idep) != -1) {
-                let ret0 = kumikae(ret);
-                return ret0 ? ret0 : ret;
-            }
-            return ret;
+                return isIDE(c) ? make_combination(c) : c;
+            }).filter(v => v);
+            ret.unshift(idep);
+            return kumikae(ret);
         };
-
-        subparts_fragment(knjf);
         return make_combination(fragments.shift());
     };
 };
@@ -389,60 +360,41 @@ const KanjiFragment = function()
 //// kanji_puzzle.js から一部改設計
 
 let PartQuiz = function() {
-    this.make = function(qwords, options)
+    this.make = function(qwords, options = {})
     {
-        let ret = {ans:"", tb:"", q:[]};
-        if (!options) options = {};
-        
-        qwords.map((qword, i) => {
-            return Array.fromCdp(qword).map(c => {
-                if (c.match(/^[ -~\s]?$/)) return;
-                
-                // 漢字分解
-                let n = kanjifrag.split(c);
-                let fragged = n.toString();
-                ret.ans += fragged + "/";
-                if (fragged == "X") n = [c];
-                
-                //分解結果の記録(問題作成ツール用)
-                if (fragged !== c)
-                    ret.tb += c + ":" + fragged.split(",").join("") + "/";
-            });
-        });
-        
+        let ret = {};
+        let ans = Array.fromCdp(qwords.join("")).filter(c => !c.match(/^[ -~\s]?$/))
+            .map(c => ({c:c, ans:kanjifrag.split(c).toString(),}));
+
+        ret.ans = ans.map(v => v.ans).join("/");
+        //分解結果の記録(問題作成ツール用)
+        ret.tb = ans.map(v => (v.ans === v.c) ? "" : (v.c + ":" + v.ans.split(",").join(""))).join("/");
+
         // ansから番号リストを生成する
         const onestrokes = "一丨亅丿ノ乙乚𠃊丶";
         const kidx = this.make_list(ret.ans, options.openlist || onestrokes);
         this.ans = ret.ans;
         this.n = Object.keys(kidx).length;
-        //console.log(this.ans);
-        //console.log(qwords.length);
         return this.n;
     };
-    
-    //これはload_quiz内に取り込むべき関数
+
     this.make_list = function(ans, openlist)
     {
-        let count = {};
-        ans.split(",").join("/").split("/").forEach(val => {
-            if (val.length == 0 || val.match(/^[A-Z]$/)) return;
-            if (("＿" + openlist).indexOf(val) != -1) return;
-            
-            if (!count[val]) count[val] = 0;
-            count[val]++;
-        });
-        
-        let kidx = {};
-        let idx = 0;
-        for (let key in count) {
-            if (count[key] <= 1) continue;
-            idx++;
-            kidx[key] = idx;
-        }
-        
+        let count = ans.split(",").join("/").split("/")
+            .filter(v => (0 < v.length) && !v.match(/^[A-Z]$/) && (("＿" + openlist).indexOf(v) < 0))
+            .reduce((count, v) => {
+                if (!count[v]) count[v] = 0;
+                count[v]++;
+                return count;
+            }, {});
+
+        let kidx = Object.entries(count).filter(([k,v]) => 1 < v).reduce((kidx,[k,v],i) => {
+            kidx[k] = i + 1;
+            return kidx;
+        }, {});
+
         this.count = count;
         this.kidx = kidx;
-        
         return kidx;
     };
 };
@@ -467,15 +419,12 @@ let PartQuizMaker = function() {
             return ops.length;
         });
 
-        //console.log(ops);
-
         let pos = 0;
         let evals = partquiz.qwords.map(w => {
-            let ex = ops.slice(pos, pos + w.length).reduce((sum, v) => sum + v);
+            let ex = ops.slice(pos, pos + w.length).reduce((sum, v) => sum + v, 0);
             pos += w.length;
             return {ex:ex, w:w};
         });
-        //console.log(evals);
 
         partquiz.qwords = evals.sort((a,b) => {
             if (a.n != b.n) return b.n - a.n;
@@ -629,12 +578,50 @@ nodeapp.automake = (argv) => {
     console.log(JSON.stringify(partquiz.count));
 };
 
-// check how much it affects qlist.json to append fragtable.plus.txt
-nodeapp.qlistcheck = () => {
+nodeapp.qdifficulty = (param) => {
     const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
-    
     kanjifrag.define(getfile("fragtable.txt"));
-    let qlists = JSON.parse(getfile("qlist.json")).slice(0);
+    kanjifrag.define(getfile("fragtable.plus.txt"));
+    let qlists = JSON.parse(getfile("qlist.json"));
+    let qs = qlists.map(q => {
+        kanjifrag.definelocal(q.def);
+        partquiz.make(q.q.split("/"));
+        let entry = Object.entries(partquiz.count);
+        let ret = {
+            qid:q.qid,
+            // the less pair kids, the more difficult solved
+            pair: entry.filter(([k,n])=>n==2).map(v=>v[0]).join(""),
+            // the more single kids, the easier solved.
+            open: entry.filter(([k,n])=>n==1).map(v=>v[0]).join(""),
+        };
+        let ev = entry.reduce((sum,k) => {
+            let n = k[1];
+            return n == 1 ? (sum - 100) : (sum + 100/((n-1)**2))
+        },0);
+        ret.val = 6000 + parseInt(ev);
+
+        // Sigma(count==1 ? (-count/2):(1/count))
+        //ret.val = 3 * ret.pair.length - 2 * ret.open.length
+        return ret;
+    });
+    qs.sort((a,b)=>a.val-b.val).map(v=>console.log(JSON.stringify(v)));
+
+};
+// check how much it affects qlist.json to append fragtable.plus.txt
+nodeapp.qcompatible = (param) => {
+    const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
+    const suggestRedef = {
+        2:'旦:Z日一', 3:'旦:Z日一', 11:'&k5-026c;:Z一由', 12:'𠮛:Z一口', 17:'𠮛:Z一口', 19:'𠮛:Z一口', 31:':Z亠丷', 34:'𠮛:Z一口', 38:'旦:Z日一',
+        43:'午:Z𠂉十', 45:'旦:Z日一', 51:'旦:Z日一', 53:'𠮛:Z一口', 91:'𠮛:Z一口', 111:'旦:Z日一', 119:'旦:Z日一', 122:'旦:Z日一', 124:':Z亠丷',
+    };
+
+    let qlists = JSON.parse(getfile("qlist.json")).slice(0).map(q => {
+        q.def = (q.def  + "/" + (suggestRedef[q.qid] || "")).split("/").map(v=>v.trim()).filter(v=>v).join("/");
+        return q;
+    });
+    if (param.indexOf("dump") != -1) console.log(JSON.stringify(qlists,null,2));
+
+    kanjifrag.define(getfile("fragtable.txt"));
     let origin = qlists.map(q => {
         kanjifrag.definelocal(q.def);
         partquiz.make(q.q.split("/"));
@@ -656,16 +643,18 @@ nodeapp.qlistcheck = () => {
         
         // parts in orip which remp does not include
         let notincl = orip.filter(c=>remp.indexOf(c)<0);
-        if (!notincl.length) return;
         
         // remake using localdef which the remp does not include
         kanjifrag.definelocal(ori.def + "/" + notincl.map(c => c+":").join("/"));
         partquiz.make(q.split("/"));
         let remp2 = Object.keys(partquiz.count);
-        if (remp2.join("") == orip.join("")) return ["def=",notincl.map(c => c+":").join("/")];
-        return ["---",  orip.filter(c=>remp2.indexOf(c)<0).join(""),
-                "+++",  remp2.filter(c=>orip.indexOf(c)<0).join("")];
-    }).map((v,i) => console.log(i+1,v ? v.join(" ") : ""));
+
+        return {
+            "plus1" : notincl.map(c => c+":").join("/"),
+            "minus" : orip.filter(c=>remp2.indexOf(c)<0).join(""),
+            "plus2" : remp2.filter(c=>orip.indexOf(c)<0).join("")
+        };
+    }).map((v,i) => {if(v.plus1 ||v.plus2||v.minus) console.log(i+1,v ? v : "")});
 };
 
 if (typeof window == "undefined") {
@@ -693,7 +682,7 @@ const $c = (c, $dom) => [... ($dom ? $dom : document).getElementsByClassName(c)]
 const $q = (query) => [... document.querySelectorAll(query)];
 
 var main = () => {
-    $("#newest .qoption .qdesc").html('<div id="seekbar"></div><div id="seekval"></div>');
+    $(".qbox.automake .qdesc").html('<div id="seekbar"></div><div id="seekval"></div>');
     $("#seekbar").css({width:"5%", backgroundColor:"red", height:"15px"});
     $("#seekval").css({"text-align":"right"}).text("5%");
 
@@ -716,7 +705,7 @@ let main2 = () => {
         makequiz.wordsort();
         //$("#main").show();
         location.hash = btoa(unescape(encodeURIComponent(partquiz.qwords.join("/") + "@@" + REDEFINE)));
-        //load_quiz({q:partquiz.qwords.join("/"), def:REDEFINE});
+        qscreen.start({q:partquiz.qwords.join("/"), def:REDEFINE});
     };
 
     let miss = 0;
