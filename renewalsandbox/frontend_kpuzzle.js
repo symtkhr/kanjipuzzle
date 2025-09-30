@@ -579,6 +579,7 @@ const draw_puzzle = function(qwords, $quiz, options)
         $("#main").show();
         $("#knjtb").val('');
         $("#quiz").text('');
+        $("#head .qid").text(quiz.qno);
         $("#point,#bonus").text(0);
         $("#top, #score").hide();
         $("#wordlist").val(qlist);
@@ -1171,47 +1172,50 @@ const TopMenu = function() {
 
         $("#qlists").html('<button class="closer">X</button>');//.css({width:"80vw",height:"75vh"});
 
-        quiztable.map((factor, idx) => {
-            let q = factor.q;
+        quiztable.map((quiz, idx) => {
+            let q = quiz.q;
+            quiz.qno = idx + 1;
             let words = q.split("/");
             let $qbox = $('<div>').appendTo("#qlists").addClass("qbox").css({position:"relative",display:"inline-block",margin:"2px"});
-            let $qid = $('<div>').addClass("qid").appendTo($qbox).text(1 + idx);
+            let $qid = $('<div>').addClass("qid").appendTo($qbox).text(quiz.qno);
             let $option = $('<div>').addClass("qoption").appendTo($qbox).hide().css({position:"absolute"});
-            $('<div>').addClass("qid").appendTo($option).text(1 + idx);
+            $('<div>').addClass("qid").appendTo($option).text(quiz.qno);
             $('<div>').addClass("qclear").appendTo($qid).text('✔');
-            let d = new Date(factor.date.split("T").shift() + "T12:00+0900");
+            let d = new Date(quiz.date.split("T").shift() + "T12:00+0900");
             $('<div>').addClass("qinfo").appendTo($option).show()
-                .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + "<br />" +
-                      d.toJSON().split("T").shift() + " " + (factor.author || ""));
-            $('<div>').addClass("qdesc").appendTo($option).html(factor.desc).show();
+                .html(words.length + "語 " + words.join("").length + "字 " + quiz.n + "部首" + "<br />" +
+                      d.toJSON().split("T").shift() + " " + allopen ? (quiz.author || "") : "");
+            $('<div>').addClass("qdesc").appendTo($option).html(quiz.desc).show();
             $('<div>').addClass("loading").text("読込中").appendTo($option).hide();
-            if (factor.done) $qbox.addClass('cleared');
+            if (quiz.done) $qbox.addClass('cleared');
         });
 
-        if (0) 
-        quiztable.map((factor, i) => {
-            let q = factor.q;
-            let words = q.split("/");
-            let $option = $('<div>').addClass("qoption").appendTo("#qlists");
-            let $qid = $('<div>').addClass("qid").appendTo($option).text(i + 1);//(factor.qid);
-
-            $('<div>').addClass("qclear").appendTo($qid).text('✔');
-            let d = new Date(factor.date.split("T").shift() + "T12:00+0900");
-            $('<div>').addClass("qinfo").appendTo($option)
-                .html(words.length + "語 " + words.join("").length + "字 " + factor.n + "部首" + " <br/> " +
-                      d.toJSON().split("T").shift());// + " " + factor.author);
-            $('<div>').addClass("qdesc").appendTo($option).html(factor.desc);
-            if (factor.done) $option.addClass('cleared');
-        });
-        {
+        // for automake
+        if (0) {
+            let $qbox = $('<div>').appendTo("#qlists").addClass("qbox automake").css({position:"relative",display:"inline-block",margin:"2px"});
+            let $qid = $('<div>').addClass("qid").appendTo($qbox).text("生成");
+            let $option = $('<div>').addClass("qoption").appendTo($qbox).hide().css({position:"absolute"});
+            $('<div>').addClass("qid").appendTo($option).text("生成");
+            $('<div>').addClass("qinfo").appendTo($option).show().html("40語 120字" + "<br /> 2025-09-29");
+            $('<div>').addClass("qdesc").appendTo($option).html(quiz.desc).show();
+            $('<div>').addClass("loading").text("読込中").appendTo($option).hide();
+        }
+        
+        if (!allopen) {
             let n = quiztable.filter(q => q.done).length;
-            if (!allopen) $(".qbox:not(.cleared)").filter(function(i) { return (n * 2) < i; }).addClass("withheld");
+            $(".qbox:not(.cleared)").filter(function(i) { return (n * 2) < i; }).addClass("withheld");
             $((n == 0) ? "#newstart" : "#continue").show();
         }
 
         $("#qlists .qbox").unbind().click(function(e) {
             if ($(this).hasClass("withheld")) return;
             let $qopt = $(this).find(".qoption").addClass("selected");
+
+            if ($(this).hasClass("automake")) {
+                $(this).siblings(".qbox").animate({"opacity": "0"});
+                return $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"}, () => { main(); });
+            }
+
             let qid = parseInt($qopt.find(".qid").text());
             $("#main .qid").text(qid);
             $("#makeuprec").addClass("withheld");
@@ -1223,6 +1227,7 @@ const TopMenu = function() {
             if ($(this).hasClass("withheld")) return;
             $(this).find(".qoption").show();
         }, function() { $(this).find(".qoption").hide(); });
+
 
         $(".closer").unbind().click(function() {
             $("#overlap").hide();
@@ -1269,16 +1274,6 @@ const TopMenu = function() {
         anchor_check();
         show_daily();
         
-        $(".qoption").click(function() {
-            if ($(this).hasClass("resume")) return;
-            $(this).unbind();
-            
-            let qid = parseInt($(this).addClass("selected").find(".qid").text());
-            $(this).siblings(".qoption").animate({"opacity": "0"});
-            let cleared = $(this).hasClass("cleared");
-                        
-            $('<div>').addClass("loading").animate({"opacity":".5"}, () => { main(); });
-        });
 
         if (location.href.indexOf("#debug") < 0 || userdata.makeup_save()) return;
 
