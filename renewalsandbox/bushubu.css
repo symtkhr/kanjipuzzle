@@ -1,0 +1,477 @@
+html {
+}
+body {
+  padding:0;
+  margin:0;
+}
+@font-face {
+  font-family: "glyphwiki";
+  src: url("glyphwikiCDP.woff");
+}
+@media screen and (max-width:600px){
+    .topbox {
+        width:100%;
+    }
+    #qex, #daily {
+        min-width: 0;
+    }
+}
+/* top */
+#top {
+    display:flex;
+    flex-wrap: wrap;
+}
+.topbox {
+    border-radius:10px;
+    margin: 10px;
+    border: 1px solid #950;
+    text-align:left;
+    padding:5px;
+    position:relative;
+}
+.topbox h4, #menu h4, #stat h4, span.minimized {
+    border-radius:20px;
+    display:inline-block;
+    border: 1px solid #ccc;
+    padding: 0 6px;
+    margin: 0px;
+    font-weight: normal;
+    background-color: #fdc;
+}
+span.minimized {
+    border: 1px solid #950;
+    background-color: #dca;
+    cursor:pointer;
+    margin:5px;
+}
+#daily:hover {
+    background-color: #bdc;
+    cursor:pointer;
+}
+#qex, #daily {
+    text-align: center;
+}
+#example, #example_answer {
+    display:inline-block;
+}
+.help, .closer {
+    position:absolute;
+    z-index:2;
+    right:0;
+    top:0;
+    height:22px;
+    width:22px;
+    padding:0px;
+}
+
+/* #quiz */
+#quiz {
+  background: linear-gradient(60deg, #efe, #aca, #595);
+  scroll-snap-type: y proximity;
+  text-align:center;
+}
+
+div.sbox {
+   position:absolute;
+   width:100%;
+   height:100%;
+   pointer-events:none;
+}
+div.elm {
+  border:1px solid #920;
+  box-sizing: border-box;
+  background-image: url('p0499_m.jpg');
+  background-color:rgba(255,240,224,0.3);
+  background-blend-mode:lighten;
+  pointer-events:initial;
+}
+div.qelm {
+    background-color:transparent;
+    background-blend-mode:none;
+}
+.elm.pselected {
+    background-color:rgba(128,128,255,0.5);
+    background-blend-mode:lighten;
+}
+
+div.qelm.onestroke {
+    background-color: #cec;
+}
+
+div.glyph {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, MS Gothic, sans-serif;
+    position:relative;
+    width:60px; height:60px; 
+    border:1px solid #853; 
+    box-sizing: border-box;
+    display:inline-block;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+div.glyph div.judge {
+    font-family: MS Gothic;
+    position:absolute;
+    width:40px;
+    height:40px;
+    top:10px;
+    left:10px;
+    font-size: 40px;
+    line-height: 40px;
+    font-weight: bold;
+    color:red;
+    text-align:center;
+    z-index: 6;
+}
+
+div.correct {
+  line-height: 58px; /* glyph decrements 2 */
+  font-size:58px;
+  color: #300;
+  display:none;
+  pointer-events:none;
+  position:absolute; 
+  bottom:0; left:0; right:0; top:0;
+}
+
+.log {
+    border: solid #eb2 1px;
+    background: #ffc;
+    display: inline-block;
+    width: 55px;
+    white-space: nowrap;
+    padding: 0;
+    overflow: hidden;
+    line-height: 16px;
+    text-align: center;
+    margin-right: 1px;
+}
+
+.logdetail {
+    width:auto;
+    text-align:left;
+    padding:1px;
+    background:#fec;
+}
+.log .logdate {
+    line-height: 12px;
+    font-size: 12px;
+}
+.log .logscore {
+    margin:0;
+    line-height:20px;
+    font-size:20px;
+    border:none;
+    background:none;
+    padding:0;
+}
+.log .logscore span {
+    font-size:15px;
+}
+.log .logdate span {
+    margin-left:5px;
+}
+.log:not(.logdetail) .logdate span,
+.log:not(.logdetail) .logscore span {
+    display: none;
+}
+
+div.glyph.hiragana,
+div.glyph.hiragana div.elm {
+    border-radius:30px;
+}
+
+div.glyph.hiragana div.elm div.kpart,
+div.glyph.hiragana div.correct {
+    text-align:center;
+    font-size:40px;
+}
+
+.word {
+    border: none;//px solid #555;
+    display:inline-block;
+    border-radius: 8px;
+    box-shadow: 3px 3px 3px gray;
+    padding: 1px 0 0 5px;
+    margin: 5px;
+    background-color: #eee;
+    background: linear-gradient(to left, #eee, #ccd);
+    background-image: url(p0499_m.jpg);
+    scroll-snap-align: start;
+}
+
+.word .wid {
+    margin:2px 2px 0 auto;
+    position:relative;
+    width:30px;
+    height:15px;
+    line-height:18px;
+    font-size:12px;
+    font-family:monospace;
+    text-align:center;
+    vertical-align:bottom;
+    overflow:hidden;
+    white-space:nowrap;
+    color: rgba(20,20,50,0.8);
+    border-radius:15px;
+    background-color:rgba(0,0,0,0.2);
+    background-blend-mode:lighten;
+    box-shadow: inset 2px 2px 2px 1px rgba(0, 0, 0, .3);
+}
+div.glyph.selected .elm {
+    //background-color: #ecc;
+    border-color: yellow;
+}
+
+div.glyph.selected {
+    border-color: yellow;
+}
+div.kidx {
+    width:100%; position:absolute; text-align:center; color:#900; z-index:2;
+    top:0; height:16px; line-height:16px;
+    font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif
+}
+
+.elm.L1 div.kidx, .elm.U1 div.kidx {
+    top:auto;
+    bottom:0;
+    text-align:left;
+}
+
+div.kpart {
+    font-family: "glyphwiki";
+    font-weight: bold;
+    color: #300;
+    width: 100%;
+    position: absolute;
+    text-align: center;
+    z-index: 1;
+    pointer-events: none;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+#judge {
+    position:absolute; right:10px; bottom:10px; display:none;
+    font: 30pt bold;
+}
+#keyinput {
+    display:inline-block;
+    padding:0; 
+    position: absolute;
+    z-index:4;
+    scroll-snap-align: start;
+}
+.userans, .usercmd, .helpuserans, #srvlog {
+    width:300px;
+    height:30px;
+    font-size:30px;
+    border:3px solid #8c8;
+    background-color:#010;
+    color: #8c8;
+}
+
+#g_log, #score {
+    display:none;
+}
+
+#discover {
+    font-family:glyphwiki;
+}
+
+div.cdp {
+    width:20px; height:20px;
+    display:inline-block;
+}
+
+#message {
+    display:none; width:300px; height:200px; 
+    position:absolute; bottom:0; left:0; right:0; top:0;
+    background-color:#bcc; margin:auto; border:2px solid gray; 
+    border-radius:40px; line-height:25px; z-index:4;
+}
+
+/* #menu */
+#archives {
+    text-decoration: underline;
+    cursor:pointer;
+}
+
+#qlistsX, #newest, #qposts {
+    display: flex;
+    flex-wrap: wrap;
+}
+.qoption.selected .loading, #qdesc .loading {
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    top:0;
+    opacity:0;
+    line-height:60px;
+    font-size:60px;
+    text-align:center;
+    z-index:0;
+    color:#008;
+}
+
+.qoption:hover {
+    background-color: #bdc;
+}
+
+.qoption.resume {
+    background-color: #faa;
+    border: #f22 solid 1px;
+}
+.qoption.resume:hover {
+    background-color: #fca;
+    border: #f22 solid 1px;
+}
+
+.qclear {
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    color:red;
+    height:40px;
+    font-size:40px;
+    display:none;
+}
+
+.qbox.cleared .qclear {
+    display:block;
+}
+.qinfo {
+    color: #66a;
+    margin-left: 4px;
+    float:left;
+    height:40px;
+    line-height:20px;
+    white-space:nowrap;
+}
+.qdesc {
+    margin: 0 5px;
+    clear:both;
+    display:block;
+    font-size:12pt;
+    width:auto;
+}
+.qinfo, .qdesc {
+    display:none;
+}
+
+/* #makequiz */
+h2.sampleword {
+    zoom:0.5;
+    margin:2px;
+    transform:translate(0,-25px) rotate(-6deg);
+}
+
+.fkana {
+    font-size:80%;
+    color: #338;
+//    white-space:nowrap;
+//    position:relative;
+//    display:inline-block;
+//    overflow:hidden;
+}
+.fword {
+    position:relative;
+    display:inline-block;
+}
+.fchar, .fword {
+    cursor: pointer;
+}
+.fchar.selected, .fword.selected {
+    border: 1px solid gray;
+    font-size: 150%;
+}
+.maskr {
+    color:red;
+}
+.maskb {
+    color:blue;
+}
+.maskp {
+    color:#f80;
+}
+.maskc {
+    color:#08f;
+}
+    
+.barekey, .fragkey, .statparts, .cdpf, #parts, #redefine {
+    font-family: "glyphwiki";
+}
+
+#ifdicload label {
+    white-space:nowrap;
+}
+
+#dicloader label {
+    display:inline-block;
+    white-space:nowrap;
+}
+.setpartbox {
+    margin:0 1px 1px 0;
+    line-height:10px;
+    font-size: 10px;
+    width:20px;
+    height:30px;
+    overflow:hidden;
+    display:inline-block;
+    cursor:pointer;
+}
+
+.setpart {
+    font-family: glyphwiki, serif;
+    cursor: pointer;
+    line-height:20px;
+    font-size: 18px;
+    width:20px;
+    height:20px;
+    background-color:#ccc;
+    display:inline-block;
+}
+
+.setpartbox.selected {
+    overflow:visible;
+}
+.setpartbox.selected .setpart {
+    width: 40px;
+    height: 40px;
+    line-height:40px;
+    font-size: 38px;
+    position:relative;
+    left: -10px;
+    border: 1px solid white;
+}
+
+#parts, #chars, #nchars, #numof {
+    width:100px;
+}
+
+#frequents label {
+    display:inline-block;
+    background-color:#ccc;
+    border-radius:12px;
+    border:1px solid #080;
+    font-size:12px;
+    padding:0 5px;
+}
+#frequents span {
+    display:inline-block;
+    color:#008;
+    /* text-decoration: underline; */
+    font-family:glyphwiki, serif;
+    height:24px;
+    line-height:24px;
+    cursor:pointer;
+}
+#frequents span:hover {
+    background-color:#ccc;
+}
+.setpart:hover {
+    background-color:#888;
+}

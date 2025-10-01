@@ -4,15 +4,14 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=600,initial-scale=1.0" />
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="frontend_automaker.js?20200913"></script>
-<script src="automaker.js?20220716"></script>
+<script src="kanji_puzzle.js?20250831"></script>
 <link rel="stylesheet" type="text/css" href="kanji_puzzle.css?20250831">
-<title>自動部首部</title>
+<title>Kanji Puzzle</title>
 </head>
 
 <body>
   <button id="showrule" class="help">?</button>
-  <h2>自動部首部</h2>
+  <h2>部首部</h2>
   <div id="top">
     <div class="topbox">
         <h4>●例題</h4> 同じ数字のところに同じ漢字パーツが入って熟語が完成します。
@@ -26,11 +25,16 @@
         <h4>●日替わりアーカイブ</h4>
         クリックで開始します。
         <div id="daily">(読込中...)</div>
-        <span id="qlen"></span>
+      </div>
+      <div class="topbox helper" id="continue">
+        <h4>●解きかけ</h4>
+        <button id="erase_resume" class="closer">X</button>
+        <div style='margin-top:6px;'></div>
       </div>
       <div class="topbox">
-        <h4>●出題</h4>
+        <h4>●最近の出題</h4>
         問題を選んでください。
+        <button class='anch' href='#archives' style="float:right; height:22px;">バックナンバー</button>
         <div id="newest" style='margin-top:6px;'>(読込中...)</div>
       </div>
   </div>
@@ -68,7 +72,6 @@
       </ul>
       <h4>ツール</h4>
       <ul>
-        <li><a href="automaker.html" target="_blank">出題自動生成版</a></li>
         <li><a href="#debug" target="_blank">作問ツール</a></li>
       </ul>
     </div>    </div>
@@ -170,7 +173,7 @@
               <label><input type="checkbox"/>SKK-JISYO.geo.filter</label>
               <label><input type="checkbox"/>railwiki.txt</label>
             </li>
-            <li><label>自前ファイル: <input type="file"/></label>(書式は <code>よみ /表記/表記/表記;注釈/</code>)</li></ul>
+            <li><label>自前ファイル: <input type="file"/></label>(書式は <code>よみ /表記/表記/表記;注釈/</code>)<code id="dicalert"></code></li></ul>
         </div>
 	<p>
 	  <h4>字検索</h4>
@@ -259,6 +262,7 @@
     </div>
   </div>
   <iframe src="fragtable.txt" id="fragtable" style="display:none;"></iframe>
+  <iframe src="fragtable.plus.txt" id="fragtableplus" style="display:none;"></iframe>
   <pre id="redefinelist" style="display:none;">
 #1画切り出し/主:Z丶王/勺:K勹丶/亼:Z𠆢一/旦:Z日一/亘:Z一旦/𠮛:Z一口/&amp;CDP-8C74;:Z𠂉一/𠫔:Z一厶/百:Z一白/&amp;CDP-8CB8;:J弋一/成:H戊𠃌/系:Zノ糸/血:Zノ皿/久:Fク㇏/&amp;k5-026c;:Z一由/
 #2画切り出し/云:Z二厶/示:Z二小/午:Z𠂉十/文:Z亠乂/玄:Z亠幺/&#xF526;:Z亠丷/衣:Z亠𧘇/亦:Z亠&#xF5ca;/穴:Z宀八/父:Zハ乂/其:Z&#xf50c;ハ/肉:H内人/𦍌:Z丷王/面:Z丆O口&amp;CDP-89CC;/石:F丆口/頁:Z丆貝/魚:Eク田灬/鬼:Z甶L儿厶/𢦏:J戈十/
