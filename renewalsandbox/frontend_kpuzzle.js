@@ -71,6 +71,17 @@ String.prototype.kanachange = function() {
     return (t < 0) ? c : Array.from("アイウエオカケヤユヨツワ")[t];
 };
 
+const getfile = (fname) => new Promise(cb => {
+    const ajax = new XMLHttpRequest();
+    ajax.onreadystatechange = () => {
+        if (ajax.readyState != 4) return;
+        if (ajax.status != 200) return;
+        cb(ajax.responseText);
+    };
+    ajax.open("GET", fname, true);
+    ajax.send(null);
+});
+
 const SoundEffect = function() {
     const file = {
         "tap" : "book-close1.mp3",
@@ -91,6 +102,7 @@ const SoundEffect = function() {
     };
 };
 
+// ユーザデータ
 const UserRecord = function() {
     let playerlog = "";
 
@@ -129,8 +141,6 @@ const UserRecord = function() {
             JSON.parse(localStorage.qclear).map(q => q.qid).map(qid => {
                 let q = menu.quiztable().find(q => q.qid == qid);
                 if (q) q.done = true;
-                //console.log(n, qid);
-                //$("#qlists .qoption").eq(n).addClass('cleared');
             });
         } catch {
             console.log(localStorage.qclear)
@@ -195,6 +205,7 @@ const UserRecord = function() {
             try {
                 let score = JSON.parse(localStorage.qclear);
                 localStorage.setItem("qclear", JSON.stringify([...score,param]));
+                // todo:古いデータを捨てる
             } catch {
                 localStorage.setItem("qclear", JSON.stringify([param]));
             }
@@ -227,7 +238,6 @@ const UserRecord = function() {
                     (rev ? '=; max-age=0': '=undefined');
             });
         });
-        location.href = "#archives";
         $("body").append('(Cache have been made)');
 
         return true;
@@ -864,6 +874,15 @@ const draw_puzzle = function(qwords, $quiz, options)
         });
         $("#top").hide();
 
+        if (quiz.pvlog) {
+            let pvlog = quiz.pvlog;
+            let replay = new PlayerLog(pvlog);
+            replay.draw_pulldown(pvlog.log, qlist);
+            console.log(pvlog,qlist);
+            return replay.run_replay(answer_check);
+        }
+        
+        //location.href="#quiz:qno=" + quiz.qno;
         if (quiz.resume) return;
         start_animation(qlen);
     };
@@ -955,6 +974,7 @@ const draw_puzzle = function(qwords, $quiz, options)
     this.end = show_ending;
 };
 
+// メニュー画面
 const TopMenu = function() {
     let quiztable = [];
 
@@ -1092,6 +1112,7 @@ const TopMenu = function() {
                     left:   inwidth < 0 ? 0 : (-inwidth),
                 });
             });
+            $("#qlists .qoption").hide().removeClass("selected")
             $("#qlists").hide().fadeIn();
         });
 
@@ -1118,6 +1139,7 @@ const TopMenu = function() {
             $(window).unbind();
             localStorage.removeItem("savepartway");
             userdata.loadpartway();
+            location.href = "#menu";
         });
         $("#onse").change(function() {
             se.enable($("#onse").prop("checked"));
@@ -1130,23 +1152,8 @@ const TopMenu = function() {
         $("#makeuprec").click(function() {
             if ($(this).hasClass("withheld")) return;
             if (!confirm("やっちまうか")) return;
-            $.ajax({
-                url: "earlier/qlist.json",
-                type: 'get',
-                dataType: 'json',
-                timeout: 10000,
-            }).success(function(data, status, error) {
-                quiztable = data.filter(q => {
-                    let p = q.date[0];
-                    return (p != "*" && p != "#");
-                });
-                draw_qlists(true);
-                $("#makeuprec").addClass("withheld");
-                $("#qlists").css({width:"80vw",height:"75vh"});
-                $("#archives").click();
-            }).fail(function(){
-                console.log("fail toload")
-            });
+            location.href = "#menu:archives";
+            location.reload();
         });
         $("#dlrec").click(function() {
             let save = localStorage.qclear;
@@ -1160,6 +1167,8 @@ const TopMenu = function() {
         $("#onwid").change(function() {
             $("#quiz")[$("#onwid").prop("checked") ? "removeClass":"addClass"]("nowid");
         });
+
+        hashcheck();
     };
 
 
@@ -1170,7 +1179,7 @@ const TopMenu = function() {
         } catch (e) {
         }
 
-        $("#qlists").html('<button class="closer">X</button>');//.css({width:"80vw",height:"75vh"});
+        $("#qlists").html('<button class="closer">X</button>');
 
         quiztable.map((quiz, idx) => {
             let q = quiz.q;
@@ -1196,8 +1205,9 @@ const TopMenu = function() {
             let $qid = $('<div>').addClass("qid").appendTo($qbox).text("生成");
             let $option = $('<div>').addClass("qoption").appendTo($qbox).hide().css({position:"absolute"});
             $('<div>').addClass("qid").appendTo($option).text("生成");
-            $('<div>').addClass("qinfo").appendTo($option).show().html("40語 120字" + "<br /> 2025-09-29");
-            $('<div>').addClass("qdesc").appendTo($option).html(quiz.desc).show();
+            $('<div>').addClass("qinfo").appendTo($option).show().html(
+                "40語 120字 x部首<br />" + new Date().toJSON().split("T").shift() + " (自動生成)");
+            $('<div>').addClass("qdesc").appendTo($option).text("問題を自動生成します。").show();
             $('<div>').addClass("loading").text("読込中").appendTo($option).hide();
         }
         
@@ -1213,7 +1223,7 @@ const TopMenu = function() {
 
             if ($(this).hasClass("automake")) {
                 $(this).siblings(".qbox").animate({"opacity": "0"});
-                return $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"}, () => { main(); });
+                return $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"}, () => { automaker(); });
             }
 
             let qid = parseInt($qopt.find(".qid").text());
@@ -1226,12 +1236,86 @@ const TopMenu = function() {
         }).hover(function() {
             if ($(this).hasClass("withheld")) return;
             $(this).find(".qoption").show();
-        }, function() { $(this).find(".qoption").hide(); });
+        }, function() {
+            if (!$(this).find(".qoption.selected").size()) $(this).find(".qoption").hide();
+        });
 
 
         $(".closer").unbind().click(function() {
             $("#overlap").hide();
         });
+    };
+
+    const hashcheck = function() {
+        let hash = location.hash;
+        if (!hash.length || hash[0] != "#") return;
+
+        const decodehash = (str) => {
+            try {
+                return decodeURIComponent(escape(window.atob(str)));
+            } catch(e) {
+                console.log(e);
+                return false;
+            }
+        };
+        
+        const runapps = {};
+        runapps.replay = (param) => {
+            let qlist = decodehash(param.q) || quiztable.find(q => q.qid == param.qid).q; // todo: refer qno
+            let qdef = decodehash(param.def) || "";
+            qscreen.start({
+                qno:param.qno, q:qlist, def:qdef,
+                pvlog:{log:decodehash(param.log), score:param.score},
+            });
+        };
+
+        // todo: consider resume
+        runapps.quiz = (param) => {
+            console.log(param);
+            if (param.qno) {
+                return $("#qlists .qoption").eq(param.qno - 1).click();
+            };
+            if (param.qid) {
+                let qno = quiztable.findIndex(q => q.qid == param.qid);
+                return $("#qlists .qoption").eq(qno).click();
+            };
+            if (param.q) {
+                let qlist = decodehash(param.q);
+                let qdef = decodehash(param.def) || "";
+                if (!qlist) return;
+                qscreen.start({qno:999, q:qlist, def:qdef });
+            }
+            // userdata.loadpartway(true);
+        };
+
+        runapps.menu = (param) => {
+            if (!param.archives) return $("#menu").show();
+            return $.ajax({
+                url: "earlier/qlist.json",
+                type: 'get',
+                dataType: 'json',
+                timeout: 10000,
+            }).success(function(data, status, error) {
+                quiztable = data.filter(q => {
+                    let p = q.date[0];
+                    return (p != "*" && p != "#");
+                });
+                draw_qlists(true);
+                $("#makeuprec").addClass("withheld");
+                $("#qlists").css({width:"80vw", height:"75vh"});
+                $("#archives").click();
+            }).fail(function(){
+                console.log("fail toload");
+            });
+        };
+
+        let param = hash.slice(1).split(":");
+        let runapp = runapps[param.shift()] || (() => {});
+        return runapp(param.reduce((ret,p) => {
+            let ps = p.split("=");
+            ret[ps[0]] = ps.slice(1).join("=") || true;
+            return ret;
+        }, {}));
     };
 
     const unsed = () => {  // 使ってないかも
@@ -1245,35 +1329,8 @@ const TopMenu = function() {
             anchor_check();
         });
 
-        // 自動生成用
-        $("#menu").show();
-        $("#newest").text("");
-        let $option = $('<div>').addClass("qoption").appendTo("#qlists");
-        let $qid = $('<div>').addClass("qid").appendTo($option).text("生成");
-        $('<div>').addClass("qclear").appendTo($qid).text('✔');
-        $('<div>').addClass("qinfo").appendTo($option).html("40語 120字 x部首<br/>(自動生成)");
-        $('<div>').addClass("qdesc").appendTo($option).html("問題を自動生成します。");
-
-        const anchor_check = function() {
-            try {
-                let str = decodeURIComponent(escape(window.atob(location.hash.slice(1))));
-                if (!str) return;
-                let q = str.split("@@");
-                console.log(str);
-                getfile("fragtable.plus.txt", (txt) => {
-                    kanjifrag.define(txt);
-                    qscreen.start({qid:"00", q:q[0], def:q[1]});
-                    userdata.loadpartway(true);
-                });
-            } catch (e) {
-                console.log(e);
-                return;
-            }
-        };
         window.addEventListener("hashchange", () => { anchor_check(); }, false);
-        anchor_check();
         show_daily();
-        
 
         if (location.href.indexOf("#debug") < 0 || userdata.makeup_save()) return;
 
@@ -1282,41 +1339,46 @@ const TopMenu = function() {
         $.getScript("./makequiz_tool.js");
         $.getScript("./jisho_tool.js");
     };
-    const show_daily = function()
-    {
-        return $("#daily").parent().hide(); /* automaker.html disables this function */
-        if ($("#daily .word").size()) return;
-        let today = new Date();
-        let seed = today.getFullYear() * 12 +
-            today.getMonth() * 35 + today.getDate();
-        //seed = 2019 * 12 + 9 * 35 + 13;
-        let random = new Random(seed);
-        let qid = 1 + random.next() % (quiztable.length - 1);
-        let quiz = quiztable[qid - 1];
-        let qlist = quiz.q;
-        let wlen = qlist.split("/").length;
-        let iword = wlen - 1 - random.next() % parseInt(wlen * 0.3);
-        let options = {
-            display: iword,
-            openlist: quiz.def.split("/").filter(def => def.indexOf("x:") != -1).join(""),
-        };
-        kanjifrag.definelocal(quiz.def);
-        qscreen.draw(qlist.split("/"), $("#daily").text(""), options);
-        
-        $("#daily").css("position", "relative").click(function() {
-            $(this).parent().css("background-color", "#bdc");
-            $('*').unbind();
-            $('<div>').addClass("loading").text("読込中").appendTo(this)
-                .animate({"opacity":".5"}, function() {
-                    qscreen.start(qid);
-                    $("#quiz .word").eq(iword).find(".elm").eq(0).click();
-                });
-        });
-    };
 
     this.show_menu = show_menu;
     this.load_qlist = load_qlist;
     this.quiztable = () => quiztable;
+};
+
+// 自動生成
+const automaker = async () => {
+    const encoder = s => btoa(unescape(encodeURIComponent(s)));
+
+    $(".qbox.automake .qdesc").html('<div id="seekbar"></div><div id="seekval"></div>');
+    $("#seekbar").css({width:"5%", backgroundColor:"red", height:"15px"});
+    $("#seekval").css({"text-align":"right"}).text("5%");
+
+    dic.load(await getfile("./dicts/SKK-JISYO.ML.utf8"));
+    kanjifrag.definelocal(REDEFINE);
+    partquiz.qwords = makequiz.select_random_words().split("/").filter(w => w);
+    partquiz.make(partquiz.qwords, {});
+
+    let dump = () => {
+        makequiz.wordsort();
+        location.hash = "quiz:q=" + encoder(partquiz.qwords.join("/")) + ":def=" + encoder(REDEFINE);
+        qscreen.start({q:partquiz.qwords.join("/"), def:REDEFINE});
+    };
+
+    let miss = 0;
+    let append = () => {
+        let qn = partquiz.qwords.length;
+        let percent = parseInt(100 * (partquiz.qwords.length) / (WORDLEN)) + "%";
+        $("#seekval").text(percent);
+        $("#seekbar").css("width", percent);
+
+        if (makequiz.select_rpbc_words() < 0) return dump();
+        partquiz.make(partquiz.qwords, {});
+        if (partquiz.qwords.length >= WORDLEN) return dump();
+        if (qn == partquiz.qwords.length) miss++;
+        if (3 < miss) return dump();
+        setTimeout(append, 10);
+    };
+    append();
 };
 
 const menu = new TopMenu();

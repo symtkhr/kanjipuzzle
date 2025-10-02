@@ -97,7 +97,6 @@ div.qelm.onestroke:not(.pselected):has(.undone) {
     background-blend-mode:lighten;
 }
 
-
 div.glyph {
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, MS Gothic, sans-serif;
     position:relative;
@@ -132,48 +131,6 @@ div.correct {
   pointer-events:none;
   position:absolute; 
   bottom:0; left:0; right:0; top:0;
-}
-
-.log {
-    border: solid #eb2 1px;
-    background: #ffc;
-    display: inline-block;
-    width: 55px;
-    white-space: nowrap;
-    padding: 0;
-    overflow: hidden;
-    line-height: 16px;
-    text-align: center;
-    margin-right: 1px;
-}
-
-.logdetail {
-    width:auto;
-    text-align:left;
-    padding:1px;
-    background:#fec;
-}
-.log .logdate {
-    line-height: 12px;
-    font-size: 12px;
-}
-.log .logscore {
-    margin:0;
-    line-height:20px;
-    font-size:20px;
-    border:none;
-    background:none;
-    padding:0;
-}
-.log .logscore span {
-    font-size:15px;
-}
-.log .logdate span {
-    margin-left:5px;
-}
-.log:not(.logdetail) .logdate span,
-.log:not(.logdetail) .logscore span {
-    display: none;
 }
 
 div.glyph.hiragana,
