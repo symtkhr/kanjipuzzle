@@ -259,7 +259,7 @@ div.cdp {
     display: flex;
     flex-wrap: wrap;
 }
-.qoption.selected .loading, #qdesc .loading {
+.qoption .loading, #qdesc .loading {
     position:absolute;
     left:0;
     right:0;

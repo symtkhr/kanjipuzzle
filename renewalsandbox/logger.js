@@ -133,6 +133,7 @@ const PlayerLog = function(qclear = {}) {
         });
         $(".gonext").eq(1).addClass("withheld");
         $(".gonext").eq(0).unbind().click(function() {
+            location.href = "#menu:archives";
             location.reload();
         });
         $(document).unbind();

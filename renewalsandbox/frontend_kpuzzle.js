@@ -75,7 +75,7 @@ const getfile = (fname) => new Promise(cb => {
     const ajax = new XMLHttpRequest();
     ajax.onreadystatechange = () => {
         if (ajax.readyState != 4) return;
-        if (ajax.status != 200) return;
+        if (ajax.status != 200) return cb();
         cb(ajax.responseText);
     };
     ajax.open("GET", fname, true);
@@ -108,14 +108,13 @@ const UserRecord = function() {
 
     // 解いた経過をキャッシュ保存する
     const savepartway = (qid) => {
-        console.log(timer.is_running, qid);
-        if (!timer.is_running) {
-            qid = -1;
-        }
-        if (qid < 0) {
+        //console.log(timer.is_running, qid);
+
+        if (!timer.is_running || !qid) {
             localStorage.removeItem("savepartway");
             return;
         }
+
         let undone = $('#quiz .kidx.undone').map(function() {
             return parseInt($(this).text());
         }).get().filter((x, i, self) => (self.indexOf(x) == i));
@@ -134,9 +133,8 @@ const UserRecord = function() {
         localStorage.setItem("savepartway", JSON.stringify(val));
     };
 
-    
-    const loadpartway = () => {
-        // 解き終わったデータ
+    // 解き終わったデータを読み出す
+    const loadqclear = () => {
         try {
             JSON.parse(localStorage.qclear).map(q => q.qid).map(qid => {
                 let q = menu.quiztable().find(q => q.qid == qid);
@@ -147,30 +145,33 @@ const UserRecord = function() {
         }
         // ユーザ名
         $("#message input").val(localStorage.uname || "");
+    };
 
-        // 再開データ
-        let savedata = localStorage.getItem("savepartway");
-        if (!savedata) return;
-        let res = JSON.parse(savedata);
-        //$("#config").append(`<div class="debug"><textarea style="width:15px;height:15px;">${savedata}</textarea></div>`); // for debug
+    // 再開データを読み出す
+    const loadpartway = (quiz) => {
+        let resume = (() => {
+            try {
+                return JSON.parse(localStorage.savepartway);
+            } catch (e) {
+                return;
+            }
+        })();
+
+        if (!resume) return;
 
         // 再開時のデータ展開
-        let q = menu.quiztable().find(q=>q.qid == res.qid);
+        let q = quiz || menu.quiztable().find(q => q.qid == resume.qid);
         if (!q) return;
 
-        $(".menu").hide();
-        let _timer = setInterval(() => { $("#resume").click(); }, 400);
-        $("#resume").show().unbind().click(function() {
-            if (!$("#fragtable").hasClass("done")) return;
-            clearInterval(_timer);
-            $(this).unbind();
+        $("#resume").addClass("enabled").unbind().click(function() {
+            $(this).unbind().removeClass("enabled");
 
             q.resume = true;
             qscreen.start(q);
 
             // 解きかけ分の展開
             $("#quiz .kidx").removeClass("undone").hide().next().show();
-            res.undone.forEach(kid => $("#quiz .kidx" + kid).addClass("undone").show().next().hide());
+            resume.undone.forEach(kid => $("#quiz .kidx" + kid).addClass("undone").show().next().hide());
 
             $("#quiz .glyph").each(function() {
                 if ($(this).find(".undone").size() > 0) return;
@@ -179,10 +180,11 @@ const UserRecord = function() {
                 $(this).find(".elm div").hide();
             });
 
-            playerlog = res.log;
-            $("#point").text(res.pt);
-            timer.start(res.time + 1);
+            playerlog = resume.log;
+            $("#point").text(resume.pt);
+            timer.start(resume.time + 1);
         });
+        return true;
     };
 
 
@@ -196,7 +198,9 @@ const UserRecord = function() {
             date: (new Date()).getTime(),
         };
         try {
-            param.log += "@@" + decodeURIComponent(escape(window.atob(location.hash.slice(1))));
+            param.log += "@@";
+            if (qid == -1) param.log += qscreen.quiz.q + "@@" + qscreen.quiz.def;
+            console.log(param.log);
         } catch (e) {
             console.log(e);
         }
@@ -250,6 +254,7 @@ const UserRecord = function() {
     this.resetlog = () => { playerlog = ""; };
     this.savepartway = savepartway;
     this.loadpartway = loadpartway;
+    this.loadqclear  = loadqclear;
     this.save_result = save_result;
     this.makeup_save = makeup_save;
 };
@@ -422,10 +427,6 @@ const PuzzleScreen = function() {
         return div;
     };
 
-const draw_puzzle = function(qwords, $quiz, options)
-{
-    if (!options) options = {};
-
     // 語リストから以下のDOM要素を生成 + ansに分解結果を記録
     // .word
     //  .glyph
@@ -436,136 +437,137 @@ const draw_puzzle = function(qwords, $quiz, options)
     //    .elm
     //      .kpart [寸]
     //    .correct [村]
-    let ans = qwords.reduce((ans, qword, i) => {
-        let is_hidden = (options.display && options.display != i);
-
-        if (!is_hidden) {
-            var $word = (qword[0] == "+" && $quiz.find(".word").size() != 0) ?
-                $quiz.find(".word:last-child") :
-                $("<div>").addClass("word").appendTo($quiz);
-            $("<div>").addClass("wid").text((101 + i).toString().slice(-2)).appendTo($word);
-        }
-        return [...ans, ...Array.fromCdp(qword).filter(c => !c.match(/^[ -~\s]?$/)).map(c => {
-            // 漢字分解
-            let n = kanjifrag.split(c);
-            let fragged = n.toString();
-            if (fragged == "X") n = [c];
-
-            if (is_hidden) return fragged;
-            //分解結果の記録(問題作成ツール用)
-            if (fragged !== c)
-               $("#knjtb").val($("#knjtb").val() + c + ":" + fragged.split(",").join("") + "/");
-
-            // 描画
-            let $glyph = $('<div class="glyph">').appendTo($word);
-            splitbox($glyph, n, false);
-            $glyph.append('<div class="correct">' + c + '</div>');
-
-            //かな文字の場合
-            if (c.match(/^[ぁ-ー]$/)) {
-                $glyph.addClass("hiragana");
+    const draw_puzzle = (qwords, $quiz, options = {}) => {
+        let ans = qwords.reduce((ans, qword, i) => {
+            let is_hidden = (options.display && options.display != i);
+            
+            if (!is_hidden) {
+                var $word = (qword[0] == "+" && $quiz.find(".word").size() != 0) ?
+                    $quiz.find(".word:last-child") :
+                    $("<div>").addClass("word").appendTo($quiz);
+                $("<div>").addClass("wid").text((101 + i).toString().slice(-2)).appendTo($word);
             }
-            return fragged;
-        })];
-    }, []).filter(v=>v).join(",");
+            return [...ans, ...Array.fromCdp(qword).filter(c => !c.match(/^[ -~\s]?$/)).map(c => {
+                // 漢字分解
+                let n = kanjifrag.split(c);
+                let fragged = n.toString();
+                if (fragged == "X") n = [c];
+                
+                if (is_hidden) return fragged;
+                //分解結果の記録(問題作成ツール用)
+                if (fragged !== c)
+                    $("#knjtb").val($("#knjtb").val() + c + ":" + fragged.split(",").join("") + "/");
+                
+                // 描画
+                let $glyph = $('<div class="glyph">').appendTo($word);
+                splitbox($glyph, n, false);
+                $glyph.append('<div class="correct">' + c + '</div>');
+                
+                //かな文字の場合
+                if (c.match(/^[ぁ-ー]$/)) {
+                    $glyph.addClass("hiragana");
+                }
+                return fragged;
+            })];
+        }, []).filter(v=>v).join(",");
 
-    // ansから番号リストを生成する
-    const onestrokes = "一丨亅丿ノ乙𠃌⺄乚𠃊丶";
-    const kidx = partquiz.make_list(ans, options.openlist || onestrokes);
+        // ansから番号リストを生成する
+        const onestrokes = "一丨亅丿ノ乙𠃌⺄乚𠃊丶";
+        const kidx = partquiz.make_list(ans, options.openlist || onestrokes);
 
-    // 分割DOM要素内に部首または番号を表示
-    $quiz.find(".elm").each(function(){
-        let c = $(this).text();
+        // 分割DOM要素内に部首または番号を表示
+        $quiz.find(".elm").each(function(){
+            let c = $(this).text();
 
-        $(this).text("");
+            $(this).text("");
 
-        // 枠を表示しない
-        if (c == "＿") {
-            $(this).parent().remove();
+            // 枠を表示しない
+            if (c == "＿") {
+                $(this).parent().remove();
+                return;
+            }
+
+            // 番号表示
+            if (kidx[c]) {
+                $(this).addClass("qelm");
+
+                let $npart = $(this).html('<div>' + kidx[c] + "</div>").find("div:last");
+                $npart.addClass('kidx undone kidx' + kidx[c]);
+
+                let boxclass = $(this).parent().prop("class") + $(this).parent().parent().prop("class");
+                // にょう・はこの番号は左下に配置
+                if (boxclass.indexOf("L1") != -1 || boxclass.indexOf("U1") != -1 ) {
+                    $npart.css({"bottom":0, "top":"auto", "text-align": "left"});
+                }
+                // 逆にょうの番号は右下に配置
+                if (boxclass.indexOf("J1") != -1 ) {
+                    $npart.css({"bottom":0, "top":"auto", "text-align": "right"});
+                }
+                // 四方構・右上構の番号は右上に配置
+                if (boxclass.indexOf("K1") != -1 || boxclass.indexOf("O1") != -1 ) {
+                    $npart.css({"text-align":"right"});
+                }
+                // かなの番号はセンタリング
+                if (boxclass.indexOf("hiragana") != -1) {
+                    $npart.css({"top":"20px", "bottom":"auto"});
+                }
+                // 1画パーツは色変更
+                else if (onestrokes.indexOf(c) != -1) {
+                    $(this).addClass("onestroke");
+                };
+            }
+
+            // 部首表示: 枠内目一杯に表示
+            let $kpart = $('<div>').addClass("kpart").appendTo(this);
+            let style = {};
+            let h = $(this).innerWidth() + 'px';
+            style['font-size'] = h;
+            style['height'] = h;
+            style['line-height'] = h;
+            style['transform'] = 'scale(1, ' + $(this).innerHeight() / $(this).innerWidth() + ')';
+
+            // 部首表示: 番号付きならば伏せる
+            if ($(this).hasClass("qelm")) $kpart.hide();
+
+            let name = c.match(/^&([^;]+);$/);
+            if (!name) {
+                $kpart.append(c).css(style);
+                return;
+            }
+
+            let gaiji = cdp2ucs(c);
+            if (gaiji != c) {
+                $kpart.append(gaiji).css(style);
+                return;
+            }
+            
+            // 部首表示: glyphwikiからロードする
+            $("head").append('<link rel="stylesheet" href="https://glyphwiki.org/style?glyph=' + name[1] + '">');
+            style["font-family"] = name[1];
+            $kpart.append("〓").css(style);
             return;
-        }
-
-        // 番号表示
-        if (kidx[c]) {
-            $(this).addClass("qelm");
-
-            let $npart = $(this).html('<div>' + kidx[c] + "</div>").find("div:last");
-            $npart.addClass('kidx undone kidx' + kidx[c]);
-
-            let boxclass = $(this).parent().prop("class") + $(this).parent().parent().prop("class");
-            // にょう・はこの番号は左下に配置
-            if (boxclass.indexOf("L1") != -1 || boxclass.indexOf("U1") != -1 ) {
-                $npart.css({"bottom":0, "top":"auto", "text-align": "left"});
+            
+            // 部首表示: フォントがない場合はSVGを使う(いちおう残し?)
+            let $svg = $("#" + name[1]);
+            if ($svg.size() > 0) {
+                $kpart.append($svg.clone().show()).css(style);
+                return;
             }
-            // 逆にょうの番号は右下に配置
-            if (boxclass.indexOf("J1") != -1 ) {
-                $npart.css({"bottom":0, "top":"auto", "text-align": "right"});
-            }
-            // 四方構・右上構の番号は右上に配置
-            if (boxclass.indexOf("K1") != -1 || boxclass.indexOf("O1") != -1 ) {
-                $npart.css({"text-align":"right"});
-            }
-            // かなの番号はセンタリング
-            if (boxclass.indexOf("hiragana") != -1) {
-                $npart.css({"top":"20px", "bottom":"auto"});
-            }
-            // 1画パーツは色変更
-            else if (onestrokes.indexOf(c) != -1) {
-                $(this).addClass("onestroke");
-            };
-         }
 
-        // 部首表示: 枠内目一杯に表示
-        let $kpart = $('<div>').addClass("kpart").appendTo(this);
-        let style = {};
-        let h = $(this).innerWidth() + 'px';
-        style['font-size'] = h;
-        style['height'] = h;
-        style['line-height'] = h;
-        style['transform'] = 'scale(1, ' + $(this).innerHeight() / $(this).innerWidth() + ')';
-
-        // 部首表示: 番号付きならば伏せる
-        if ($(this).hasClass("qelm")) $kpart.hide();
-
-        let name = c.match(/^&([^;]+);$/);
-        if (!name) {
+            // 部首表示: 諦めてそのまま表示
             $kpart.append(c).css(style);
-            return;
-        }
-
-        let gaiji = cdp2ucs(c);
-        if (gaiji != c) {
-            $kpart.append(gaiji).css(style);
-            return;
-        }
-
-        // 部首表示: glyphwikiからロードする
-        $("head").append('<link rel="stylesheet" href="https://glyphwiki.org/style?glyph=' + name[1] + '">');
-        style["font-family"] = name[1];
-        $kpart.append("〓").css(style);
-        return;
-        
-        // 部首表示: フォントがない場合はSVGを使う(いちおう残し?)
-        let $svg = $("#" + name[1]);
-        if ($svg.size() > 0) {
-            $kpart.append($svg.clone().show()).css(style);
-            return;
-        }
-
-        // 部首表示: 諦めてそのまま表示
-        $kpart.append(c).css(style);
-    });
-    if (options.open) {
-        $quiz.find(".glyph").each(function() {
-            $(this).find(".correct").show();
-            $(this).find(".elm div").hide();
         });
-    }
-    $quiz.find(".hiragana .elm .kpart").css("font-size", "");
 
-    if (!$("#onwid").prop("checked")) $quiz.addClass("nowid");
-    return (Object.keys(kidx).length);
-}
+        if (options.open) {
+            $quiz.find(".glyph").each(function() {
+                $(this).find(".correct").show();
+                $(this).find(".elm div").hide();
+            });
+        }
+        $quiz.find(".hiragana .elm .kpart").css("font-size", "");
+        if (!$("#onwid").prop("checked")) $quiz.addClass("nowid");
+        return (Object.keys(kidx).length);
+    };
 
     // 要素が画面内にあるか
     const isHeightViewable = (element, isviewport) => {
@@ -589,7 +591,7 @@ const draw_puzzle = function(qwords, $quiz, options)
         $("#main").show();
         $("#knjtb").val('');
         $("#quiz").text('');
-        $("#head .qid").text(quiz.qno);
+        $("#head .qid").text((quiz.qid == -1) ? "生成" : quiz.qno);
         $("#point,#bonus").text(0);
         $("#top, #score").hide();
         $("#wordlist").val(qlist);
@@ -603,9 +605,18 @@ const draw_puzzle = function(qwords, $quiz, options)
             se.play("tap");
             $("#resume, #control, .loading").hide();
             $("#keyinput").appendTo("#main");
-            $(".qoption").css("opacity","");
-            let n = menu.quiztable().findIndex(q=>q.qid == qid);
-            $(".qbox").eq(n+1).click();
+            $(".qbox, .qoption").css("opacity","").removeClass("qselected");
+            let n = menu.quiztable().findIndex(q => q.qid == qid);
+            let $qbox = (qid == -1) ? $(".qbox.automake") : $(".qbox").eq(n + 1)
+            console.log(n+1,$qbox);
+            $qbox.removeClass("withheld").click();
+
+            if (!$qbox.hasClass("automake")) return;
+
+            $("#qlists").show();
+            $("#archives").click();
+            $qbox.show().find(".qoption").show();
+            $("#qlists .closer").hide();
         });
         
         // パズル描画
@@ -660,10 +671,13 @@ const draw_puzzle = function(qwords, $quiz, options)
                  "left" : $glyph.position().left / zoom,
                  "bottom": ($word.height() - $glyph.position().top / zoom) });
             $(".userans").show().css({"width": "100%"}).focus().select();
-            
-            if ($(this).parents(".word").find(".correct:hidden").size() == 0) {
+
+            if ($("#srvlog").size()) {
+                $("#srvlog").focus().select();
+            } else if ($(this).parents(".word").find(".correct:hidden").size() == 0) {
                 $ki.hide();
             }
+
             let $kidx = $(this).find(".kidx");
             if ($kidx.hasClass("undone") || !classname) {
                 $("#discover").hide().html("");
@@ -1008,12 +1022,11 @@ const TopMenu = function() {
             show_menu("rgs");
         });
 
-        loadfile();  /* automaker.html does not need qlist */
+        loadfile();
     };
 
     const show_menu = (arg) => {
         if (!quiztable.length || !$("#fragtable").hasClass("done") || !$("#fragtablep").hasClass("done")) return;
-        console.log("showmenu",arg);
         
         // draw the sample quiz
         kanjifrag.definelocal("尌:/洛:");
@@ -1099,9 +1112,8 @@ const TopMenu = function() {
         });
         
         $("#archives").click(function() {
-            $("#control, #message, #howto").hide();
-            $("#overlap,#qlists").show();
-            $("#qlists .qbox").map(function() {
+            $("#overlap, #qlists, #qlists .closer").show();
+            $("#qlists .qbox").removeClass("qselected").map(function() {
                 let $qbox = $(this);
                 let $qopt = $(this).find(".qoption");
                 let pos = $qbox.position();
@@ -1112,7 +1124,7 @@ const TopMenu = function() {
                     left:   inwidth < 0 ? 0 : (-inwidth),
                 });
             });
-            $("#qlists .qoption").hide().removeClass("selected")
+            $("#control, #message, #howto, #qlists .qoption").hide();
             $("#qlists").hide().fadeIn();
         });
 
@@ -1137,9 +1149,10 @@ const TopMenu = function() {
             quiztable.map(v => v.resume = false);
             $(quiztable.find(v => v.done) ? "#continue":"#newstart").show();
             $(window).unbind();
-            localStorage.removeItem("savepartway");
-            userdata.loadpartway();
-            location.href = "#menu";
+            userdata.savepartway();
+            userdata.loadqclear();
+            draw_qlists();
+            location.hash = quiztable.length < 40 ? "#menu" : "#menu:archives";
         });
         $("#onse").change(function() {
             se.enable($("#onse").prop("checked"));
@@ -1171,16 +1184,12 @@ const TopMenu = function() {
         hashcheck();
     };
 
-
-    const draw_qlists = (allopen) => {
+    const draw_qlists = () => {
         // start the resumed quiz
-        try {
-            userdata.loadpartway(true);
-        } catch (e) {
-        }
-
+        userdata.loadqclear(true);
         $("#qlists").html('<button class="closer">X</button>');
 
+        let allopen = $("#qlists").hasClass("earlier");
         quiztable.map((quiz, idx) => {
             let q = quiz.q;
             quiz.qno = idx + 1;
@@ -1213,17 +1222,23 @@ const TopMenu = function() {
         
         if (!allopen) {
             let n = quiztable.filter(q => q.done).length;
-            $(".qbox:not(.cleared)").filter(function(i) { return (n * 2) < i; }).addClass("withheld");
+            $("#qlists .qbox:not(.cleared)").filter(function(i) { return (n * 2) < i; }).addClass("withheld");
             $((n == 0) ? "#newstart" : "#continue").show();
+            if (!$("#qlists .qbox").eq(-2).hasClass("cleared")) $(".qbox.automake").hide();
         }
 
         $("#qlists .qbox").unbind().click(function(e) {
-            if ($(this).hasClass("withheld")) return;
-            let $qopt = $(this).find(".qoption").addClass("selected");
-
+            if ($(this).hasClass("withheld") || $("#qlists .qselected").size()) return;
+            $(this).addClass("qselected");
+            let $qopt = $(this).find(".qoption");
+            
             if ($(this).hasClass("automake")) {
                 $(this).siblings(".qbox").animate({"opacity": "0"});
-                return $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"}, () => { automaker(); });
+                $(".qbox.automake .qdesc").html('<div id="seekbar"></div><div id="seekval"></div>');
+                $("#seekbar").css({width:"0%", backgroundColor:"red", height:"15px"});
+                $("#seekval").css({"text-align":"right"}).text("0%");
+                automaker();
+                return $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"});
             }
 
             let qid = parseInt($qopt.find(".qid").text());
@@ -1237,7 +1252,7 @@ const TopMenu = function() {
             if ($(this).hasClass("withheld")) return;
             $(this).find(".qoption").show();
         }, function() {
-            if (!$(this).find(".qoption.selected").size()) $(this).find(".qoption").hide();
+            if (!$(this).hasClass("qselected")) $(this).find(".qoption").hide();
         });
 
 
@@ -1248,7 +1263,7 @@ const TopMenu = function() {
 
     const hashcheck = function() {
         let hash = location.hash;
-        if (!hash.length || hash[0] != "#") return;
+        //if (!hash.length || hash[0] != "#") return;
 
         const decodehash = (str) => {
             try {
@@ -1260,57 +1275,79 @@ const TopMenu = function() {
         };
         
         const runapps = {};
-        runapps.replay = (param) => {
-            let qlist = decodehash(param.q) || quiztable.find(q => q.qid == param.qid).q; // todo: refer qno
+        runapps.replay = async (param) => {
+            let qlist = decodehash(param.q);
             let qdef = decodehash(param.def) || "";
+            if (!qlist) {
+                let quiz0 = quiztable[param.qno - 1] || quiztable.find(q => q.qid == param.qid);
+                if (quiz0) [qlist, qdef] = [quiz0.q, quiz0.def];
+            }
+            if (!qlist) {
+                let json = await getfile("earlier/qlist.json");
+                let quiz0 = JSON.parse(json).find(q => q.qid == param.qid);
+                if (quiz0) [qlist, qdef] = [quiz0.q, quiz0.def];
+            }
             qscreen.start({
-                qno:param.qno, q:qlist, def:qdef,
+                qno:param.qno || param.qid, qid:param.qid, q:qlist, def:qdef,
                 pvlog:{log:decodehash(param.log), score:param.score},
             });
         };
 
         // todo: consider resume
-        runapps.quiz = (param) => {
-            console.log(param);
+        runapps.quiz = async (param) => {
             if (param.qno) {
                 return $("#qlists .qoption").eq(param.qno - 1).click();
             };
             if (param.qid) {
-                let qno = quiztable.findIndex(q => q.qid == param.qid);
-                return $("#qlists .qoption").eq(qno).click();
+                if ((200 < param.qid) && (param.qid <= 230)) {
+                    return $("#qlists .qoption").eq(param.qid - 201).click();
+                }
+                let json = await getfile("earlier/qlist.json");
+                let q0 = JSON.parse(json).find(q => q.qid == param.qid);
+                if (q0) qscreen.start(q0);
+                return;
             };
             if (param.q) {
                 let qlist = decodehash(param.q);
                 let qdef = decodehash(param.def) || "";
                 if (!qlist) return;
-                qscreen.start({qno:999, q:qlist, def:qdef });
+                let q0 = {qid:-1, q:qlist, def:qdef };
+                if (!userdata.loadpartway(q0)) return qscreen.start(q0);
+                $("#overlap").hide();
+                $(".menu:not(.enabled)").hide();
+                return setTimeout(() => $("#resume").click(), 700);
             }
-            // userdata.loadpartway(true);
         };
 
-        runapps.menu = (param) => {
-            if (!param.archives) return $("#menu").show();
-            return $.ajax({
-                url: "earlier/qlist.json",
-                type: 'get',
-                dataType: 'json',
-                timeout: 10000,
-            }).success(function(data, status, error) {
-                quiztable = data.filter(q => {
-                    let p = q.date[0];
-                    return (p != "*" && p != "#");
-                });
-                draw_qlists(true);
-                $("#makeuprec").addClass("withheld");
-                $("#qlists").css({width:"80vw", height:"75vh"});
-                $("#archives").click();
-            }).fail(function(){
-                console.log("fail toload");
-            });
+        runapps.menu = async (param) => {
+            if (!param.archives) {
+                $("#menu").show();
+            } else {
+                let json = await getfile("earlier/qlist.json");
+                try {
+                    quiztable = JSON.parse(json).filter(q => {
+                        let p = q.date[0];
+                        return (p != "*" && p != "#");
+                    });
+                    $("#qlists").addClass("earlier").css({width:"80vw", height:"75vh"});
+                    draw_qlists();
+                    $("#makeuprec").addClass("withheld");
+                    $("#archives").click();
+                } catch (e) {
+                    console.log(e, "failedtoload");
+                }
+            }
+
+            userdata.loadpartway();
+            if (!$("#resume.enabled").show().size()) return;
+            $("#overlap").hide();
+            $(".menu:not(.enabled)").hide();
+            return setTimeout(() => $("#resume").click(), 700);
         };
 
         let param = hash.slice(1).split(":");
-        let runapp = runapps[param.shift()] || (() => {});
+        let runapp = runapps[param.shift()] || runapps.menu;
+        //console.log(runapp);
         return runapp(param.reduce((ret,p) => {
             let ps = p.split("=");
             ret[ps[0]] = ps.slice(1).join("=") || true;
@@ -1349,10 +1386,6 @@ const TopMenu = function() {
 const automaker = async () => {
     const encoder = s => btoa(unescape(encodeURIComponent(s)));
 
-    $(".qbox.automake .qdesc").html('<div id="seekbar"></div><div id="seekval"></div>');
-    $("#seekbar").css({width:"5%", backgroundColor:"red", height:"15px"});
-    $("#seekval").css({"text-align":"right"}).text("5%");
-
     dic.load(await getfile("./dicts/SKK-JISYO.ML.utf8"));
     kanjifrag.definelocal(REDEFINE);
     partquiz.qwords = makequiz.select_random_words().split("/").filter(w => w);
@@ -1361,7 +1394,7 @@ const automaker = async () => {
     let dump = () => {
         makequiz.wordsort();
         location.hash = "quiz:q=" + encoder(partquiz.qwords.join("/")) + ":def=" + encoder(REDEFINE);
-        qscreen.start({q:partquiz.qwords.join("/"), def:REDEFINE});
+        qscreen.start({q:partquiz.qwords.join("/"), def:REDEFINE, qid:-1});
     };
 
     let miss = 0;
@@ -1375,7 +1408,7 @@ const automaker = async () => {
         partquiz.make(partquiz.qwords, {});
         if (partquiz.qwords.length >= WORDLEN) return dump();
         if (qn == partquiz.qwords.length) miss++;
-        if (3 < miss) return dump();
+        if (30 < miss) return dump();
         setTimeout(append, 10);
     };
     append();

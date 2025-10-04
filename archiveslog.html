@@ -92,6 +92,11 @@ body {
 .log:not(.logdetail) .logplay {
     display: none;
 }
+.log:not(.logdetail) a {
+    pointer-events:none;
+    text-decoration:none;
+    color:inherit;
+}
 .loghash, .logid { display:none; }
 .ptrank {
     display:inline-block;
@@ -136,7 +141,7 @@ const getfile = (fname) => new Promise(cb => {
     ajax.send(null);
 });
 
-const LOGGERURL = $id("gasapi").getAttribute("href");
+const LOGGERURL = location.hash == "#nogas" ? null : $id("gasapi").getAttribute("href");
 const scorelist = async function() {
     $id("head").innerHTML += "問qlists/時latest/点ptrank".split("/")
         .map(v=> `<label><input type="radio" name="sort" value="${v.slice(1)}" ${v[0]=="時"?"checked":""}/>${v[0]}</label>`).join("");
@@ -155,7 +160,7 @@ const scorelist = async function() {
             let d = v.time.split("-").map(v => parseInt(v));
             v.time = (new Date(d[0], d[1]-1, d[2], 0, 0)).getTime();
         }
-        let idx = ret.findIndex(setv => {
+        let idx = (v.qid < -1) ? v.qid : ret.findIndex(setv => {
             let timediff = v.time - setv.time;
             return (0 < timediff) && (timediff < 1000 * 60 * 60 * 24) && (v.score == setv.score);
         });
@@ -173,6 +178,7 @@ const scorelist = async function() {
     data.sort((a, b)=> b.score[2] - a.score[2]).forEach((r, i) => r.rank = i);
     let logs = data.sort((a, b) => (b.time - a.time));
 
+    // draw display
     $id("latest").innerText = '';
     $id("ptrank").innerHTML = '<div class="ptrank"></div>'.repeat(logs.length);
     $id("qlists").innerHTML = [...Array(127 + 3), -1].map((qid,i) => qid || (i + (i < 3 ? 201 : -2)))
@@ -186,9 +192,9 @@ const scorelist = async function() {
 
         let $log = $cn("log", $qopt).slice(-1)[0];
         $log.innerHTML += [
-            `<button class=logplay>ログ</button>`,
-            `<a class="logplay hidden">ログ</a>`,
-            `<div class=qid>3</div>`,
+            //`<button class=logplay>ログ</button>`,
+            //`<a class="logplay hidden">ログ</a>`,
+            `<div class=qid>0</div>`,
             `<div class="logid"></div>`,
             `<div class="loghash"></div>`,
             `<div class="logdate"><span></span></div>`,
@@ -207,22 +213,34 @@ const scorelist = async function() {
         $q(".logid", $log)[0].innerText = r.time;
         $q(".loghash", $log)[0].innerText = `replay:qid=${r.qid}:score=${r.score.slice(0,2).join(";")}:date=${r.time}`;
         $q(".logdate", $log)[0].innerHTML = strdate + "<span>" + strtime + "</span>";
-        $q(".logscore", $log)[0].innerHTML = r.score[2] + `<span>(=${r.score.slice(0,2).join("+")})</span>`;
+        $q(".logscore", $log)[0].innerHTML = `<a>${r.score[2]}</a> <span>(=${r.score.slice(0,2).join("+")})</span>`;
         
         let $name = $tag("span", $log).slice(-1)[0];
-        $name.innerHTML = r.name || '<span style="color:#999;">--</span>';
-        if (16140000000000 < r.time) $name.innerText = r.name;
+        $name.innerHTML = r.name || '<span style="color:white;">--</span>';
+        if (16140000000000 < r.time) $name.innerText = r.name; // 2021年1月までタグインジェクションができた
+
+        let hashes = r.log.split("@@").map((v,i) => ["log","q","def"].slice(i)[0] + "=" + encoder(v));
+        hashes.unshift(`replay:qid=${r.qid}:score=${r.score.slice(0,2).join(";")}:date=${r.time}`);
+
+        let $a = $q(".logscore a", $log)[0];
+        $a.setAttribute("href", `./#${hashes.join(":")}`);
 
         $id("latest").append($log.cloneNode(true));
         $q("#ptrank .ptrank")[r.rank].append($log.cloneNode(true));
     });
     
     $cn("log").map($log => $log.onclick = (e) => {
-        e.stopPropagation();
         $log.classList.toggle("logdetail");
+        $q(".logscore a", $log)[0].onclick = (e) => { e.stopPropagation(); return true; };
+        return;
+
+        // unused
         let $button = $q("button.logplay", $log)[0];
         if ($button) $button.removeAttribute("disabled");
+        if (!$log.classList.contains("logdetail")) return;
     });
+
+    // unused
     $q("button.logplay").map($dom => $dom.onclick = async (e) => {
         e.stopPropagation();
         $dom.setAttribute("disabled", true);
@@ -246,6 +264,5 @@ const scorelist = async function() {
 window.onload = () => { scorelist(); };
 
 </script>
-
 </body>
 </html>
