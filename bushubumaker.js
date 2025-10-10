@@ -195,10 +195,10 @@ const WordDictionary = function()
 const KanjiTable = function()
 {
     // 指定された部首を持つ漢字を返す
-    this.find = function(part) {
+    this.find = function(part, filter = (() => true)) {
         return _SKKTABLE.split("").filter(c => {
-            let n = kanjifrag.split(c).toString() + ",";
-            return (!part.some(val => (n.indexOf(val) == -1)));
+            let n = kanjifrag.split(c).toString().split(",");
+            return part.every(val => (n.indexOf(val) != -1) && filter(n));
         });
     };
 
@@ -657,10 +657,21 @@ nodeapp.qcompatible = (param) => {
     }).map((v,i) => {if(v.plus1 ||v.plus2||v.minus) console.log(i+1,v ? v : "")});
 };
 
+// 引数で指定された部品を持つ漢字を検索する
+nodeapp.findpart = (argv) => {
+    const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
+    kanjifrag.define(getfile("fragtable.txt"));
+    kanjifrag.define(getfile("fragtable.plus.txt"));
+    let target = Array.fromCdp(argv[0]);
+    kanjifrag.definelocal(target.map(c => c+":").join("/"));
+    let filter = (n) => (n.length < 4) && n[0]=="N" && n[1]=="月";
+    let ret = kanjitable.find(target) //, filter);
+    console.log(ret.length, ret.join(""));
+};
+
 if (typeof window == "undefined") {
     let argv = process.argv.slice(2);
     let key = argv.shift();
-    if (!nodeapp[key]) key = "help";
-    nodeapp[key](argv);
+    (nodeapp[key] || nodeapp.help)(argv);
 }
 

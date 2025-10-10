@@ -66,9 +66,11 @@ String.prototype.toHalfWidth = function() {
 String.prototype.kanachange = function() {
     if (!this) return "";
     let c = this.trim();
-    if (c.match(/[ぁ-ん]/)) c = String.fromCharCode(c.charCodeAt(0) + 0x60);
-    const t = "ァィゥェォヵヶャュョッヮ".indexOf(c);
-    return (t < 0) ? c : Array.from("アイウエオカケヤユヨツワ")[t];
+    return Array.from(this).map(c => {
+        if (c.match(/[ぁ-ん]/)) c = String.fromCharCode(c.charCodeAt(0) + 0x60);
+        const t = "ァィゥェォヵヶャュョッヮ".indexOf(c);
+        return (t < 0) ? c : Array.from("アイウエオカケヤユヨツワ")[t];
+    }).join("");
 };
 
 const getfile = (fname) => new Promise(cb => {
@@ -712,29 +714,28 @@ const PuzzleScreen = function() {
         
         const answer_check = function(value, undraw)
         {
-            let $selected = $("#quiz .glyph.selected");
-            let $word = $selected.parent();
-            
-            //かな不在の語はかな入力を無視
-            if ($word.find(".hiragana .qelm").size() == 0) {
-                value = (value.match(/[一-龥々]/g) || []).join("");
-            }
-            
-            let $selecteds = $selected.nextAll(".glyph").filter(function() {
-                return (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana .qelm");
+            let $selecteds = $("#quiz .glyph.selected").nextAll(".glyph").addBack().filter(function() {
+                return $(this).hasClass("selected") || (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana .qelm");
             });
+
+            // 指定の漢字かな書式に合わない文字の除去
+            let values = Array.from(value).reduce((ret,v) => {
+                let ischira = $selecteds.eq(ret.length).hasClass("hiragana");
+                let isvhira = v.match(/[ぁ-ー]/);
+                if ((ischira && isvhira) || (!ischira && !isvhira && v.match(/\p{Script=Han}/u))) ret.push(v);
+                return ret;
+            }, []).slice(0, $selecteds.size());
             
-            //枠外の入力を無視
-            value = value.slice(0, $selected.size() + $selecteds.size());
-            $(".userans").val(value);
+            $(".userans").val(values.join(""));
             
             let g_log = timer.count() + "=";
             let trate = 0;
             const is_same = (a, b) => a.kanachange().jischange() == b.kanachange().jischange();
             
             //1文字ずつ正解判定
-            let missed = value.split("").some(function(c, i) {
-                if (0 < i) $selected = $selecteds.eq(i - 1);
+            let $word = $selecteds.eq(0).parent();
+            let missed = values.some((c, i) => {
+                let $selected = $selecteds.eq(i);
                 g_log += c;
                 
                 //正解判定
@@ -847,7 +848,8 @@ const PuzzleScreen = function() {
                 let $glyphs = $("#quiz .word:not(.wdone) .glyph, #quiz .glyph.selected")
                 let n = $glyphs.index($("#quiz .glyph.selected")) + (e.key == "ArrowRight" ? 1 : -1);
                 let max = $glyphs.size();
-                $glyphs.eq((n + max) % max).find(".kidx").eq(0).click();
+                $glyphs.eq((n + max) % max).find(".kpart").eq(0).click();
+                console.log(n,max);
             }
         }).keyup(function(e) {
             if (!e.ctrlKey) return;
@@ -1230,8 +1232,8 @@ const TopMenu = function() {
         $("#qlists .qbox").unbind().click(function(e) {
             if ($(this).hasClass("withheld") || $("#qlists .qselected").size()) return;
             $(this).addClass("qselected");
-            let $qopt = $(this).find(".qoption");
-            
+            let $qopt = $(this).find(".qoption").show();
+
             if ($(this).hasClass("automake")) {
                 $(this).siblings(".qbox").animate({"opacity": "0"});
                 $(".qbox.automake .qdesc").html('<div id="seekbar"></div><div id="seekval"></div>');

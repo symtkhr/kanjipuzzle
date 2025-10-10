@@ -3,7 +3,12 @@ const PlayerLog = function(qclear = {}) {
     const draw_pulldown = function(logstring, qlist)
     {
         let qwords = qlist.split("/");
+
+        // ログ書式: "${秒}=${入力}x[${語番号}]${入力位置}" 形式で";"区切り
+        // ログ例: "60=文学x[40]1;75=文字" (正解はx以下省略)
         pvlog = logstring.split("@@")[0].split(';').filter(v=>v).map(ans => {
+
+            // 2020-01-17以前のログ書式 "[${秒}]${入力}x" 対応
             if (ans.indexOf("=") < 0) {
                 ans = ans.slice(1).split("]").join("=");
             }
@@ -16,7 +21,7 @@ const PlayerLog = function(qclear = {}) {
 
             ret.wid = parseInt(wid[0].slice(1));
             ret.input = d[1].split("x").shift() + "x";
-            ret.glyph = d[1].split(wid[0]).pop();
+            ret.glyph = parseInt(d[1].split(wid[0]).pop());
             return ret;
 
         }).filter(v=>v).map(log => {
@@ -24,22 +29,27 @@ const PlayerLog = function(qclear = {}) {
             let wid = parseInt(log.wid);
             let time = log.time;
             let input = log.input;
-            let match = input.slice(-1) == "x" ? input.slice(0, -2) : input.kanachange().jischange();
+            let match = (input.slice(-1) == "x" ? input.slice(0, -2) : input).kanachange().jischange();
+            if (!match.length) return log;
 
             // 語番号の推定
-            if (wid == 0 && match.length) {
+            if (wid == 0) {
                 wid = 1 + qwords.map(w => w.kanachange().jischange()).findIndex(w => {
-                    // 入力位置の特定(todo:"湯湯婆"(AAB型),"十人十色"(ABAC型)への対応)
+                    // 字位置の推定
                     let glyph = w.indexOf(match);
-                    if (glyph < 0) return false;
+                    if (glyph < 0) {
+                        if (w.replace(/[ァ-ー]/g,"").indexOf(match) < 0) return false;
+                        glyph = w.indexOf(Array.from(match)[0]);
+                    }
                     log.glyph = glyph;
                     return true;
                 });
-                console.log(match,wid);
+            } else if ((log.glyph != 0) && !log.glyph) {
+                // 字位置の推定
+                log.glyph = qwords[wid - 1].kanachange().jischange().indexOf(match);
             }
 
-            if (!wid || !match.length) return log;
-            log.wid = wid;
+            if (wid) log.wid = wid;
             return log;
         });
 
@@ -54,7 +64,9 @@ const PlayerLog = function(qclear = {}) {
             let $opt = $("<option>").text("<Playlog>").appendTo($pdown);
             if (!v.time) return;
             $opt.text(v.input);
+            if (!v.wid || !Number.isInteger(v.glyph)) $opt.css("color","red");
         });
+        //console.log(qwords,pvlog);
     };
 
     const replay_log = (answerchecker) => {
@@ -133,7 +145,7 @@ const PlayerLog = function(qclear = {}) {
         });
         $(".gonext").eq(1).addClass("withheld");
         $(".gonext").eq(0).unbind().click(function() {
-            location.href = "#menu:archives";
+            location.href = "#menu";
             location.reload();
         });
         $(document).unbind();
