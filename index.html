@@ -1,1 +1,293 @@
-renewalsandbox/index.html
+<!DOCTYPE html>
+<head>
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="initial-scale=1.0" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="frontend_kpuzzle.js?20251012"></script>
+<script src="bushubumaker.js?20251012"></script>
+<script src="logger.js?20251012"></script>
+<link rel="stylesheet" type="text/css" href="bushubu.css?20251005" />
+<title>部首パズル</title>
+<style>
+  body {
+      overflow:hidden;
+  }
+  /* menu */
+  #menu {
+      display:flex; flex-wrap:wrap;height:100vh;
+      background-image:url(p0499_m.jpg);
+      background-color:rgba(0,80,0,.8);
+      background-blend-mode:multiply;
+  }
+  .menu {
+      text-align:center;
+      width:100%;
+  }
+  #title .correct, h2.sampleword .correct {
+      color: rgba(170,90,40,.8);
+      text-shadow: -1px -1px 2px #522, 1px 1px 1px #c77;
+  }
+  #title {
+      height:50vh;
+      width:100%;
+      text-align:center;
+      min-width:360px;
+  }
+  #title .glyph.hiragana {zoom:1.7; }
+  #title .glyph { zoom:2.5; }
+
+  /* main */
+  #main {
+      display: flex;
+      flex-direction: column;
+      width:100vw;
+      height:100vh;
+  }
+  #head {
+      z-index:2;
+      min-width:300px; width:100%;
+      height:40px; overflow:hidden;
+      background-image:url(p0499_m.jpg);
+      background-color:rgba(0,80,0,.8);
+      background-blend-mode:multiply;
+  }
+  h2.sampleword .correct {
+      color: rgba(100,40,20,.8);
+  }
+  h2.sampleword .glyph.hiragana { zoom: 0.8; }
+  #discover
+  {
+      line-height:10px;
+      font-size:10px;
+      width: 25px;
+      text-align:center;
+      display:block;
+      margin:2px;
+      color: #300;
+
+  }
+  #discover .cdpf {
+      display:block;
+      font-size:20px;
+      line-height:20px;
+      font-weight: bold;
+  }
+  #status {
+      position:absolute;
+      right:25px;
+      color:white; font-size:15px;
+  }
+  #status .pointtype {
+      display:inline-block; line-height:14px;text-align:center;
+  }
+  #point, #bonus, .tpoint {
+      font-size:20px;
+  }
+  .showrule {
+      height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;
+  }
+
+  /* quiz */
+  #quiz {
+      flex: 1;
+      min-height: 100px;
+  }
+  #quiz.scroll {
+      padding-top:30px;
+      overflow:hidden scroll;
+  }
+  #quiz.nowid .wid, #menu .wid, #howto .wid {
+      font-size:0px;
+  }
+  #hint {
+      border:3px #156 dotted;position:fixed;
+      background:rgba(128,128,128,.8);
+      display:none;
+      z-index:5;bottom:0;right:0;zoom:.64;
+      pointer-events:none;
+      max-height:30vh;
+      overflow:hidden;
+  }
+  /* overlap */
+  #overlap {
+      opacity:.9;
+      overflow:hidden auto;
+      position:absolute; text-align:center; bottom:0; left:0; right:0; top:0;
+      background-color: rgba(0,0,0,0.5);
+      margin:auto; border:2px solid gray;
+      padding-top:40px;
+      display:flex;
+      z-index:4;
+  }
+  #qlists {
+      width:300px; padding:30px; position:relative; overflow:hidden auto; margin:auto; height:50vh;
+      background-image:url(p0499_m.jpg);
+  }
+  #qlists .qid {
+      background-blend-mode:lighten;
+      background-color:rgba(255,240,224,0.3);
+      border-radius:0;
+      color: #900;
+      border: 2px solid #900;
+      position:relative; float:left;
+      width:40px; height:40px; line-height:40px; text-align:center;
+  }
+  #qlists .qbox {
+      cursor:pointer;
+  }
+  #qlists .qoption {
+      display:block;
+      position:relative;
+      border:1px solid gray;
+      width: 240px;
+      margin: 0 2px 5px 2px;
+      min-height:80px;
+      line-height: 20px;
+      opacity:.9;
+      text-align:left;
+      background-blend-mode:lighten;
+      background-color:rgba(255,240,224,1);
+      display:inline-block;
+      pointer-events:none;
+      z-index:1;
+  }
+
+  #qlists .qid:hover {
+      border: 2px yellow solid;
+      background-blend-mode:multiply;
+      background-color:rgba(128,128,255,0.5);
+  }
+  button.gonext, button.replay, button.submit {
+      cursor:pointer;
+      width:200px;font-size:20px; height:50px;
+      background-image:url(p0499_m.jpg);
+  }
+  button.userrecord {
+      width:150px;height:30px;background-image:url(p0499_m.jpg);
+      cursor:pointer;
+  }
+  #greet {
+      text-shadow:0 0 5px #3cc;
+      color: #008;
+      font-weight: bold;
+  }
+  .withheld {
+      opacity:.5;
+  }
+</style>
+</head>
+
+<body>
+  <div id="menu">
+    <div style="position:absolute;top:0;"><a style="color:#9c9;" href="./earlier">オリジナル版</a></div>
+    <button class="help showrule">&#x2753;</button><!--&#x2699;&#xFe0F;-->
+    <div id="title" class="sampleword">部首パズル</div>
+    <div class="menu sampleword" id="newstart">新規開始</div>
+    <div class="menu sampleword" id="continue">継続開始</div>
+    <div class="menu sampleword" id="archives">問題集</div>
+    <div class="menu sampleword" id="resume">中断再開</div>
+  </div>
+  <div id="main">
+    <div id="head">
+      <h2 class="sampleword" style="cursor:pointer; display:inline-block;">部首パズル本体</h2>
+      <div style="display:inline-block;height:40px;vertical-align:top;">
+        <div id="discover" class="elm pselected"></div>
+        <span id="knjdef"></span>
+      </div>
+      <button class="showrule help" style="">&#x2753;</button>
+      <span id="status">
+        <span class="pointtype"><span style="font-size:10px;">素点</span><br/><span id="point">0</span></span> +
+        <span class="pointtype"><span style="font-size:10px;">タイムボーナス</span><br/><span id="bonus">0</span>
+          (&#x23f0;<span id="time">0</span></span>)
+        <span id="score">= <span class="tpoint"></span>点</span>
+      </span>
+    </div>
+    <div id="hint"></div>
+    <div id="keyinput" class="keyinput" style="z-index:3;">
+      <input class="userans" enterkeyhint="done"  style="z-index:3;" placeholder="漢字を入力" />
+      <div id="judge"></div>
+      <div style="position: absolute; border: 1px solid white; text-align:left; margin:0;padding:0;
+                  background-color:rgba(120,120,120,.8); width:200px; height:90px; font-size:12px; 
+                  inset: auto auto 20px -50px; pointer-events:none; border-radius:10px; overflow:hidden;" id="hintc">
+        <h3 style="background:#ccc;margin:0;padding:0 5px;font-size:10px;font-weight:normal;">ヒント: 部首を含む文字</h3>
+        <h3 style="background:#ccc;margin:0;padding:0 5px;font-size:10px;font-weight:normal; display:none;">キー操作: </h3>
+        <ul style="padding-left:18px;  white-space:nowrap; margin:0; display:none;">
+          <li>[Ctrl] + [左][右] で入力欄移動
+          <li>[Ctrl] + [Shift] で部首選択移動
+          <li>"10↵"入力で語番号10を選択
+          <li>"p10↵"入力で部首番号10を選択
+        </ul>
+        <div id="khint" style="font-size:20px;line-height:18px;font-weight:bold;color:#300;text-align:center;padding:3px;"></div>
+      </div>
+    </div>
+    <div id="quiz"></div>
+  </div>
+  <div id="overlap" style="display:none;">
+    <div id="qlists"></div>
+    <div id="control" style="position:relative;">
+      <button class="closer">X</button>
+      <div class="topbox helper" style="background-color:#bcc; top:0px; padding:20px;">
+        <button class="gonext">トップに戻る</button>
+        <br/>
+        <button class="replay">リプレイを見る</button>
+        <br/>
+        <button class="gonext">次の問題へ</button>
+      </div>
+    </div>
+    <div id="message"  style="display: block; display:flex; flex-direction:column; border-radius: 40px; height: 200px; overflow: hidden;">
+      <div style="flex-grow:1; font-size:15pt; display: flex;  justify-content: center;  align-items: center;">
+        <div id="greet">Greetings</div></div>
+      <div style="text-align: center; font-size: 12pt; width: 100%; height: 110px;">
+        名前:<input style="width:200px; font-size:15pt; background-color:#010; color: #8c8; font-family:monospace;" enterkeyhint="done"><br />
+        <span class="tpoint"></span>点<br />
+        <button class="submit">記録(Enter)</button>
+      </div>
+    </div>
+    <div style="margin:auto; margin-right:10px; margin-top:10px; position:relative;display:flex; flex-wrap:wrap;" id="howto">
+      <button class="closer">X</button>
+      <div class="topbox helper" style="background-color:#bcc;" id="rule">
+      <h4>●例題</h4>
+      同じ数字のところに同じ漢字パーツが入って熟語が完成します。
+      <div id='qex'>
+        <div class="sampleword qex" style="display:inline-block;">落葉樹</div>
+        →
+        <div class="sampleword qex" style="display:inline-block;">落葉樹</div>
+      </div>
+      盤面をクリックして黄色く光るマスの漢字を入力してください。<br/>(まとめて「葉樹」とも打てます)
+      <div id='qex2' style="padding-top:15px;position:relative;">
+        <input class="helpuserans" disabled style="position:absolute; top:0px; left:75px; width:120px;"/>
+        <div id="example2" class="sampleword qex">落葉樹</div>
+      </div>
+      わからないときは「?」入力でヒントが出るかもしれません。
+      <div style="text-align:center;display:none;" id="q1st">
+        <button class="submit">パズル開始</button>
+      </div>
+    </div>
+    <div class="topbox helper" style="background-color:#bcc;" id="config">
+      <h4>●設定</h4><br/>
+      <label><input type="checkbox" id="onse" checked />SE</label><br/>
+      <label><input type="checkbox" id="onwid" />語番号表示</label> <br/>
+      <label>サイズ自動調整:
+        <select id="zoomer">
+          <option>-4</option><option>-3</option><option>-2</option><option>-1</option>
+          <option selected>0</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </label><br/>
+      これまでの記録:<br/>
+      <button class="userrecord" id="dlrec">ダウンロードする</button><br/>
+      <button class="userrecord" id="makeuprec">全問解禁する</button><br/>
+      <button class="userrecord" id="rmrec">削除する</button>
+    </div>
+
+    </div>
+  </div>
+</div>
+<div style="display:none;">
+  <iframe src="fragtable.txt" id="fragtable"></iframe>
+  <iframe src="fragtable.plus.txt" id="fragtablep"></iframe>
+  <a href="https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec" id="gasapi">GAS</a>
+</div>
+</body>
+</html>

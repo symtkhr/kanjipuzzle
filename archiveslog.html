@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="initial-scale=1.0" />
+<title>解答履歴</title>
+<style>
+body {
+  padding:0;
+  margin:0;
+}
+#head {
+    z-index:2;
+    min-width:300px; width:100%;
+    height:40px; overflow:hidden;
+    background-image:url(p0499_m.jpg);
+    background-color:rgba(0,80,0,.8);
+    background-blend-mode:multiply;
+    color:white;
+    line-height:24px;
+    font-size:20px;
+}
+#head label {
+    width:100px;
+    display:inline-block;
+    transform:scale(1.6);
+    transform-origin: top left;
+}
+.dump {
+    background: linear-gradient(60deg, #efe, #aca, #595);
+}
+#ptrank,#latest {
+    text-align:center;
+}
+.qid {
+      background-blend-mode:lighten;
+      background-color:rgba(255,240,224,0.3);
+      border-radius:0;
+      color: #900;
+      border: 2px solid #900;
+      position:relative;
+      width:40px; height:40px; line-height:40px; text-align:center;
+}
+#qlists .qid {
+    float:left;
+}
+.log {
+    background-image:url(p0499_m.jpg);
+    background-blend-mode:lighten;
+    background-color:rgba(255,240,200,.2);
+    border: solid #272 1px;
+    display: inline-block;
+    vertical-align:top;
+    width: 70px;
+    white-space: nowrap;
+    padding: 2px;
+    overflow: hidden;
+    line-height: 16px;
+    text-align: center;
+    margin: 2px 2px;
+    cursor:pointer;
+}
+#qlists .log {
+}
+
+.logdetail {
+    background-color:rgba(255,255,255,.4);
+    width:auto;
+    height:auto;
+    text-align:left;
+}
+.log .logdate {
+    line-height: 12px;
+    font-size: 12px;
+}
+.log .logscore {
+    margin:0;
+    line-height:20px;
+    font-size:20px;
+    border:none;
+    background:none;
+    padding:0;
+}
+.log .logscore span {
+    font-size:15px;
+}
+.log .logdate span {
+    margin-left:5px;
+}
+.log:not(.logdetail) .logdate span,
+.log:not(.logdetail) .logscore span, 
+.log:not(.logdetail) .logplay {
+    display: none;
+}
+.log:not(.logdetail) a {
+    pointer-events:none;
+    text-decoration:none;
+    color:inherit;
+}
+.loghash, .logid { display:none; }
+.ptrank {
+    display:inline-block;
+}
+.logplay {
+    float:right;
+}
+    .log a.logplay.hidden, #qlists .log .qid  {
+    display:none;
+}
+        </style>
+</head>
+<body>
+  <div id="head"></div>
+  <div id="latest" class="dump">(読込中...)</div>
+  <div id="qlists" class="dump">(読込中...)</div>
+  <div id="ptrank" class="dump">(読込中...)</div>
+  <div style="display:none;">
+    <a href="https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec" id="gasapi">GAS</a>
+  </div>
+<script>
+const $id = (id) => document.getElementById(id);
+const $name = (name) => [... ($dom || document).getElementsByName(name)];
+const $tag = (name, $dom) => [... ($dom || document).getElementsByTagName(name)];
+const $cn = $c = (c, $dom) => [... ($dom || document).getElementsByClassName(c)];
+const $q = (query, $dom) => [... ($dom || document).querySelectorAll(query)];
+const getfile = (fname) => new Promise(cb => {
+    const ajax = new XMLHttpRequest();
+
+    ajax.open("GET", fname, true);
+    if (0) {
+        ajax.setRequestHeader('Pragma', 'no-cache');
+        ajax.setRequestHeader('Cache-Control', 'no-cache');
+        ajax.setRequestHeader('If-Modified-Since', 'Thu, 01 Jun 1970 00:00:00 GMT');
+        ajax.setRequestHeader('Access-Control-Allow-Origin', "https://script.google.com");
+    }
+    ajax.onreadystatechange = () => {
+        if (ajax.readyState != 4) return;
+        if (ajax.status != 200) return;
+        cb(ajax.responseText);
+    };
+    ajax.send(null);
+});
+
+const LOGGERURL = location.hash == "#nogas" ? null : $id("gasapi").getAttribute("href");
+const scorelist = async function() {
+    $id("head").innerHTML += "問qlists/時latest/点ptrank".split("/")
+        .map(v=> `<label><input type="radio" name="sort" value="${v.slice(1)}" ${v[0]=="時"?"checked":""}/>${v[0]}</label>`).join("");
+    $q("#head input[name=sort]").map($dom => $dom.onchange = () => {
+        $cn("dump").map($dump => $dump.style.display = "none");
+        $id($dom.value).style.display = "block";
+    });
+    $q("#head input[name=sort]")[1].onchange();
+
+    const encoder = s => btoa(unescape(encodeURIComponent(s)));
+    const rawdata = await getfile((LOGGERURL || "eval/entire.json") + "?v=score&logid=entire");
+
+    // sort & merge data
+    let data = JSON.parse(rawdata).reduce((ret, v) => {
+        if (v.time.toString().indexOf("-") != -1) {
+            let d = v.time.split("-").map(v => parseInt(v));
+            v.time = (new Date(d[0], d[1]-1, d[2], 0, 0)).getTime();
+        }
+        let idx = (v.qid < -1) ? v.qid : ret.findIndex(setv => {
+            let timediff = v.time - setv.time;
+            return (0 < timediff) && (timediff < 1000 * 60 * 60 * 24) && (v.score == setv.score);
+        });
+        if (idx < 0) 
+            ret.push(v);
+        else
+            ret[idx] = v;
+        return ret;
+    }, []).map(r => {
+        let score = r.score.split(";").map(v => parseInt(v));
+        score.push(score.reduce((sum, v) => (sum + 1 * v), 0));
+        r.score = score;
+        return r;
+    })
+    data.sort((a, b)=> b.score[2] - a.score[2]).forEach((r, i) => r.rank = i);
+    let logs = data.sort((a, b) => (b.time - a.time));
+
+    // draw display
+    $id("latest").innerText = '';
+    $id("ptrank").innerHTML = '<div class="ptrank"></div>'.repeat(logs.length);
+    $id("qlists").innerHTML = [...Array(129 + 3), -1].map((qid,i) => qid || (i + (i < 3 ? 201 : -2)))
+        .map(qid => `<div class="qoption qoption${qid}"><div class="qid">${ (qid == -1) ? "生成" : qid }</div></div>`).join("\n");
+    
+    logs.forEach(r => {
+        let $qopt = $q(`#qlists .qoption${r.qid}`)[0];
+        if (!$qopt) return console.log(r.qid);
+
+        $qopt.innerHTML += `<div class="log"></div>`;
+
+        let $log = $cn("log", $qopt).slice(-1)[0];
+        $log.innerHTML += [
+            //`<button class=logplay>ログ</button>`,
+            //`<a class="logplay hidden">ログ</a>`,
+            `<div class=qid>0</div>`,
+            `<div class="logid"></div>`,
+            `<div class="loghash"></div>`,
+            `<div class="logdate"><span></span></div>`,
+            `<div class="logscore"><span></span></div>`,
+            `<span></span>`,
+        ].join("");
+
+        let d = new Date(r.time);
+        let strdate = d.getFullYear() * 10000
+            + (d.getMonth() + 1) * 100
+            + d.getDate();
+        let strtime = '0000' + (d.getHours() * 100 + d.getMinutes());
+        strtime = strtime.slice(-4, -2) + ':' + strtime.slice(-2);
+
+        $q(".qid", $log)[0].innerText = r.qid == -1 ? "生成" : r.qid;
+        $q(".logid", $log)[0].innerText = r.time;
+        $q(".loghash", $log)[0].innerText = `replay:qid=${r.qid}:score=${r.score.slice(0,2).join(";")}:date=${r.time}`;
+        $q(".logdate", $log)[0].innerHTML = strdate + "<span>" + strtime + "</span>";
+        $q(".logscore", $log)[0].innerHTML = `<a>${r.score[2]}</a> <span>(=${r.score.slice(0,2).join("+")})</span>`;
+        
+        let $name = $tag("span", $log).slice(-1)[0];
+        $name.innerHTML = r.name || '<span style="color:white;">--</span>';
+        if (16140000000000 < r.time) $name.innerText = r.name; // 2021年1月までタグインジェクションができた
+
+        let hashes = r.log.split("@@").map((v,i) => ["log","q","def"].slice(i)[0] + "=" + encoder(v));
+        hashes.unshift(`replay:qid=${r.qid}:score=${r.score.slice(0,2).join(";")}:date=${r.time}`);
+
+        let $a = $q(".logscore a", $log)[0];
+        $a.setAttribute("href", `./#${hashes.join(":")}`);
+
+        $id("latest").append($log.cloneNode(true));
+        $q("#ptrank .ptrank")[r.rank].append($log.cloneNode(true));
+    });
+    
+    $cn("log").map($log => $log.onclick = (e) => {
+        $log.classList.toggle("logdetail");
+        $q(".logscore a", $log)[0].onclick = (e) => { e.stopPropagation(); return true; };
+        return;
+
+        // unused
+        let $button = $q("button.logplay", $log)[0];
+        if ($button) $button.removeAttribute("disabled");
+        if (!$log.classList.contains("logdetail")) return;
+    });
+
+    // unused
+    $q("button.logplay").map($dom => $dom.onclick = async (e) => {
+        e.stopPropagation();
+        $dom.setAttribute("disabled", true);
+
+        let $rec = $dom.parentNode;
+        let logid = $cn("logid", $rec)[0].innerText;
+        //let rawdata = await getfile((LOGGERURL || "eval/logx.json") + `?logid=${logid}`);
+        let rawdata = logs.find(v => v.time == logid);
+        if (!rawdata) return;
+
+        let hashes = rawdata.log.split("@@").map((v,i) => ["log","q","def"].slice(i)[0] + "=" + encoder(v));
+        hashes.unshift($cn("loghash", $rec)[0].innerText);
+
+        $dom.remove();
+        let $a = $q("a.logplay", $rec)[0];
+        $a.classList.remove("hidden");
+        $a.setAttribute("href", `./#${hashes.join(":")}`);
+        $a.onclick = (e) => e.stopPropagation();
+    });
+};
+window.onload = () => { scorelist(); };
+
+</script>
+</body>
+</html>

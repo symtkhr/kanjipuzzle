@@ -6,6 +6,7 @@ var scorelist = function()
 {
     var $lately = $("<div>").prependTo("#menu");
     $("<h4>").text("●最近の解かれ").appendTo($lately);
+    $("<a>").prop({target:"_blank",href:"../archiveslog.html"}).text("新版ログ").css("margin-left","5px").appendTo($lately);
     $lately.append("<br/>");
     $("<hr>").insertAfter($lately);
 
