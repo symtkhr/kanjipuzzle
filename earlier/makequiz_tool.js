@@ -340,8 +340,11 @@ var make_quiz = function(is_unsort)
 	return;
     }
 
-    $("<span>").css({"display":"inline-block"}).appendTo("#quiz")
-        .text("(" + $(".word").size() + "語 " + $(".glyph").size() + "字 " + $(".fragkey").size() + "部首)");
+    const encoder = s => btoa(unescape(encodeURIComponent(s)));
+    let $qstat = $("<span>").css({"display":"inline-block"}).appendTo("#quiz")
+        .html("(" + $(".word").size() + "語 " + $(".glyph").size() + "字 " + $(".fragkey").size() + "部首 <a>新デモ</a>)");
+    $qstat.find("a").prop("href", "../#quiz:q=" + encoder(quiz.q) + ":def=" + encoder(quiz.def))
+        .prop("target","_blank");
 
     //文字重複チェック
     var dup = quiz.q.split("").filter(function(x, i, self) {

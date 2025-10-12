@@ -198,7 +198,12 @@ const KanjiTable = function()
     this.find = function(part, filter = (() => true)) {
         return _SKKTABLE.split("").filter(c => {
             let n = kanjifrag.split(c).toString().split(",");
-            return part.every(val => (n.indexOf(val) != -1) && filter(n));
+            return part.every(val => {
+                let i = n.indexOf(val);
+                if (i < 0) return false;
+                n = [...n.slice(0,i-1), ...n.slice(i+1)];
+                return filter(n);
+            });
         });
     };
 

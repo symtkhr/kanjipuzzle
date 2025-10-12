@@ -73,6 +73,21 @@ String.prototype.kanachange = function() {
     }).join("");
 };
 
+// ランダムソート
+Array.prototype.shuffle = function() {
+    let array = this;
+    for (let i = array.length - 1; 0 < i; i--) {
+        const j = parseInt(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+};
+
+// 重複除去
+Array.prototype.uniq = function() {
+    return this.filter((v, i, self)=>(self.indexOf(v) === i));
+};
+
 const getfile = (fname) => new Promise(cb => {
     const ajax = new XMLHttpRequest();
     ajax.onreadystatechange = () => {
@@ -119,7 +134,7 @@ const UserRecord = function() {
 
         let undone = $('#quiz .kidx.undone').map(function() {
             return parseInt($(this).text());
-        }).get().filter((x, i, self) => (self.indexOf(x) == i));
+        }).get().uniq();
         if (!undone.length) return;
         
         let pt = parseInt($("#point").text(), 10);
@@ -169,6 +184,7 @@ const UserRecord = function() {
             $(this).unbind().removeClass("enabled");
 
             q.resume = true;
+            q.hintwait = resume.time;
             qscreen.start(q);
 
             // 解きかけ分の展開
@@ -662,10 +678,10 @@ const PuzzleScreen = function() {
             let classname = $(this).find(".kidx").html();
             $("#quiz .elm").removeClass("pselected");
             $("#quiz .kidx" + classname).parent().addClass("pselected");
-            $("#judge").hide();
+            $("#judge, #hintc").hide();
             $("#quiz .glyph").removeClass("selected");
             $glyph.addClass("selected");
-            
+
             let $ki = $("#keyinput").appendTo($word).show();
             let zoom = $("#quiz").css("zoom") || 1;
             $ki.css(
@@ -709,11 +725,63 @@ const PuzzleScreen = function() {
                 $("#quiz .word").eq(wid - 1).find(".glyph:first").find(".elm:first").click();
                 return;
             }
-            answer_check($(this).val());
+            answer_check($(this).val().trim());
         });
+
+        const parthint = () => {
+            const WAITSEC = 60;
+            const HINTNUM = 14;
+            
+            // ポップアップを表示(キー操作とか他のヒント)
+            $("#hintc").show().css({left:"-50px",bottom:"20px"});
+            let offset = $("#hintc").offset();
+            let x = offset.left + $("#hintc").width() - $("#main").width();
+            let y = offset.top + $("#hintc").height() - $("#main").height();
+            let left = (offset.left < 0) ? 0 : (0 < x) ? -x-80 : -50;
+            let top = (offset.top < 0) ? -150 : (0 < y) ? -y-50 : 20;
+            $("#hintc").css({left:left,bottom:top});
+
+            // $selectedから開示されている部品を拾う
+            $("#hintc").show();
+            $("#khint").html(`<div style="line-height:20px;font-size:15px;">このマスのヒントは<br/>ありません</div>`);
+
+            let kopen = $("#quiz .glyph.selected .kpart")
+                .filter(function(){ return $(this).siblings(".undone").size() == 0; })
+                .get().map($v => $v.innerText);
+            console.log(kopen);
+            if (kopen.length == 0 || $("#quiz .selected .undone").length == 0) return;
+
+            quiz.hintwait = quiz.hintwait || 0;
+            // 時間経過前なら通常メッセージを表示して終了
+            if (timer.count() - quiz.hintwait < WAITSEC) {
+                return $("#khint").html(
+                    `<div style="line-height:20px;font-size:15px;">次のヒントまで`
+                        +`<div style="font-size:20px;">${WAITSEC - (timer.count() - quiz.hintwait)}秒</div>`
+                        +` お待ちください</div>`);
+            }
+            
+            // ない場合は通常メッセージを表示して終了
+            let khint = kanjitable.find(kopen);
+            if (khint.length == 0) return;
+            
+            quiz.hintwait = timer.count();
+            let correct = $("#quiz .glyph.selected .correct").text();
+            khint = khint.slice(-parseInt(HINTNUM / 2 * 3)).filter(c => (kopen.indexOf(c) < 0)).shuffle();
+            if ((Math.random() * 2 < 1) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
+            
+            $("#khint").html(khint.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
+            //$("#hintc ul, #hintc h3:first-child").hide();
+            $("#khint .khint").css({
+                "background-image":"url(p0499_m.jpg)",
+                border:"2px solid #920",display:"inline-block",
+                height:"20px",padding:"1px",margin:"1px"});
+            $(".userans").val("");
+        };
         
         const answer_check = function(value, undraw)
         {
+            if (value == "?" || value == "？") return parthint(); 
+
             let $selecteds = $("#quiz .glyph.selected").nextAll(".glyph").addBack().filter(function() {
                 return $(this).hasClass("selected") || (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana .qelm");
             });
@@ -833,8 +901,7 @@ const PuzzleScreen = function() {
             // Ctrl + Shift
             if (e.shiftKey && $("#quiz .pselected .kidx").size()) {
                 $("#onwid").prop("checked", true).trigger("change");
-                let kids = $("#quiz .selected .kidx").get().map($v => [...$v.classList].find(v=>v.match(/^kidx[0-9]/)))
-                    .filter((v,i,self) => self.indexOf(v) == i);
+                let kids = $("#quiz .selected .kidx").get().map($v => [...$v.classList].find(v=>v.match(/^kidx[0-9]/))).uniq();
                 if (kids.length < 2) return;
                 let kid0 = [...$("#quiz .pselected .kidx").get(0).classList].find(v=>v.match(/^kidx[0-9]/));
                 let classname = "." + kids[(1 + kids.indexOf(kid0)) % kids.length];
@@ -848,8 +915,9 @@ const PuzzleScreen = function() {
                 let $glyphs = $("#quiz .word:not(.wdone) .glyph, #quiz .glyph.selected")
                 let n = $glyphs.index($("#quiz .glyph.selected")) + (e.key == "ArrowRight" ? 1 : -1);
                 let max = $glyphs.size();
-                $glyphs.eq((n + max) % max).find(".kpart").eq(0).click();
-                console.log(n,max);
+                let $glyph = $glyphs.eq((n + max) % max);
+                let $kidx = $glyph.find(".kidx");
+                ($kidx.length ? $kidx : $glyph.find(".kpart")).eq(0).click();
             }
         }).keyup(function(e) {
             if (!e.ctrlKey) return;

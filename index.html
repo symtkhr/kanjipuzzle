@@ -207,6 +207,19 @@
     <div id="keyinput" class="keyinput" style="z-index:3;">
       <input class="userans" enterkeyhint="done"  style="z-index:3;" placeholder="漢字を入力" />
       <div id="judge"></div>
+      <div style="position: absolute; border: 1px solid white; text-align:left; margin:0;padding:0;
+                  background-color:rgba(120,120,120,.8); width:200px; height:90px; font-size:12px; 
+                  inset: auto auto 20px -50px; pointer-events:none; border-radius:10px; overflow:hidden;" id="hintc">
+        <h3 style="background:#ccc;margin:0;padding:0 5px;font-size:10px;font-weight:normal;">ヒント: 部首を含む文字</h3>
+        <h3 style="background:#ccc;margin:0;padding:0 5px;font-size:10px;font-weight:normal; display:none;">キー操作: </h3>
+        <ul style="padding-left:18px;  white-space:nowrap; margin:0; display:none;">
+          <li>[Ctrl] + [左][右] で入力欄移動
+          <li>[Ctrl] + [Shift] で部首選択移動
+          <li>"10↵"入力で語番号10を選択
+          <li>"p10↵"入力で部首番号10を選択
+        </ul>
+        <div id="khint" style="font-size:20px;line-height:18px;font-weight:bold;color:#300;text-align:center;padding:3px;"></div>
+      </div>
     </div>
     <div id="quiz"></div>
   </div>
