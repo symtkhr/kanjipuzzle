@@ -1,0 +1,15 @@
+<head>
+  <script>
+    const decodehash = (str) => decodeURIComponent(escape(window.atob(str)));
+    try {
+        let dec = decodehash(location.hash.slice(1));
+        if (dec) {
+            console.log(dec);
+            location.href = "./#quiz:q=" + location.hash.slice(1);
+        }
+    } catch {
+        document.write("hash decode error");
+    }
+  </script>
+</head>
+</html>

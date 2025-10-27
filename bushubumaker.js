@@ -341,8 +341,11 @@ const KanjiFragment = function()
     {
         const isIDE = c => ("NZMEOHUCFKLQJ".indexOf(c) != -1);
 
+        let i = 0;
         // Apply IDEs recursively ("警" => [Z,敬,言] => [Z,N,Z,艹,K,勹,口,攵,言])
         const subparts_fragment = (knj) => {
+            i++;
+            if (100 < i) { console.log("maxcall", knj); return [knj]; }
             let idestr = referdb(knj);
             return (!idestr) ? [knj] :
                 Array.fromCdp(idestr).map(c => isIDE(c) ? c : subparts_fragment(c));

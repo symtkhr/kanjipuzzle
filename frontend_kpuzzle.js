@@ -482,7 +482,7 @@ const PuzzleScreen = function() {
                 $glyph.append('<div class="correct">' + c + '</div>');
                 
                 //かな文字の場合
-                if (c.match(/^[ぁ-ー]$/)) {
+                if (!c.match(/\p{Script=Han}/u)) {
                     $glyph.addClass("hiragana");
                 }
                 return fragged;
@@ -782,20 +782,25 @@ const PuzzleScreen = function() {
         {
             if (value == "?" || value == "？") return parthint(); 
 
-            let $selecteds = $("#quiz .glyph.selected").nextAll(".glyph").addBack().filter(function() {
+            // 問の対象にない文字の除去
+            let $glyph = $("#quiz .glyph.selected").nextAll(".glyph").addBack();
+            let outoftarget = $glyph.filter(function() {
+                return ($(this).find(".qelm").size() == 0) && !$(this).hasClass("selected");
+            }).map(function() { return $(this).find(".correct").text(); }).get().join(",").kanachange().jischange();
+
+            let values = Array.from(value).filter(u => outoftarget.indexOf(u.jischange().kanachange()) < 0);
+            let $selecteds = $glyph.filter(function() {
                 return $(this).hasClass("selected") || (0 < $(this).find(".qelm").size()) || $(this).hasClass("hiragana .qelm");
             });
 
             // 指定の漢字かな書式に合わない文字の除去
-            let values = Array.from(value).reduce((ret,v) => {
+            values = values.reduce((ret,v) => {
                 let ischira = $selecteds.eq(ret.length).hasClass("hiragana");
                 let isvhira = v.match(/[ぁ-ー]/);
                 if ((ischira && isvhira) || (!ischira && !isvhira && v.match(/\p{Script=Han}/u))) ret.push(v);
                 return ret;
             }, []).slice(0, $selecteds.size());
-            
-            $(".userans").val(values.join(""));
-            
+
             let g_log = timer.count() + "=";
             let trate = 0;
             const is_same = (a, b) => a.kanachange().jischange() == b.kanachange().jischange();
