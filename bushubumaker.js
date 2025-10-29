@@ -677,6 +677,15 @@ nodeapp.findpart = (argv) => {
     console.log(ret.length, ret.join(""));
 };
 
+nodeapp.songcheck = (argv) => {
+    const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
+    let q = JSON.parse(getfile("earlier/qlist.json")).find(v => v.qid == 130);
+    let list = getfile("vocaloid-karatetsu2024.txt").split("\n");
+    //console.log(q);
+    let ret = q.q.split("/").map(v => [v,list.find(l => l.indexOf("/" + v + ";") != -1)]);
+    console.log(ret);
+};
+
 if (typeof window == "undefined") {
     let argv = process.argv.slice(2);
     let key = argv.shift();

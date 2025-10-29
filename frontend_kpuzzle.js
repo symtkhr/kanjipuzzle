@@ -67,7 +67,7 @@ String.prototype.kanachange = function() {
     if (!this) return "";
     let c = this.trim();
     return Array.from(this).map(c => {
-        if (c.match(/[ぁ-ん]/)) c = String.fromCharCode(c.charCodeAt(0) + 0x60);
+        if (c.match(/[ぁ-ゔ]/)) c = String.fromCharCode(c.charCodeAt(0) + 0x60);
         const t = "ァィゥェォヵヶャュョッヮ".indexOf(c);
         return (t < 0) ? c : Array.from("アイウエオカケヤユヨツワ")[t];
     }).join("");

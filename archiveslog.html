@@ -181,7 +181,7 @@ const scorelist = async function() {
     // draw display
     $id("latest").innerText = '';
     $id("ptrank").innerHTML = '<div class="ptrank"></div>'.repeat(logs.length);
-    $id("qlists").innerHTML = [...Array(131 + 3), -1].map((qid,i) => qid || (i + (i < 3 ? 201 : -2)))
+    $id("qlists").innerHTML = [...Array(132 + 3), -1].map((qid,i) => qid || (i + (i < 3 ? 201 : -2)))
         .map(qid => `<div class="qoption qoption${qid}"><div class="qid">${ (qid == -1) ? "生成" : qid }</div></div>`).join("\n");
     
     logs.forEach(r => {
