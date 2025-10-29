@@ -1278,7 +1278,7 @@ const TopMenu = function() {
             $('<div>').addClass("qinfo").appendTo($option).show()
                 .html(words.length + "語 " + words.join("").length + "字 " + quiz.n + "部首" + "<br />" +
                       d.toJSON().split("T").shift() + " " + (allopen ? (quiz.author || "") : ""));
-            $('<div>').addClass("qdesc").appendTo($option).html(quiz.desc).show();
+            $('<div>').addClass("qdesc").appendTo($option).html(quiz.desc.split("\n").join("<br/>")).show();
             $('<div>').addClass("loading").text("読込中").appendTo($option).hide();
             if (quiz.done) $qbox.addClass('cleared');
         });
