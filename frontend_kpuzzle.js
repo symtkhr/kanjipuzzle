@@ -138,6 +138,7 @@ const UserRecord = function() {
         if (!undone.length) return;
         
         let pt = parseInt($("#point").text(), 10);
+
         const val = {
             date: (new Date()).getTime(),
             qid: qid,
@@ -147,6 +148,7 @@ const UserRecord = function() {
             log: playerlog,
         };
         console.log("save",val);
+        localStorage.setItem("manualresume", $("#autoresume").prop("checked") ? 0 : 1);
         localStorage.setItem("savepartway", JSON.stringify(val));
     };
 
@@ -162,6 +164,8 @@ const UserRecord = function() {
         }
         // ユーザ名
         $("#message input").val(localStorage.uname || "");
+        console.log()
+        $("#autoresume").prop("checked", localStorage.manualresume != "1");
     };
 
     // 再開データを読み出す
@@ -224,6 +228,7 @@ const UserRecord = function() {
         }
         {
             localStorage.setItem("uname", name);
+            localStorage.setItem("manualresume", $("#autoresume").prop("checked") ? 0 : 1);
             try {
                 let score = JSON.parse(localStorage.qclear);
                 localStorage.setItem("qclear", JSON.stringify([...score,param]));
@@ -1186,11 +1191,27 @@ const TopMenu = function() {
             $(this).css("background-color","").find(".glyph").removeClass("selected")
         });
         
+        const fix_within_box = ($c, $p) => {
+            let xmax = $p.width() - $c.width();
+            let ymax = $p.height() - $c.height();
+            let os = $c.position();
+            let x, y;
+            [x,y] = [os.left, os.top];
+            
+            if (x < 0) x = 0;
+            if (xmax < x) x = xmax; //xp - x0;
+            if (y < 0) y = 0;
+            if (ymax < y) y = ymax; //yp - y0;
+            $("#quiz").css("left",x).css("top",y);
+        };
+        
         $("#archives").click(function() {
+            console.log("archives click")
             $("#overlap, #qlists, #qlists .closer").show();
             $("#qlists .qbox").removeClass("qselected").map(function() {
                 let $qbox = $(this);
                 let $qopt = $(this).find(".qoption");
+                //return fix_within_box($qbox, $qopt);
                 let pos = $qbox.position();
                 let inwidth = pos.left + 0 + $qopt.width() - $("#qlists").width();
                 let inheight = pos.top + 40 + $qopt.height() - $("#qlists").height();
@@ -1390,6 +1411,7 @@ const TopMenu = function() {
                 if (!userdata.loadpartway(q0)) return qscreen.start(q0);
                 $("#overlap").hide();
                 $(".menu:not(.enabled)").hide();
+                //if (!$("#autoresume").prop("checked")) return;
                 return setTimeout(() => $("#resume").click(), 700);
             }
         };
@@ -1415,7 +1437,8 @@ const TopMenu = function() {
 
             userdata.loadpartway();
             if (!$("#resume.enabled").show().size()) return;
-            $("#overlap").hide();
+            $("#overlap,#continue").hide();
+            if (!$("#autoresume").prop("checked")) return;
             $(".menu:not(.enabled)").hide();
             return setTimeout(() => $("#resume").click(), 700);
         };

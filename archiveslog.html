@@ -181,9 +181,8 @@ const scorelist = async function() {
     // draw display
     $id("latest").innerText = '';
     $id("ptrank").innerHTML = '<div class="ptrank"></div>'.repeat(logs.length);
-    $id("qlists").innerHTML = [...Array(131 + 3), -1].map((qid,i) => qid || (i + (i < 3 ? 201 : -2)))
+    $id("qlists").innerHTML = [...Array(200 + 3), -1].map((qid,i) => qid || (i + (i < 3 ? 201 : -2)))
         .map(qid => `<div class="qoption qoption${qid}"><div class="qid">${ (qid == -1) ? "生成" : qid }</div></div>`).join("\n");
-    
     logs.forEach(r => {
         let $qopt = $q(`#qlists .qoption${r.qid}`)[0];
         if (!$qopt) return console.log(r.qid);
@@ -260,6 +259,7 @@ const scorelist = async function() {
         $a.setAttribute("href", `./#${hashes.join(":")}`);
         $a.onclick = (e) => e.stopPropagation();
     });
+    $c("qoption").filter($qopt => $c("log",$qopt).length == 0).map($qopt => $qopt.style.display = "none");
 };
 window.onload = () => { scorelist(); };
 
