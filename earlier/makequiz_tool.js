@@ -251,17 +251,18 @@ var draw_partbox = function(c, n, $parent, callback)
     }
 
     //SVG
-    if (!c.match(/&[^;]+;/)) return;
+    if (!c.match(/&[^;]+;/)) return $part;
             
     if (c.indexOf("CDP") != -1) {
         $part.html(cdp2ucs(c)).addClass("cdpf");
-        return;
+        return $part;
     }
     var $svg = $("#" + c.substr(1, c.length - 2));
     if ($svg.size() > 0) {
         $part.html($svg.clone().show());
         $part.css("background-color", "#7C7");
     }
+    return $part;
 };
 
 //問題パーツ一覧表示
@@ -274,11 +275,15 @@ var dump_partstable = function(kidx, count)
         var color = (n < 7 ? (0xfff - (n - 2) * 0x022) : 0xf11);
         return ('#' + color.toString(16));
     };
-    
     // リスト表示
     $("#op").text("");
+    let frgs = $("#knjtb").val().split("/").sort()
+        .filter((v,i,self) => v.slice(0,1).match(/\p{Script=Han}/u) && self.indexOf(v)==i)
+        .map(v=>v.split(":")[1]);
     for (var key in kidx) {
-        draw_partbox(key, count[key], "#op", colorcode);
+        let $part = draw_partbox(key, count[key], "#op", colorcode);
+        // 閉じた(=単一漢字にしか使われていない)部首の判定
+        if (!key.match(/[ぁ-ん]/) && frgs.filter(f=>f.indexOf(key)!=-1).length == 1) $part.css("color","blue");
     }
     for (var key in count) {
         if (count[key] != 1) continue;
@@ -347,13 +352,18 @@ var make_quiz = function(is_unsort)
         .prop("target","_blank");
 
     //文字重複チェック
-    var dup = quiz.q.split("").filter(function(x, i, self) {
-        return (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x);
-	//return (x !== "/") && (self.indexOf(x) !== self.lastIndexOf(x));
-    });
-    if (dup.length > 0) {
-        $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.join());
+    let dup = quiz.q.split("").filter((x, i, self) => (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x));
+    if (0 < dup.length) {
+        let $dup = $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.join());
+
+        // 語重複チェック
+        let wdup = quiz.q.split("/").filter((x, i, self) => self.indexOf(x) == i && self.lastIndexOf(x) != i);
+        if (0 < wdup.length) {
+            $("<span>").css({"display":"inline-block", "margin-left":"2px","background":"#fdd"}).appendTo($dup).text(" [語重複] " + wdup.join());
+        }
     }
+
+    
     
     //語使用歴チェック
     var words = $(".wordstat").map(function() { return $(this).text(); }).get();

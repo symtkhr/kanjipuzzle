@@ -523,8 +523,7 @@ var draw_puzzle = function(qwords, $quiz, options)
 
             if (is_hidden) return;
             //分解結果の記録(問題作成ツール用)
-            if (fragged !== c)
-               $("#knjtb").val($("#knjtb").val() + c + ":" + fragged.split(",").join("") + "/");
+            $("#knjtb").val($("#knjtb").val() + c + ":" + fragged.split(",").join("") + "/");
 
             // 描画
             var $glyph = $('<div class="glyph">').appendTo($word);

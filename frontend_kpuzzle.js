@@ -128,7 +128,7 @@ const UserRecord = function() {
         //console.log(timer.is_running, qid);
 
         if (!timer.is_running || !qid) {
-            localStorage.removeItem("savepartway");
+            //localStorage.removeItem("savepartway");
             return;
         }
 
@@ -237,6 +237,7 @@ const UserRecord = function() {
                 localStorage.setItem("qclear", JSON.stringify([param]));
             }
         }
+        this.savepartway();
 
         let url = $("#gasapi").prop("href") || "";
         $.ajax({
@@ -840,7 +841,7 @@ const PuzzleScreen = function() {
             
             if (!undraw) {
                 userdata.logappend(g_log);
-                userdata.savepartway(qid);
+                //userdata.savepartway(qid);
                 $(".judge").show().animate({"left":"-120px","font-size":"300px","opacity":"0"}, function() {
                     $(this).remove();
                 });
@@ -1245,7 +1246,7 @@ const TopMenu = function() {
             quiztable.map(v => v.resume = false);
             $(quiztable.find(v => v.done) ? "#continue":"#newstart").show();
             $(window).unbind();
-            userdata.savepartway();
+            //userdata.savepartway();
             userdata.loadqclear();
             draw_qlists();
             location.hash = quiztable.length < 40 ? "#menu" : "#menu:archives";
@@ -1443,9 +1444,19 @@ const TopMenu = function() {
             return setTimeout(() => $("#resume").click(), 700);
         };
 
+        runapps.archiveslog = () => {
+            location.href = "./archiveslog.html";
+            return;
+        };
+
+        runapps.debug = () => {
+            location.href = "./earlier/#debug";
+            return;
+        };
+
         let param = hash.slice(1).split(":");
         let runapp = runapps[param.shift()] || runapps.menu;
-        //console.log(runapp);
+
         return runapp(param.reduce((ret,p) => {
             let ps = p.split("=");
             ret[ps[0]] = ps.slice(1).join("=") || true;
