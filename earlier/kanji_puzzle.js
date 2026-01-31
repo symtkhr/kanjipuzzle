@@ -638,7 +638,7 @@ var load_quiz = function(qid)
 {
     var quiz = quiztable[(qid || quiztable.length) - 1];
     var qlist = quiz.q;
-    if (quiz.def.indexOf("@plus") != -1) {
+    if (quiz.def.indexOf("@plus") != -1 || 130 < quiz.qid) {
         kanjifrag.define($("#fragtableplus").contents().find("body").text());
     }
     kanjifrag.definelocal(quiz.def);
