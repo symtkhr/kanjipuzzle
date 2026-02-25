@@ -383,7 +383,7 @@ let PartQuiz = function() {
         const kidx = this.make_list(ret.ans, options.openlist || onestrokes);
         this.ans = ret.ans;
         this.n = Object.keys(kidx).length;
-        return this.n;
+        return ret;
     };
 
     this.make_list = function(ans, openlist)
@@ -684,6 +684,26 @@ nodeapp.songcheck = (argv) => {
     //console.log(q);
     let ret = q.q.split("/").map(v => [v,list.find(l => l.indexOf("/" + v + ";") != -1)]);
     console.log(ret);
+};
+
+nodeapp.make = (argv) => {
+    const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
+    kanjifrag.define(getfile("fragtable.txt"));
+    kanjifrag.define(getfile("fragtable.plus.txt"));
+    let qlists = JSON.parse(getfile("./earlier/qlist.json"));
+    let maker = q => {
+        kanjifrag.definelocal(q.def);
+        let ret = partquiz.make(q.q.split("/"));
+        let entry = Object.entries(partquiz.count);
+        let tb = ret.tb.split("/");
+        let quiz = q.q.split("/").map(w =>
+            Array.from(w).map(c=> (tb.find(t => t.indexOf(c+":") == 0)||(c+":"+c)).split(":").slice(1)[0])
+                .map(fr=>Array.from(fr).map(p=> [p,1+Object.keys(partquiz.count).indexOf(p)]))
+                .map(fr=>fr.map(p=>p[1]||p[0]).join("."))
+        );
+        quiz.map(w=>console.log(w));
+    };
+    maker(qlists.find(q => q.qid == parseInt(argv)));
 };
 
 if (typeof window == "undefined") {
