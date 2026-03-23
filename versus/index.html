@@ -3,11 +3,11 @@
 <meta http-equiv="pragma" content="no-cache" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="initial-scale=1.0" />
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="frontend_kpuzzle.js?20260323"></script>
-<script src="bushubumaker.js?20251027"></script>
-<script src="logger.js?20251027"></script>
-<link rel="stylesheet" type="text/css" href="bushubu.css?20251027" />
+<script src="jquery.min.js"></script>
+<script src="client_kpuzzle.js?20260307"></script>
+<script src="../bushubumaker.js?20251027"></script>
+<script src="socket.js?20260316"></script>
+<link rel="stylesheet" type="text/css" href="../bushubu.css?20251027" />
 <title>部首パズル</title>
 <style>
   body {
@@ -87,7 +87,7 @@
   .showrule {
       height:25px;width:25px;overflow:hidden;margin:0 0 0 auto;
   }
-          
+
   /* quiz */
   #quiz {
       flex: 1;
@@ -108,17 +108,6 @@
       pointer-events:none;
       max-height:30vh;
       overflow:hidden;
-  }
-  .widclose {
-      cursor:pointer;
-      pointer-events:auto;
-      font-weight:bold;
-      color:#fc9;
-  }
-  .widclose:hover {
-      background-color:#f00;
-      font-weight:bold;
-      color:white;
   }
   /* overlap */
   #overlap {
@@ -191,12 +180,10 @@
 
 <body>
   <div id="menu">
-    <div style="position:absolute;top:0;"><a style="color:#9c9;" href="./earlier">オリジナル版</a></div>
     <button class="help showrule">&#x2753;</button><!--&#x2699;&#xFe0F;-->
-    <div id="title" class="sampleword">部首パズル</div>
-    <div class="menu sampleword" id="newstart">新規開始</div>
+    <div id="title" class="sampleword">部首バトル</div>
+    <div class="menu sampleword" id="newstart">対戦開始</div>
     <div class="menu sampleword" id="continue">継続開始</div>
-    <div class="menu sampleword" id="archives">問題集</div>
     <div class="menu sampleword" id="resume">中断再開</div>
   </div>
   <div id="main">
@@ -208,10 +195,8 @@
       </div>
       <button class="showrule help" style="">&#x2753;</button>
       <span id="status">
-        <span class="pointtype"><span style="font-size:10px;">素点</span><br/><span id="point">0</span></span> +
-        <span class="pointtype"><span style="font-size:10px;">タイムボーナス</span><br/><span id="bonus">0</span>
-          (&#x23f0;<span id="time">0</span></span>)
-        <span id="score">= <span class="tpoint"></span>点</span>
+        <span id="member">hoge,fuga</span>
+        <span class="pointtype"><span style="font-size:10px;">素点</span><br/><span id="point">0</span></span>
       </span>
     </div>
     <div id="hint"></div>
@@ -239,20 +224,17 @@
     <div id="control" style="position:relative;">
       <button class="closer">X</button>
       <div class="topbox helper" style="background-color:#bcc; top:0px; padding:20px;">
+        <div style="flex-grow:1; font-size:15pt; display: flex;  justify-content: center;  align-items: center;">
+          <div id="greet2">Greetings</div></div>
         <button class="gonext">トップに戻る</button>
-        <br/>
-        <button class="replay">リプレイを見る</button>
-        <br/>
-        <button class="gonext">次の問題へ</button>
       </div>
     </div>
-    <div id="message"  style="display: block; display:flex; flex-direction:column; border-radius: 40px; height: 200px; overflow: hidden;">
+    <div id="message" style="display: block; display:flex; flex-direction:column; border-radius: 40px; height: 200px; overflow: hidden;">
       <div style="flex-grow:1; font-size:15pt; display: flex;  justify-content: center;  align-items: center;">
         <div id="greet">Greetings</div></div>
       <div style="text-align: center; font-size: 12pt; width: 100%; height: 110px;">
         名前:<input style="width:200px; font-size:15pt; background-color:#010; color: #8c8; font-family:monospace;" enterkeyhint="done"><br />
-        <span class="tpoint"></span>点<br />
-        <button class="submit">記録(Enter)</button>
+        <button class="submit">参加</button>
       </div>
     </div>
     <div style="margin:auto; margin-right:10px; margin-top:10px; position:relative;display:flex; flex-wrap:wrap;" id="howto">
@@ -279,26 +261,21 @@
       <h4>●設定</h4><br/>
       <label><input type="checkbox" id="onse" checked />SE</label><br/>
       <label><input type="checkbox" id="onwid" />語番号表示</label> <br/>
-      <label><input type="checkbox" id="autoresume" checked />自動中断再開</label> <br/>
       <label>サイズ自動調整:
         <select id="zoomer">
           <option>-4</option><option>-3</option><option>-2</option><option>-1</option>
           <option selected>0</option>
           <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
         </select>
-      </label><br/>
-      これまでの記録:<br/>
-      <button class="userrecord" id="dlrec">ダウンロードする</button><br/>
-      <button class="userrecord" id="makeuprec">全問解禁する</button><br/>
-      <button class="userrecord" id="rmrec">削除する</button>
+      </label>
     </div>
 
     </div>
   </div>
 </div>
 <div style="display:none;">
-  <iframe src="fragtable.txt" id="fragtable"></iframe>
-  <iframe src="fragtable.plus.txt" id="fragtablep"></iframe>
+  <iframe src="../fragtable.txt" id="fragtable"></iframe>
+  <iframe src="../fragtable.plus.txt" id="fragtablep"></iframe>
   <a href="https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec" id="gasapi">GAS</a>
 </div>
 </body>
