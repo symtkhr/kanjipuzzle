@@ -558,7 +558,7 @@ const PuzzleScreen = function() {
             style['height'] = h;
             style['line-height'] = h;
             style['transform'] = 'scale(1, ' + $(this).innerHeight() / $(this).innerWidth() + ')';
-
+            
             // 部首表示: 番号付きならば伏せる
             if ($(this).hasClass("qelm")) $kpart.hide();
 
@@ -571,6 +571,16 @@ const PuzzleScreen = function() {
             let gaiji = cdp2ucs(c);
             if (gaiji != c) {
                 $kpart.append(gaiji).css(style);
+                return;
+            }
+
+            // 部首表示: glyphwikiからロードする(応急処置)
+            if (1) {
+                const elm = $(this);
+                //const imgstyle = `width:${elm.innerWidth()}px; height:${elm.innerHeight()}px;`;
+                style["transform-origin"] = "top left";
+                let imgstyle = Object.entries(style).map(([k,v])=>k+":"+v).join(";");
+                $kpart.html(`<img src="http://glyphwiki.org/glyph/${name[1]}.svg" style="${imgstyle}" />`);
                 return;
             }
             
@@ -1107,8 +1117,6 @@ const TopMenu = function() {
         };
 
         $("#fragtable,#fragtablep").removeClass("done").load(function(){
-            let txt = $(this).contents().find("body").text();
-            kanjifrag.define(txt);
             $(this).addClass("done");
             show_menu("rgs");
         });
@@ -1122,6 +1130,10 @@ const TopMenu = function() {
             setTimeout(() => location.reload(), 1000);
             return;
         }
+        $("#fragtable,#fragtablep").each(function(){
+            let txt = $(this).contents().find("body").text();
+            kanjifrag.define(txt);
+        });
         
         // draw the sample quiz
         kanjifrag.definelocal("尌:/洛:");
@@ -1423,7 +1435,7 @@ const TopMenu = function() {
                 let qdef = decodehash(param.def) || "";
                 if (!qlist) return;
                 let q0 = {qid:-1, q:qlist, def:qdef };
-                if (!userdata.loadpartway(q0)) return qscreen.start(q0);
+                if (!userdata.loadpartway(q0) || param.demo) return qscreen.start(q0);
                 $("#overlap").hide();
                 $(".menu:not(.enabled)").hide();
                 //if (!$("#autoresume").prop("checked")) return;

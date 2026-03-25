@@ -348,7 +348,7 @@ var make_quiz = function(is_unsort)
     const encoder = s => btoa(unescape(encodeURIComponent(s)));
     let $qstat = $("<span>").css({"display":"inline-block"}).appendTo("#quiz")
         .html("(" + $(".word").size() + "語 " + $(".glyph").size() + "字 " + $(".fragkey").size() + "部首 <a>新デモ</a>)");
-    $qstat.find("a").prop("href", "../#quiz:q=" + encoder(quiz.q) + ":def=" + encoder(quiz.def))
+    $qstat.find("a").prop("href", "../#quiz:demo=:q=" + encoder(quiz.q) + ":def=" + encoder(quiz.def))
         .prop("target","_blank");
 
     //文字重複チェック
