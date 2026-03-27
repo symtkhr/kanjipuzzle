@@ -535,6 +535,16 @@ const PuzzleScreen = function() {
                 return;
             }
             
+            // 部首表示: glyphwikiからロードする(応急処置)
+            if (1) {
+                const elm = $(this);
+                //const imgstyle = `width:${elm.innerWidth()}px; height:${elm.innerHeight()}px;`;
+                style["transform-origin"] = "top left";
+                let imgstyle = Object.entries(style).map(([k,v])=>k+":"+v).join(";");
+                $kpart.html(`<img src="http://glyphwiki.org/glyph/${name[1]}.svg" style="${imgstyle}" />`);
+                return;
+            }
+            
             // 部首表示: glyphwikiからロードする
             $("head").append('<link rel="stylesheet" href="https://glyphwiki.org/style?glyph=' + name[1] + '">');
             style["font-family"] = name[1];
@@ -702,15 +712,8 @@ const PuzzleScreen = function() {
                 return;
             }
             answer_check($(this).val().trim());
-        }).keydown(function(e) {
-            // これは鬱陶しいので5sおきに見に行くことにする。
-            return;
-            if (e.key != "Process") return;
-            let $selected = $(".glyph.selected");
-            let wid = $selected.parent().find(".wid").text();
-            sock.send({action:"select",a:`${wid}.${$selected.index()}` });
         });
-
+        
         const parthint = () => {
             const WAITSEC = 60;
             const HINTNUM = 14;
@@ -761,14 +764,12 @@ const PuzzleScreen = function() {
             $(".userans").val("");
         };
         
-        const answer_check = function(value, undraw, option)
+        const answer_check = function(value, undraw)
         {
             if (value == "?" || value == "？") return parthint(); 
 
             let $sel = $("#quiz .glyph.selected");
-            if (option) {
-                $sel = $("#quiz .word").eq(option.wid).find(".glyph").eq(option.glyph);
-            }
+
             // 問の対象にない文字の除去
             let $glyph = $sel.nextAll(".glyph").addBack();
             let outoftarget = $glyph.filter(function() {
@@ -859,7 +860,7 @@ const PuzzleScreen = function() {
                 return c;
             }).get().filter(v=>v);
             
-            if (!option && cpen.length) {
+            if (cpen.length) {
                 let wid = $word.find(".wid").text() * 1 - 1;
                 let gid = $word.find(".glyph").index($sel);
                 sock.send({
@@ -867,27 +868,7 @@ const PuzzleScreen = function() {
                     a:cpen.filter(v=>v).join("")});
             }
 
-            // 全パーツが開いた単語を発光
-            // todo:他人のanswerイベントでも発行する
-            let $w = $("#quiz .word").filter(function() {
-                return !$(this).hasClass("wdone") && ($(this).find(".undone").size() == 0);
-            }).addClass("wdone");
-
-            const cb = (n) => {
-                //todo:.correctに.cXXXXがあるものはそのユーザ色を維持する
-                $w.find(".correct").css({"text-shadow":`0 0 ${n}px #c00`,"color":`rgb(${20*n+50},${20*n},${13*n})`})
-                    .parent().find(".elm").css({
-                        "box-shadow":`0 0 ${n/2}px #f99,  inset 0 0 ${n/2}px #f00`,
-                        "border":`rgb(${144+(255-144)*n/10},${34+(160-34)*n/10},${8*n}) solid 1px`,
-                    });
-                if (n < 10) return setTimeout(() => { cb(n+1); }, 50);
-                $(".wdone .elm").css("box-shadow","");
-                $(".wdone .correct").css({"text-shadow":"0 0 4px #500","color":"#fc9"});
-            };
-            //cb(0);
-
             $(".userans").select();
-            //if ($("#quiz .kidx.undone").size() == 0) show_ending(qlen);
         };
 
         $(document).keydown(function(e) {
@@ -1079,11 +1060,8 @@ const TopMenu = function() {
             });
         };
 
-        $("#fragtable,#fragtablep").load(function(){
-            let txt = $(this).contents().find("body").text();
-            kanjifrag.define(txt);
+        $("#fragtable,#fragtablep").removeClass("done").load(function(){
             $(this).addClass("done");
-            console.log("fragtable.done");
             show_menu("rgs");
         });
 
@@ -1095,7 +1073,14 @@ const TopMenu = function() {
     };
 
     const show_menu = (arg) => {
-        if (!$("#fragtable").hasClass("done") || !$("#fragtablep").hasClass("done")) return;
+        if ($("#fragtable").contents().find("body").text().length < 30000 || $("#fragtablep").contents().find("body").text().length < 3000) {
+            //setTimeout(() => location.reload(), 1000);
+            return;
+        }
+        $("#fragtable,#fragtablep").each(function(){
+            let txt = $(this).contents().find("body").text();
+            kanjifrag.define(txt);
+        });
         
         // draw the sample quiz
         kanjifrag.definelocal("尌:/洛:");
@@ -1328,37 +1313,6 @@ const TopMenu = function() {
     this.quiztable = () => quiztable;
 };
 
-// 自動生成
-const automaker = async () => {
-    const encoder = s => btoa(unescape(encodeURIComponent(s)));
-
-    dic.load(await getfile("./dicts/SKK-JISYO.ML.utf8"));
-    kanjifrag.definelocal(REDEFINE);
-    partquiz.qwords = makequiz.select_random_words().split("/").filter(w => w);
-    partquiz.make(partquiz.qwords, {});
-
-    let dump = () => {
-        makequiz.wordsort();
-        location.hash = "quiz:q=" + encoder(partquiz.qwords.join("/")) + ":def=" + encoder(REDEFINE);
-        qscreen.start({q:partquiz.qwords.join("/"), def:REDEFINE, qid:-1});
-    };
-
-    let miss = 0;
-    let append = () => {
-        let qn = partquiz.qwords.length;
-        let percent = parseInt(100 * (partquiz.qwords.length) / (WORDLEN)) + "%";
-        $("#seekval").text(percent);
-        $("#seekbar").css("width", percent);
-
-        if (makequiz.select_rpbc_words() < 0) return dump();
-        partquiz.make(partquiz.qwords, {});
-        if (partquiz.qwords.length >= WORDLEN) return dump();
-        if (qn == partquiz.qwords.length) miss++;
-        if (30 < miss) return dump();
-        setTimeout(append, 10);
-    };
-    append();
-};
 
 const menu = new TopMenu();
 const qscreen = new PuzzleScreen();

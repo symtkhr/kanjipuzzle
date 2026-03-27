@@ -1233,11 +1233,12 @@ const TopMenu = function() {
         };
         
         $("#archives").click(function() {
-            console.log("archives click")
+            //console.log("archives click")
             $("#overlap, #qlists, #qlists .closer").show();
-            $("#qlists .qbox").removeClass("qselected").map(function() {
+            $("#control, #message, #howto").hide();
+            $("#qlists .qbox").removeClass("qselected").show().map(function(i) {
                 let $qbox = $(this);
-                let $qopt = $(this).find(".qoption");
+                let $qopt = $(this).find(".qoption").show();
                 //return fix_within_box($qbox, $qopt);
                 let pos = $qbox.position();
                 let inwidth = pos.left + 0 + $qopt.width() - $("#qlists").width();
@@ -1246,8 +1247,10 @@ const TopMenu = function() {
                     top:    inheight < 0 ? 40 : (-inheight),
                     left:   inwidth < 0 ? 0 : (-inwidth),
                 });
+                //console.log(i,$qopt.css("top"),$qopt.css("left"));
             });
-            $("#control, #message, #howto, #qlists .qoption").hide();
+            //return;
+            $("#qlists .qoption").hide();
             $("#qlists").hide().fadeIn();
         });
 

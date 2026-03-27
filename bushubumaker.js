@@ -522,7 +522,7 @@ let PartQuizMaker = function() {
         
         let n = parseInt(result.length * Math.random());
         try {
-            partquiz.qwords = (partquiz.qwords.join("/") + "/" + result[n].w).split("/");
+            partquiz.qwords = (partquiz.qwords.join("/") + "/" + result[n].w.replace(/.々/g,(c)=>c[0]+c[0])).split("/");
         }catch(e) {
             console.log(e);
             console.log(cs,words,result);
@@ -570,13 +570,14 @@ nodeapp.automake = (argv) => {
         .split("/");
 
     let miss = 0;
+    const wordlen = argv[0] || 40;
     for (;;)
     {
         let qn = partquiz.qwords.length;
         if (makequiz.select_rpbc_words() < 0) { console.log("-1!"); break; }
         console.log(qn, makequiz.abandon);
         partquiz.make(partquiz.qwords, options);
-        if (partquiz.qwords.length >= WORDLEN) break;
+        if (partquiz.qwords.length >= wordlen) break;
         if (qn == partquiz.qwords.length) miss++;
         if (30 < miss) break;
     }

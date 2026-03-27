@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="initial-scale=1.0" />
+<title>woff display test</title>
+<script src="../bushubumaker.js?20251027"></script>
+<style>
+@font-face {
+  font-family: "glyphwiki";
+  src: url("glyphwikiCDP.woff");
+}
+.kpart {
+    font-family: "glyphwiki";
+    display:inline-block;
+    border:1px solid gray;
+    margin:1px;
+    padding:1px;
+}
+.cdp {
+    background:#cec;
+}
+td img {
+    width:20px;
+}
+</style>
+</head>
+<body>
+  <div id="result"></div>
+</body>
+<script>
+const $id = (id) => document.getElementById(id);
+const $name = (name) => [... ($dom || document).getElementsByName(name)];
+const $tag = (name, $dom) => [... ($dom || document).getElementsByTagName(name)];
+const $cn = $c = (c, $dom) => [... ($dom || document).getElementsByClassName(c)];
+const $q = (query, $dom) => [... ($dom || document).querySelectorAll(query)];
+const GREPRESULT = [...Array.from(
+    `⺀⺆⺇⺊⺌⺍⺤⺧⺮⻌㇏㑒㔾㦮丆业丷习乡产叐堇夹龰龶龷龸龹𠀎𠀐𠂆𠂇𠂊𠂎𠂭𠃌𠃜𠄐𠕁𠫔𠮛𡗜𢆉𢎨𤰔𤴓𦈢𦣻𧘇𧰨𫝀𫩏𫶧𮥶屮`
+).map(c=>"&#x"+c.codePointAt(0).toString(16)+";"), 
+...`
+&#x20017;
+&#x22189;
+&#x24d13;
+&#x2b740;
+&#x2ea4;
+&#x2ecc;
+&#x9fb9;
+&#xF526;
+&#xF55A;
+&#xF564;
+&#xF579;
+&#xF5E1;
+&#xF5ca;
+&#xf404;
+&#xf50c;
+&CDP-875C;
+&CDP-884A;
+&CDP-88A7;
+&CDP-88B4;
+&CDP-88E2;
+&CDP-88EE;
+&CDP-88F0;
+&CDP-88F1;
+&CDP-8971;
+&CDP-89AE;
+&CDP-89B0;
+&CDP-89BD;
+&CDP-89C5;
+&CDP-89CC;
+&CDP-89E0;
+&CDP-89E5;
+&CDP-89EC;
+&CDP-89EF;
+&CDP-89F3;
+&CDP-89FA;
+&CDP-89FD;
+&CDP-89FE;
+&CDP-8A49;
+&CDP-8B5E;
+&CDP-8B62;
+&CDP-8B7A;
+&CDP-8B7C;
+&CDP-8BBE;
+&CDP-8BBF;
+&CDP-8BC0;
+&CDP-8BC5;
+&CDP-8BC6;
+&CDP-8BD9;
+&CDP-8BDE;
+&CDP-8BE8;
+&CDP-8BF1;
+&CDP-8BF8;
+&CDP-8BFE;
+&CDP-8C42;
+&CDP-8C74;
+&CDP-8CA6;
+&CDP-8CAC;
+&CDP-8CB8;
+&CDP-8CBB;
+&CDP-8CC8;
+&CDP-8CD4;
+&CDP-8CE4;
+&CDP-8D46;
+&CDP-8D61;
+&CDP-8DBA;
+&CDP-8DC1;
+&CDP-8DC9;
+&CDP-8DCB;
+&CDP-8DDD;
+&CDP-8DE0;
+&CDP-8DE2;
+&CDP-8DE8;
+&CDP-8DEB;
+&CDP-8DEC;
+&CDP-8bf5;
+&cdp-897d;
+&cdp-89b0-var-019;
+&cdp-89bf;
+&cdp-89df;
+&cdp-89eb;
+&cdp-89f4;
+&cdp-8cbd;
+&cdp-8cc6;
+&cdp-8d62;
+&cdp-8d75;
+&cdp-8dd8;
+&cdp-8ddf;
+&cdp-8be9;
+&cbeta-18388;
+&k5-026c;
+&u24c14-var-001;
+&u2e976;
+&u2ff1-cdp-884a-u4e00;
+&u2ff1-u2e8c-u4e00;
+&u5140-itaiji-001;
+&u706c-itaiji-002;
+`.split("\n")].map(v=>v.trim()).filter(v=>v);
+
+  const FONTXML = `
+    <cmap_format_12 platformID="0" platEncID="10" format="12" reserved="0" length="1984" language="0" nGroups="164">
+      <map code="0x2e80" name="uni2E80"/><!-- CJK RADICAL REPEAT -->
+      <map code="0x2e84" name="uni2E84"/><!-- CJK RADICAL SECOND THREE -->
+      <map code="0x2e86" name="uni2E86"/><!-- CJK RADICAL BOX -->
+      <map code="0x2e87" name="uni2E87"/><!-- CJK RADICAL TABLE -->
+      <map code="0x2e8a" name="uni2E8A"/><!-- CJK RADICAL DIVINATION -->
+      <map code="0x2e8c" name="uni2E8C"/><!-- CJK RADICAL SMALL ONE -->
+      <map code="0x2e8d" name="uni2E8D"/><!-- CJK RADICAL SMALL TWO -->
+      <map code="0x2ea4" name="uni2EA4"/><!-- CJK RADICAL PAW ONE -->
+      <map code="0x2ea7" name="uni2EA7"/><!-- CJK RADICAL COW -->
+      <map code="0x2eaa" name="uni2EAA"/><!-- CJK RADICAL BOLT OF CLOTH -->
+      <map code="0x2eae" name="uni2EAE"/><!-- CJK RADICAL BAMBOO -->
+      <map code="0x2eb7" name="uni2EB7"/><!-- CJK RADICAL RAM -->
+      <map code="0x2ebb" name="uni2EBB"/><!-- CJK RADICAL BRUSH TWO -->
+      <map code="0x2ec0" name="uni2EC0"/><!-- CJK RADICAL GRASS THREE -->
+      <map code="0x2eca" name="uni2ECA"/><!-- CJK RADICAL FOOT -->
+      <map code="0x2ecc" name="uni2ECC"/><!-- CJK RADICAL SIMPLIFIED WALK -->
+      <map code="0x2ed7" name="uni2ED7"/><!-- CJK RADICAL RAIN -->
+      <map code="0x2ede" name="uni2EDE"/><!-- CJK RADICAL EAT TWO -->
+      <map code="0x2f2c" name="uni2F2C"/><!-- KANGXI RADICAL SPROUT -->
+      <map code="0x3401" name="uni3401"/><!-- CJK UNIFIED IDEOGRAPH-3401 -->
+      <map code="0x3404" name="uni3404"/><!-- CJK UNIFIED IDEOGRAPH-3404 -->
+      <map code="0x3405" name="uni3405"/><!-- CJK UNIFIED IDEOGRAPH-3405 -->
+      <map code="0x3406" name="uni3406"/><!-- CJK UNIFIED IDEOGRAPH-3406 -->
+      <map code="0x3452" name="uni3452"/><!-- CJK UNIFIED IDEOGRAPH-3452 -->
+      <map code="0x34c1" name="uni34C1"/><!-- CJK UNIFIED IDEOGRAPH-34C1 -->
+      <map code="0x353e" name="uni353E"/><!-- CJK UNIFIED IDEOGRAPH-353E -->
+      <map code="0x355a" name="uni355A"/><!-- CJK UNIFIED IDEOGRAPH-355A -->
+      <map code="0x3692" name="uni3692"/><!-- CJK UNIFIED IDEOGRAPH-3692 -->
+      <map code="0x382f" name="uni382F"/><!-- CJK UNIFIED IDEOGRAPH-382F -->
+      <map code="0x3840" name="uni3840"/><!-- CJK UNIFIED IDEOGRAPH-3840 -->
+      <map code="0x386d" name="uni386D"/><!-- CJK UNIFIED IDEOGRAPH-386D -->
+      <map code="0x38fa" name="uni38FA"/><!-- CJK UNIFIED IDEOGRAPH-38FA -->
+      <map code="0x39ae" name="uni39AE"/><!-- CJK UNIFIED IDEOGRAPH-39AE -->
+      <map code="0x39b0" name="uni39B0"/><!-- CJK UNIFIED IDEOGRAPH-39B0 -->
+      <map code="0x4491" name="uni4491"/><!-- CJK UNIFIED IDEOGRAPH-4491 -->
+      <map code="0x459d" name="uni459D"/><!-- CJK UNIFIED IDEOGRAPH-459D -->
+      <map code="0x5f50" name="uni5F50"/><!-- CJK UNIFIED IDEOGRAPH-5F50 -->
+      <map code="0x9fb0" name="uni9FB0"/><!-- CJK UNIFIED IDEOGRAPH-9FB0 -->
+      <map code="0x9fb4" name="uni9FB4"/><!-- CJK UNIFIED IDEOGRAPH-9FB4 -->
+      <map code="0x9fb5" name="uni9FB5"/><!-- CJK UNIFIED IDEOGRAPH-9FB5 -->
+      <map code="0x9fb6" name="uni9FB6"/><!-- CJK UNIFIED IDEOGRAPH-9FB6 -->
+      <map code="0x9fb7" name="uni9FB7"/><!-- CJK UNIFIED IDEOGRAPH-9FB7 -->
+      <map code="0x9fb8" name="uni9FB8"/><!-- CJK UNIFIED IDEOGRAPH-9FB8 -->
+      <map code="0x9fb9" name="uni9FB9"/><!-- CJK UNIFIED IDEOGRAPH-9FB9 -->
+      <map code="0xf16b" name="uniF16B"/><!-- ???? -->
+      <map code="0xf1c2" name="uniF1C2"/><!-- ???? -->
+      <map code="0xf310" name="uniF310"/><!-- ???? -->
+      <map code="0xf348" name="uniF348"/><!-- ???? -->
+      <map code="0xf355" name="uniF355"/><!-- ???? -->
+      <map code="0xf373" name="uniF373"/><!-- ???? -->
+      <map code="0xf38f" name="uniF38F"/><!-- ???? -->
+      <map code="0xf392" name="uniF392"/><!-- ???? -->
+      <map code="0xf3b8" name="uniF3B8"/><!-- ???? -->
+      <map code="0xf3b9" name="uniF3B9"/><!-- ???? -->
+      <map code="0xf3c2" name="uniF3C2"/><!-- ???? -->
+      <map code="0xf3ca" name="uniF3CA"/><!-- ???? -->
+      <map code="0xf3ec" name="uniF3EC"/><!-- ???? -->
+      <map code="0xf3ee" name="uniF3EE"/><!-- ???? -->
+      <map code="0xf3f1" name="uniF3F1"/><!-- ???? -->
+      <map code="0xf3fb" name="uniF3FB"/><!-- ???? -->
+      <map code="0xf403" name="uniF403"/><!-- ???? -->
+      <map code="0xf404" name="uniF404"/><!-- ???? -->
+      <map code="0xf408" name="uniF408"/><!-- ???? -->
+      <map code="0xf40a" name="uniF40A"/><!-- ???? -->
+      <map code="0xf40c" name="uniF40C"/><!-- ???? -->
+      <map code="0xf41e" name="uniF41E"/><!-- ???? -->
+      <map code="0xf421" name="uniF421"/><!-- ???? -->
+      <map code="0xf423" name="uniF423"/><!-- ???? -->
+      <map code="0xf425" name="uniF425"/><!-- ???? -->
+      <map code="0xf42a" name="uniF42A"/><!-- ???? -->
+      <map code="0xf42d" name="uniF42D"/><!-- ???? -->
+      <map code="0xf431" name="uniF431"/><!-- ???? -->
+      <map code="0xf438" name="uniF438"/><!-- ???? -->
+      <map code="0xf43b" name="uniF43B"/><!-- ???? -->
+      <map code="0xf43c" name="uniF43C"/><!-- ???? -->
+      <map code="0xf446" name="uniF446"/><!-- ???? -->
+      <map code="0xf44c" name="uniF44C"/><!-- ???? -->
+      <map code="0xf4f8" name="uniF4F8"/><!-- ???? -->
+      <map code="0xf4fc" name="uniF4FC"/><!-- ???? -->
+      <map code="0xf4fe" name="uniF4FE"/><!-- ???? -->
+      <map code="0xf506" name="uniF506"/><!-- ???? -->
+      <map code="0xf50c" name="uniF50C"/><!-- ???? -->
+      <map code="0xf514" name="uniF514"/><!-- ???? -->
+      <map code="0xf516" name="uniF516"/><!-- ???? -->
+      <map code="0xf520" name="uniF520"/><!-- ???? -->
+      <map code="0xf523" name="uniF523"/><!-- ???? -->
+      <map code="0xf526" name="uniF526"/><!-- ???? -->
+      <map code="0xf536" name="uniF536"/><!-- ???? -->
+      <map code="0xf537" name="uniF537"/><!-- ???? -->
+      <map code="0xf538" name="uniF538"/><!-- ???? -->
+      <map code="0xf53d" name="uniF53D"/><!-- ???? -->
+      <map code="0xf53e" name="uniF53E"/><!-- ???? -->
+      <map code="0xf543" name="uniF543"/><!-- ???? -->
+      <map code="0xf54b" name="uniF54B"/><!-- ???? -->
+      <map code="0xf54e" name="uniF54E"/><!-- ???? -->
+      <map code="0xf551" name="uniF551"/><!-- ???? -->
+      <map code="0xf55a" name="uniF55A"/><!-- ???? -->
+      <map code="0xf560" name="uniF560"/><!-- ???? -->
+      <map code="0xf564" name="uniF564"/><!-- ???? -->
+      <map code="0xf569" name="uniF569"/><!-- ???? -->
+      <map code="0xf56d" name="uniF56D"/><!-- ???? -->
+      <map code="0xf570" name="uniF570"/><!-- ???? -->
+      <map code="0xf576" name="uniF576"/><!-- ???? -->
+      <map code="0xf578" name="uniF578"/><!-- ???? -->
+      <map code="0xf579" name="uniF579"/><!-- ???? -->
+      <map code="0xf582" name="uniF582"/><!-- ???? -->
+      <map code="0xf59d" name="uniF59D"/><!-- ???? -->
+      <map code="0xf5a0" name="uniF5A0"/><!-- ???? -->
+      <map code="0xf5ab" name="uniF5AB"/><!-- ???? -->
+      <map code="0xf5ad" name="uniF5AD"/><!-- ???? -->
+      <map code="0xf5b1" name="uniF5B1"/><!-- ???? -->
+      <map code="0xf5c1" name="uniF5C1"/><!-- ???? -->
+      <map code="0xf5ca" name="uniF5CA"/><!-- ???? -->
+      <map code="0xf5cd" name="uniF5CD"/><!-- ???? -->
+      <map code="0xf5d0" name="uniF5D0"/><!-- ???? -->
+      <map code="0xf5dd" name="uniF5DD"/><!-- ???? -->
+      <map code="0xf5e1" name="uniF5E1"/><!-- ???? -->
+      <map code="0xf5e9" name="uniF5E9"/><!-- ???? -->
+      <map code="0xf5ea" name="uniF5EA"/><!-- ???? -->
+      <map code="0xf5f9" name="uniF5F9"/><!-- ???? -->
+      <map code="0xf5fc" name="uniF5FC"/><!-- ???? -->
+      <map code="0xf61a" name="uniF61A"/><!-- ???? -->
+      <map code="0xf635" name="uniF635"/><!-- ???? -->
+      <map code="0xf636" name="uniF636"/><!-- ???? -->
+      <map code="0xf63f" name="uniF63F"/><!-- ???? -->
+      <map code="0xf66c" name="uniF66C"/><!-- ???? -->
+      <map code="0xf673" name="uniF673"/><!-- ???? -->
+      <map code="0xf67b" name="uniF67B"/><!-- ???? -->
+      <map code="0xf68f" name="uniF68F"/><!-- ???? -->
+      <map code="0xf691" name="uniF691"/><!-- ???? -->
+      <map code="0xf692" name="uniF692"/><!-- ???? -->
+      <map code="0xf694" name="uniF694"/><!-- ???? -->
+      <map code="0xf69a" name="uniF69A"/><!-- ???? -->
+      <map code="0xf69d" name="uniF69D"/><!-- ???? -->
+      <map code="0x2000e" name="u2000E"/><!-- CJK UNIFIED IDEOGRAPH-2000E -->
+      <map code="0x20010" name="u20010"/><!-- CJK UNIFIED IDEOGRAPH-20010 -->
+      <map code="0x20041" name="u20041"/><!-- CJK UNIFIED IDEOGRAPH-20041 -->
+      <map code="0x20086" name="u20086"/><!-- CJK UNIFIED IDEOGRAPH-20086 -->
+      <map code="0x20087" name="u20087"/><!-- CJK UNIFIED IDEOGRAPH-20087 -->
+      <map code="0x20089" name="u20089"/><!-- CJK UNIFIED IDEOGRAPH-20089 -->
+      <map code="0x2008a" name="u2008A"/><!-- CJK UNIFIED IDEOGRAPH-2008A -->
+      <map code="0x2008b" name="u2008B"/><!-- CJK UNIFIED IDEOGRAPH-2008B -->
+      <map code="0x2008e" name="u2008E"/><!-- CJK UNIFIED IDEOGRAPH-2008E -->
+      <map code="0x20094" name="u20094"/><!-- CJK UNIFIED IDEOGRAPH-20094 -->
+      <map code="0x200a2" name="u200A2"/><!-- CJK UNIFIED IDEOGRAPH-200A2 -->
+      <map code="0x200a4" name="u200A4"/><!-- CJK UNIFIED IDEOGRAPH-200A4 -->
+      <map code="0x200ad" name="u200AD"/><!-- CJK UNIFIED IDEOGRAPH-200AD -->
+      <map code="0x200ca" name="u200CA"/><!-- CJK UNIFIED IDEOGRAPH-200CA -->
+      <map code="0x200cc" name="u200CC"/><!-- CJK UNIFIED IDEOGRAPH-200CC -->
+      <map code="0x200dc" name="u200DC"/><!-- CJK UNIFIED IDEOGRAPH-200DC -->
+      <map code="0x20120" name="u20120"/><!-- CJK UNIFIED IDEOGRAPH-20120 -->
+      <map code="0x201a2" name="u201A2"/><!-- CJK UNIFIED IDEOGRAPH-201A2 -->
+      <map code="0x20509" name="u20509"/><!-- CJK UNIFIED IDEOGRAPH-20509 -->
+      <map code="0x20541" name="u20541"/><!-- CJK UNIFIED IDEOGRAPH-20541 -->
+      <map code="0x2090e" name="u2090E"/><!-- CJK UNIFIED IDEOGRAPH-2090E -->
+      <map code="0x20ad3" name="u20AD3"/><!-- CJK UNIFIED IDEOGRAPH-20AD3 -->
+      <map code="0x20b9b" name="u20B9B"/><!-- CJK UNIFIED IDEOGRAPH-20B9B -->
+      <map code="0x2123c" name="u2123C"/><!-- CJK UNIFIED IDEOGRAPH-2123C -->
+      <map code="0x215d7" name="u215D7"/><!-- CJK UNIFIED IDEOGRAPH-215D7 -->
+      <map code="0x215dc" name="u215DC"/><!-- CJK UNIFIED IDEOGRAPH-215DC -->
+      <map code="0x21fe7" name="u21FE7"/><!-- CJK UNIFIED IDEOGRAPH-21FE7 -->
+      <map code="0x22189" name="u22189"/><!-- CJK UNIFIED IDEOGRAPH-22189 -->
+      <map code="0x2218d" name="u2218D"/><!-- CJK UNIFIED IDEOGRAPH-2218D -->
+      <map code="0x223a8" name="u223A8"/><!-- CJK UNIFIED IDEOGRAPH-223A8 -->
+      <map code="0x2298f" name="u2298F"/><!-- CJK UNIFIED IDEOGRAPH-2298F -->
+      <map code="0x233b3" name="u233B3"/><!-- CJK UNIFIED IDEOGRAPH-233B3 -->
+      <map code="0x23942" name="u23942"/><!-- CJK UNIFIED IDEOGRAPH-23942 -->
+      <map code="0x23d92" name="u23D92"/><!-- CJK UNIFIED IDEOGRAPH-23D92 -->
+      <map code="0x24c14" name="u24C14"/><!-- CJK UNIFIED IDEOGRAPH-24C14 -->
+      <map code="0x24d13" name="u24D13"/><!-- CJK UNIFIED IDEOGRAPH-24D13 -->
+      <map code="0x26222" name="u26222"/><!-- CJK UNIFIED IDEOGRAPH-26222 -->
+      <map code="0x2634c" name="u2634C"/><!-- CJK UNIFIED IDEOGRAPH-2634C -->
+      <map code="0x268dd" name="u268DD"/><!-- CJK UNIFIED IDEOGRAPH-268DD -->
+      <map code="0x268de" name="u268DE"/><!-- CJK UNIFIED IDEOGRAPH-268DE -->
+      <map code="0x268fb" name="u268FB"/><!-- CJK UNIFIED IDEOGRAPH-268FB -->
+      <map code="0x26951" name="u26951"/><!-- CJK UNIFIED IDEOGRAPH-26951 -->
+      <map code="0x26954" name="u26954"/><!-- CJK UNIFIED IDEOGRAPH-26954 -->
+      <map code="0x2696f" name="u2696F"/><!-- CJK UNIFIED IDEOGRAPH-2696F -->
+      <map code="0x26c29" name="u26C29"/><!-- CJK UNIFIED IDEOGRAPH-26C29 -->
+      <map code="0x27607" name="u27607"/><!-- CJK UNIFIED IDEOGRAPH-27607 -->
+      <map code="0x27c28" name="u27C28"/><!-- CJK UNIFIED IDEOGRAPH-27C28 -->
+      <map code="0x27fb7" name="u27FB7"/><!-- CJK UNIFIED IDEOGRAPH-27FB7 -->
+      <map code="0x2b740" name="u2B740"/><!-- CJK UNIFIED IDEOGRAPH-2B740 -->
+      <map code="0x2ba4f" name="u2BA4F"/><!-- CJK UNIFIED IDEOGRAPH-2BA4F -->
+      <map code="0x2bda7" name="u2BDA7"/><!-- CJK UNIFIED IDEOGRAPH-2BDA7 -->
+      <map code="0x2c3be" name="u2C3BE"/><!-- CJK UNIFIED IDEOGRAPH-2C3BE -->
+      <map code="0x2e976" name="u2E976"/><!-- CJK UNIFIED IDEOGRAPH-2E976 -->
+    </cmap_format_12>
+`.split("\n").map(v=>v.match(/code="0x([^"]+)"/)).filter(v=>v).map(v=>parseInt("0x"+v[1]));
+
+  $id("result").innerHTML = `<h4>All glyphs currently included in webfont</h4>` +
+    FONTXML.map(v=>`<span class="kpart${0xE000<v&&v<0xf900?' cdp':''}">&#x${v.toString(16)};</span>`).join("");
+
+  const REPS = `&CDP-88F0;:&CDP-8B5E;/&CDP-8971;:⺀/&CDP-8BDE;:𫩏/&CDP-8CA6;:⺻/&CDP-8DCB;:𬎾/&CDP-8DEC;:𫝀/&u2e976;:𮥶/`
+        .trim().split("\n").map(v=>v.split(":").shift());
+
+  const ret = [];
+  $id("result").innerHTML += `<h4>Glyphs to be included in webfont</h4><table>` + [...GREPRESULT].filter(v=>{
+      let u = (v.indexOf("&#x") == 0) ? String.fromCodePoint("0"+v.slice(2,-1)) : cdp2ucs(v.toUpperCase());
+      if (FONTXML.indexOf(u.codePointAt(0)) != -1) return;
+      if (REPS.indexOf(v) != -1) return;
+      console.log(v);
+      return true;
+  }).map(v=> {
+      let gwname = v[1]=="#"?("u"+v.slice(3,-1).toLowerCase()):v.slice(1,-1).toLowerCase();
+      let cdp = cdp2ucs(v.toUpperCase());
+      ret.push({gw:gwname, u:cdp.codePointAt(0).toString(16)});
+      return [
+          `<a href="https://glyphwiki.org/wiki/${gwname}">${v}</a>`,
+          `<span class=kpart>${cdp}</span>`,
+          `${(v.slice(0,2)=="&u") ? v.split("u").join("#x") : "_"}`,
+          `<img src="https://glyphwiki.org/glyph/${gwname}.svg" />`,
+      ].map(v=>`<td>${v}</td>`).join("");
+  }).map(tr=>"<tr>"+tr+"</tr>").join("");
+  console.log(JSON.stringify(ret));
+</script>

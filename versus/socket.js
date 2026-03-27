@@ -18,13 +18,16 @@ const SocketClient = function() {
     answer: (d) => {
         //if (d.uid == uid) return;
         let $glyphs = $("#quiz .glyph").filter(function() {
-            if ($(this).find(".undone").size() == 0) return;
-            let $c = $(this).find(".correct");
-            //console.log(d.a, $c.text());
-            if (d.a.indexOf($c.text()) == -1) return;
-            $c.show().addClass("cdone"+d.uid);
-            $(this).find(".elm div").hide();
-            return true;
+            return d.qclear.some(v=> {
+                let cdoneclass = "cdone"+v.uid;
+                if ($(this).hasClass(cdoneclass)) return;
+                let $c = $(this).find(".correct");
+                //console.log(d.a, $c.text());
+                if (v.c.indexOf($c.text()) == -1) return;
+                $c.show().addClass(cdoneclass);
+                $(this).find(".elm div").hide();
+                return true;
+            });
         });
         $glyphs.each(function() {
             $(this).find(".elm").each(function() {

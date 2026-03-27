@@ -23,7 +23,8 @@ $(function() {
                         wordDb[key] += ws.pop();
                 });
             });
-            $("#dicloaded").append("[読込済]").show();
+            $("#dicloaded span").remove();
+            $("#dicloaded").append("[読込済]<span>:全" + Object.keys(wordDb).length + "語</span>").show();
             $("#ifdicload").show();
         };
 
