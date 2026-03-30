@@ -7,7 +7,7 @@ body {
 }
 @font-face {
   font-family: "glyphwiki";
-  src: url("glyphwikiCDP.woff");
+  src: url("../webfont/glyphwiki.v2.woff");
 }
 @media screen and (max-width:600px){
     .topbox {

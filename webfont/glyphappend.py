@@ -1,3 +1,4 @@
+#!/bin/python3
 
 import fontforge
 import os
@@ -6,19 +7,29 @@ import json
 f = open("glyphappend.json","r")
 glyphs = json.load(f)
 
-def add_svgs_to_font(base_font_path, svg_dir, output_path, start_unicode=0xE000):
-    font = fontforge.open(base_font_path)
-    
-    svg_files = [f for f in os.listdir(svg_dir) if f.endswith('.svg')]
-    
+def add_svgs_to_font(output_path):
+    font = fontforge.open("glyphwikiCDP.woff")
+        
     for i, g in enumerate(glyphs):
-        filename = "svg/" + g["gw"] + "svg"
+        filename = "svg/" + g["gw"] + ".svg"
+        if not os.path.isfile(filename):
+            print(f"-- {filename} is not found.")
+            continue
+        #if (i == 2): break
+        
         unicode_val = int(g["u"],16)
-        glyph = font.createChar(unicode_val, f"uni{unicode_val:04X}")
+        try:
+            font.removeGlyph(unicode_val)
+        except:
+            print("new")
+        glyph = font.createChar(unicode_val, g["gw"])
         
         # SVGをインポート(座標の正規化・スケーリング・整数に丸め)
-        glyph.importOutlines(os.path.join(svg_dir, filename))
+        glyph.importOutlines(filename)
+        glyph.width = 1000
         glyph.simplify()
+        glyph.removeOverlap()
+        glyph.correctDirection()
         glyph.round()
         
         print(f"Added {filename} as U+{unicode_val:04X}")
@@ -54,4 +65,4 @@ def add_ivs_with_fontforge(font_path, base_unicode, selector_unicode, glyph_name
 
 
 # 実行
-add_svgs_to_font("glyphwikiCDP.woff", "./svg", "output.woff2")
+add_svgs_to_font("glyphwiki.v2.woff")
