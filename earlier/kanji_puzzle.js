@@ -233,7 +233,19 @@ var stringToArray = function(str) {
 
 var cdp2ucs = function(cdpref)
 {
-    var m = cdpref.match(/&CDP-([^;]+);/);
+    const gw0 = [
+        {"gw":"k5-026c","u":"f800","memo":"画-凵"},
+        {"gw":"u5140-itaiji-001","u":"f803","memo":"長[-4]"},
+        {"gw":"u2ff1-cdp-884a-u4e00","u":"f805","memo":"長[1:5]"},
+        {"gw":"u2ff1-u2e8c-u4e00","u":"f802","memo":"光-儿"},
+        {"gw":"u706c-itaiji-002","u":"f804","memo":"虫-中"},
+        {"gw":"cbeta-18388","u":"f806","memo":"Z一女"},
+        {"gw":"u24c14-var-001","u":"f801","memo":"博-十寸"},
+        {"gw":"cdp-89b0-var-019","u":"f807","memo":"龍-立月三"},
+        {"gw":"u268fb-itaiji-002","u":"f808","memo":"直-十"},
+    ].find(v => "&"+v.gw+";" == cdpref);
+    if (gw0) return String.fromCodePoint("0x"+gw0.u);
+    var m = cdpref.toUpperCase().match(/&CDP-([^;]+);/);
     if (!m) return cdpref;
     var cdp = parseInt(m[1], 16);
     var upper = (cdp >> 8) & 0x7f;

@@ -8,7 +8,8 @@
 <style>
 @font-face {
   font-family: "glyphwiki";
-  src: url("glyphwikiCDP.woff");
+  //src: url("glyphwikiCDP.woff");
+  src: url("glyphwiki.v2.woff");
 }
 .kpart {
     font-family: "glyphwiki";
@@ -16,6 +17,8 @@
     border:1px solid gray;
     margin:1px;
     padding:1px;
+    font-size:40px;
+    text-decoration:none;
 }
 .cdp {
     background:#cec;
@@ -27,6 +30,7 @@ td img {
 </head>
 <body>
   <div id="result"></div>
+  <foooter><a href="kageEngineViewer.html">Editor</a></footer>
 </body>
 <script>
 const $id = (id) => document.getElementById(id);
@@ -34,6 +38,13 @@ const $name = (name) => [... ($dom || document).getElementsByName(name)];
 const $tag = (name, $dom) => [... ($dom || document).getElementsByTagName(name)];
 const $cn = $c = (c, $dom) => [... ($dom || document).getElementsByClassName(c)];
 const $q = (query, $dom) => [... ($dom || document).querySelectorAll(query)];
+const getfile = (fname) => new Promise(cb => {
+    const ajax = new XMLHttpRequest();
+    ajax.open("GET", fname, true);
+    ajax.onreadystatechange = () => { if (ajax.readyState == 4 && ajax.status == 200) cb(ajax.responseText); };
+    ajax.send(null);
+});
+
 const GREPRESULT = [...Array.from(
     `⺀⺆⺇⺊⺌⺍⺤⺧⺮⻌㇏㑒㔾㦮丆业丷习乡产叐堇夹龰龶龷龸龹𠀎𠀐𠂆𠂇𠂊𠂎𠂭𠃌𠃜𠄐𠕁𠫔𠮛𡗜𢆉𢎨𤰔𤴓𦈢𦣻𧘇𧰨𫝀𫩏𫶧𮥶屮`
 ).map(c=>"&#x"+c.codePointAt(0).toString(16)+";"), 
@@ -328,29 +339,43 @@ const GREPRESULT = [...Array.from(
     </cmap_format_12>
 `.split("\n").map(v=>v.match(/code="0x([^"]+)"/)).filter(v=>v).map(v=>parseInt("0x"+v[1]));
 
-  $id("result").innerHTML = `<h4>All glyphs currently included in webfont</h4>` +
-    FONTXML.map(v=>`<span class="kpart${0xE000<v&&v<0xf900?' cdp':''}">&#x${v.toString(16)};</span>`).join("");
-
-  const REPS = `&CDP-88F0;:&CDP-8B5E;/&CDP-8971;:⺀/&CDP-8BDE;:𫩏/&CDP-8CA6;:⺻/&CDP-8DCB;:𬎾/&CDP-8DEC;:𫝀/&u2e976;:𮥶/`
+  const fonttable = async () => {
+      let json = await getfile("./glyphappend.json");
+      let glyphs = JSON.parse(json).map(v=> ({gw:v.gw, u:parseInt(v.u,16) }));
+      let ucs = glyphs.map(v=>v.u);
+      $id("result").innerHTML += `<h4>All glyphs currently included in webfont</h4> ` +
+          ucs.concat(FONTXML.filter(u => ucs.indexOf(u) < 0)).sort((a,b)=>(a - b))
+          .map(u => {
+              let cdp = (0xE000 < u && u < 0xf900) ? ' cdp' : '';
+              let gwname = cdp ? (glyphs.find(g => g.u == u) || {gw:"-"}).gw : ("u" + u.toString(16));
+              return `<a href="https://glyphwiki.org/wiki/${gwname}" class="kpart ${cdp}" target="_blank">&#x${u.toString(16)};</a>`;
+          }).join("");
+      console.log(FONTXML.filter(u => ucs.indexOf(u) < 0));
+      return glyphs;
+  
+      const REPS = `&CDP-88F0;:&CDP-8B5E;/&CDP-8971;:⺀/&CDP-8BDE;:𫩏/&CDP-8CA6;:⺻/&CDP-8DCB;:𬎾/&CDP-8DEC;:𫝀/&u2e976;:𮥶/`
         .trim().split("\n").map(v=>v.split(":").shift());
 
-  const ret = [];
-  $id("result").innerHTML += `<h4>Glyphs to be included in webfont</h4><table>` + [...GREPRESULT].filter(v=>{
-      let u = (v.indexOf("&#x") == 0) ? String.fromCodePoint("0"+v.slice(2,-1)) : cdp2ucs(v.toUpperCase());
-      if (FONTXML.indexOf(u.codePointAt(0)) != -1) return;
-      if (REPS.indexOf(v) != -1) return;
-      console.log(v);
-      return true;
-  }).map(v=> {
-      let gwname = v[1]=="#"?("u"+v.slice(3,-1).toLowerCase()):v.slice(1,-1).toLowerCase();
-      let cdp = cdp2ucs(v.toUpperCase());
-      ret.push({gw:gwname, u:cdp.codePointAt(0).toString(16)});
-      return [
-          `<a href="https://glyphwiki.org/wiki/${gwname}">${v}</a>`,
-          `<span class=kpart>${cdp}</span>`,
-          `${(v.slice(0,2)=="&u") ? v.split("u").join("#x") : "_"}`,
+      const ret = [];
+      $id("result").innerHTML += `<h4>Glyphs to be included in webfont</h4><table>` + [...GREPRESULT].filter(v=>{
+          let u = (v.indexOf("&#x") == 0) ? String.fromCodePoint("0"+v.slice(2,-1)) : cdp2ucs(v.toUpperCase());
+          if (FONTXML.indexOf(u.codePointAt(0)) != -1) return;
+          if (REPS.indexOf(v) != -1) return;
+          //console.log(v);
+          return true;
+      }).map(v=> {
+          let gwname = v[1]=="#"?("u"+v.slice(3,-1).toLowerCase()):v.slice(1,-1).toLowerCase();
+          let cdp = cdp2ucs(v.toUpperCase());
+          ret.push({gw:gwname, u:cdp.codePointAt(0).toString(16)});
+          return [
+              `<a href="https://glyphwiki.org/wiki/${gwname}">${v}</a>`,
+              `<span class=kpart>${cdp}</span>`,
+              `${(v.slice(0,2)=="&u") ? v.split("u").join("#x") : "_"}`,
           `<img src="https://glyphwiki.org/glyph/${gwname}.svg" />`,
-      ].map(v=>`<td>${v}</td>`).join("");
-  }).map(tr=>"<tr>"+tr+"</tr>").join("");
-  console.log(JSON.stringify(ret));
+          ].map(v=>`<td>${v}</td>`).join("");
+      }).map(tr=>"<tr>"+tr+"</tr>").join("");
+      console.log(JSON.stringify(ret));
+  };
+  
+  fonttable();
 </script>

@@ -555,7 +555,8 @@ const PuzzleScreen = function() {
             let style = {};
             let h = $(this).innerWidth() + 'px';
             style['font-size'] = h;
-            style['height'] = h;
+            style['width'] = h;
+            style['transform-origin'] = "top left";
             style['line-height'] = h;
             style['transform'] = 'scale(1, ' + $(this).innerHeight() / $(this).innerWidth() + ')';
             
