@@ -1,3 +1,5 @@
+#!/bin/node
+
 const { WebSocketServer } = require('ws');
 
 const wss = new WebSocketServer({ port: 0xc3b4, host:"0.0.0.0", });

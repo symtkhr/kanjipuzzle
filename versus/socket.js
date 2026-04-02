@@ -83,9 +83,10 @@ const SocketClient = function() {
         ws.send(JSON.stringify(obj));
     };
     this.send = socksend;
-    this.launch = function() {
+    this.launch = async function() {
         $("#message input").val(localStorage.uname || "");
-        ws = new WebSocket(`ws://${location.hostname}:50100`);
+        let sockurl = await getfile("sockurl");
+        ws = new WebSocket(sockurl.trim().split("https://").join("wss://"));
         ws.onopen = function(){
             $("#greet").text("戦いますか?");
 
