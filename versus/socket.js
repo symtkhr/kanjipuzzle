@@ -4,17 +4,30 @@ const SocketClient = function() {
     let uid = 0;
 
     const replies = {
-        wait:(d) => {
-            const ucolor = ["fee/300", "ccf/00a", "fcc/c00", "cfc/0f0", "cff/0ff", "ffc/ff0", "fcf/a0a", "caa/840"].map(v=>v.split("/"));
-            let users = d.user.filter(u => u.uid != uid);
-            users.unshift(d.user.find(u => u.uid == uid));
-            let $users = users.map((u,i)=>{
-                return `<div class="user uid${u.uid}" style="border:2px solid #${ucolor[i%8][1]}; border-radius:20px; margin:2px; background:#${ucolor[i%8][0]}; padding:5px; display:inline-block; ${i==0?"font-weight:bold;text-decoration:underline;":""}">${u.name}</div>`;
-            }).join("");
-            $("#qlists").show().html("待機中: " + $users);
-            $("#member").html($users);
-            $("#member .user").css({margin:"2px -2px","font-size":"12px",color:"black",width:"25px","white-space":"nowrap","text-align":"center",overflow:"hidden"});
-        },
+    wait:(d) => {
+        const ucolor = ["fee/300", "ccf/00a", "fcc/c00", "cfc/0f0", "cff/0ff", "ffc/ff0", "fcf/a0a", "caa/840"].map(v=>v.split("/"));
+        let users = d.user.filter(u => u.uid != uid);
+        users.unshift(d.user.find(u => u.uid == uid));
+        let $users = users.map((u,i)=>{
+            const styles = Object.entries({
+                border:`2px solid #${ucolor[i%8][1]}`,
+                background:`#${ucolor[i%8][0]}`,
+                "border-radius":"20px",
+                margin:"2px",
+                padding:"5px",
+                display:"inline-block",
+                "font-weight":(i==0?"bold":""),
+                "text-decoration":(i==0?"underline":""),
+            }).map(([k,v])=>k+":"+v).join(";");
+            return `<div class="user uid${u.uid}" style="${styles}">${u.name}</div>`;
+        }).join("");
+        $("#qlists").show().html("待機中: " + $users);
+        $("#member").html($users);
+        $("#member .user").css({
+            margin:"2px -2px","font-size":"12px",color:"black",width:"25px",
+            "white-space":"nowrap","text-align":"center",overflow:"hidden",
+        });
+    },
     answer: (d) => {
         //if (d.uid == uid) return;
         let $glyphs = $("#quiz .glyph").filter(function() {
@@ -83,9 +96,11 @@ const SocketClient = function() {
         ws.send(JSON.stringify(obj));
     };
     this.send = socksend;
-    this.launch = function() {
+    this.launch = async function() {
         $("#message input").val(localStorage.uname || "");
-        ws = new WebSocket(`ws://${location.hostname}:50100`);
+        const baseurl = await getfile("sockurl") || (location.protocol + "//" + location.hostname + ":50100");
+        const sockurl = baseurl.replace(/^https?:\/\//, (scheme) => scheme.split("http").join("ws"));
+        ws = new WebSocket(sockurl);
         ws.onopen = function(){
             $("#greet").text("戦いますか?");
 
@@ -263,9 +278,7 @@ qscreen.end = () => {
         se.play("clear");
         $("#overlap, #score, .replay").show();
         $("#control").show().animate({"left":0});
-        $(".gonext").unbind().click(function() {
-            location.reload();
-        });
+        $(".gonext").unbind().click(function() { location.reload(); });
     }, 1000);
 };
 
@@ -274,16 +287,16 @@ const TopMenuVersus = function() {
     const load_qlist = (url) => {
         $("#fragtable,#fragtablep").removeClass("done").load(function(){
             $(this).addClass("done");
-            show_menu("rgs");
+            show_menu();
         });
-
+        setTimeout(() => { show_menu(); }, 1000);
     };
 
     const show_menu = (arg) => {
-        if ($("#fragtable").contents().find("body").text().length < 30000 ||
-            $("#fragtablep").contents().find("body").text().length < 3000) {
-            //setTimeout(() => location.reload(), 1000);
-            return;
+        if (0 < $("#title .glyph").size()) return;
+        if (($("#fragtable").contents().find("body").text().length < 30000) ||
+            ($("#fragtablep").contents().find("body").text().length < 3000)) {
+            return setTimeout(() => { show_menu(); }, 1000);
         }
         $("#fragtable,#fragtablep").each(function(){
             let txt = $(this).contents().find("body").text();
@@ -379,18 +392,20 @@ const TopMenuVersus = function() {
         $("#onwid").change(function() {
             $("#quiz")[$("#onwid").prop("checked") ? "removeClass":"addClass"]("nowid");
         });
+
+        sock.launch();
     };
 
     this.show_menu = show_menu;
     this.load_qlist = load_qlist;
 };
 
-const menuversus = new TopMenuVersus();
+
 const sock = new SocketClient();
 
 $(function() {
     $("#sh, #continue, #main").hide();
-    sock.launch();
+    const menuversus = new TopMenuVersus();
     menuversus.load_qlist();
 });
 

@@ -1,9 +1,15 @@
+#!/bin/node
+
 const { WebSocketServer } = require('ws');
+const { execSync } = require('child_process');
+const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
 
 const wss = new WebSocketServer({ port: 0xc3b4, host:"0.0.0.0", });
 
 let users = [];
 let room = {state:"lobby", qclear:""};
+const qtable = getfile("srvqlist.txt").split("--").map(b => ({q:b.trim(), def:"円:H冂丄",}));
+
 const broadaction = (d) => {
     let ret = d;
     ret.reply = d.action;
@@ -11,22 +17,6 @@ const broadaction = (d) => {
     d.action = null;
     return ret;
 };
-
-const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
-
-const qtable = getfile("srvqlist.txt").split("--").map(b => {
-    return {q:b.trim(), def:"円:H冂丄",};
-});
-const qtablesample =
-[{
-    q: "猛禽類/等閑視/総統府/蛍光灯/騒音計/八重桜/募金箱/更待月/浮世絵/標準時/立方根/経済学/青梗菜/針葉樹/耳掃除/分相応/消防庁/愛息子/木綿糸/浄玻璃/衝撃波/急接近/往復便/大前提/文章題/進駐軍/紋白蝶/注意力/対抗馬/腹膜炎/温泉街/護送車/虫眼鏡/導火線/新聞社/闘争心/坊主頭/取締役/関連付/摩天楼/好投手/軽労働/自叙伝/独禁法/焼林檎/運動会/煙草盆/全粒粉/首脳陣/鎮静剤",
-    def :"凶:/光:Z⺌兀/反:F厂又/尓:Z𠂉小/争:Zク/斉:Z文/:Z亠丷",
-},{
-    "q": "保護者/雑木林/消去法/明後日/花言葉/化粧台/胡麻油/銀行員/老眼鏡/幼馴染/新境地/借金取/赤信号/著作権/椎間板/温度計/経験則",def:"",
-},{
-    "q": "徒競走/超音波/洗浄器",def:"争:",
-},{q:"準結晶/易損品/委員会/大過去/固溶体/兌換券/湯湯婆/咽頭炎/贔屓目/十日町/明治村/迦楼羅/奥女中/潤滑油/抱茗荷/月桂樹/連絡先/潜伏期/新嘉坡/時代物/朝比奈/仏舎利/花散里/規格判/賃貸借/王昭君/胆汁質/四重唱/仲間割/法螺貝/七変化/芋羊羹/熱量計/精進揚/菠薐草/条件付/丸暗記/保育園/如何程/半濁音/加速器/河口湖/闘牛士/麦藁帽/分数式/未定稿/昆布巻/犬吠埼/森林浴/青表紙/婚姻届/基本給/扶持米/高松市/秋吉台/転向力/瑜伽宗/赤提灯/公社債/真骨頂/清見潟/有袋類/浄土寺/古今集/勅任官/能狂言/納豆菌/黒色腫/木太刀/伊勢湾/味噌漬/蠟細工/相姦者/谷地田/安全弁/寄合書/名前負/信号場/賛美歌/責問権/宇宙船/素封家/切絵図/尾瀬沼/洪積層/和漢洋/特別区/空約束/勘解由/料理番/蜂須賀/直江津/無造作/流星群/専門語/居酒屋/胃潰瘍/留守宅/八路軍/頸動脈",def:"",
-}].slice(-1);
 
 const actions = {
     participate: (d,ws) => {
