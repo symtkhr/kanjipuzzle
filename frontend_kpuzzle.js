@@ -460,6 +460,7 @@ const PuzzleScreen = function() {
         return div;
     };
 
+
     // 語リストから以下のDOM要素を生成 + ansに分解結果を記録
     // .word
     //  .glyph
@@ -803,10 +804,12 @@ const PuzzleScreen = function() {
                 height:"20px",padding:"1px",margin:"1px"});
             $(".userans").val("");
         };
-        
+
+        let qscreen0 = this;
         const answer_check = function(value, undraw)
         {
-            if (value == "?" || value == "？") return parthint(); 
+            if (value == "?" || value == "？") return parthint();
+            if (qscreen0.onAnswer) return qscreen0.onAnswer(value);
 
             // 問の対象にない文字の除去
             let $glyph = $("#quiz .glyph.selected").nextAll(".glyph").addBack();
@@ -1084,7 +1087,8 @@ const PuzzleScreen = function() {
             });
         }, 1000);
     };
-    
+
+    this.dump_answereventhandler = () => console.log(this.onAnswer);
     this.draw = draw_puzzle;
     this.start = load_quiz;
     this.end = show_ending;
@@ -1560,6 +1564,7 @@ const timer = new TimeCounter();
 const se = new SoundEffect();
 
 $(function() {
+    if (location.href.indexOf("/versus") != -1) return;
     if (location.href.indexOf("/renewalsandbox") != -1) return location.href = "..";
     $("#sh, #continue, #main").hide();
     menu.load_qlist();
