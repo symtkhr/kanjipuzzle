@@ -8,7 +8,7 @@ const wss = new WebSocketServer({ port: 0xc3b4, host:"0.0.0.0", });
 
 let users = [];
 let room = {state:"lobby", qclear:""};
-const qtable = getfile("srvqlist.txt").split("--").map(b => ({q:b.trim(), def:"円:H冂丄",}));
+const qtable = JSON.parse(getfile("srvqlist.json")).filter(v=>v.date.indexOf("#forbattle")==0);
 
 const broadaction = (d) => {
     let ret = d;
@@ -24,10 +24,10 @@ const actions = {
 
         let user = users.find(u => d.uid == u.uid);
         let ret = {reply:"wait", multicast:true};
-
+        
         if (user) {
             user.name = d.name;
-            user.state = "lobby"; // これは微妙?
+            user.state = "lobby";
             ret.state = "alreadyset";
         } else {
             users.push({uid:d.uid,name:d.name,state:"lobby",qclear:""});
@@ -39,7 +39,7 @@ const actions = {
     qstart: (d,ws,midwayjoin) => {
         let ret = {reply:"qstart"};
 
-        if (!midwayjoin) {
+        if (!midwayjoin && room.state == "lobby") {
             room.qid = d.qid ? (d.qid % qtable.length) : parseInt(Math.random() * qtable.length);
             ret.multicast = true;
             users.map(u=>u.qclear="");
@@ -53,6 +53,7 @@ const actions = {
         return ret;
     },
     answer: (d) => {
+        if (room.state == "lobby") return;
         d.a = Array.from(d.a).filter(c => room.qclear.indexOf(c) != -1).join("");
         room.qclear = Array.from(room.qclear).filter(c => (c != '/') && (d.a.indexOf(c) < 0)).join("");
         let user = users.find(u => u.uid == d.uid);
@@ -60,11 +61,18 @@ const actions = {
         user.qclear += d.a;
         d.qclear = users.map(v=>({uid:v.uid,c:v.qclear}));
         console.log(users);
-        if (room.qclear.length == 0) room.state = "lobby";
+        if (room.qclear.length == 0) {
+            room.state = "lobby";
+            d.state = "finish";
+        }
         return broadaction(d);
     },
     select: (d) => broadaction(d),
-
+    finish: (d) => {
+        let user = users.find(u => u.uid == d.uid);
+        if (!user) return;
+        user.state = "offline";
+    },
 };
 
 wss.on('connection', ws => {
@@ -82,7 +90,9 @@ wss.on('connection', ws => {
 
         (Array.isArray(ret) ? ret : [ret]).filter(v=>v).map(mes => {
             if (mes.multicast) {
-                wss.clients.forEach(ws0 => ws0.send(JSON.stringify(mes)));
+                // remove offline users
+                const uids = users.filter(u=>u.state!="offline").map(u=>u.uid);
+                [...wss.clients].filter(ws0 => uids.indexOf(ws0.uid) != -1).forEach(ws0 => ws0.send(JSON.stringify(mes)));
                 return;
             }
             mes.uid = d.uid;
@@ -96,6 +106,7 @@ wss.on('connection', ws => {
         if (!user) return;
         user.state = "offline";
         //todo:時刻とか
+        if (room.state == "inplay") return;
         let ret = {reply:"wait"};
         ret.user = users.filter(v=>v.state!="offline");//.map(v=>v.name);
         wss.clients.forEach(ws0 => ws0.send(JSON.stringify(ret)));

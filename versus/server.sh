@@ -1,21 +1,19 @@
 #!/bin/bash
 
 cd "$(dirname "$(readlink -f "$0")")"
-ln -s ../fragtable.txt
-ln -s ../fragtable.plus.txt
-ln -s ../bushubumaker.js
-ln -s ../bushubu.css
+for f in $(ls ../frag*.txt ../*.js ../*.css); do ln -s $f; done
 ln -s ../webfont
 
+kill $(cat ./run.pid)
 python3 -m http.server 8188 &
-echo $! >> run.pid
+echo $! > run.pid
 
-touch srvqlist.txt
+touch srvqlist.json
 npm install ws
-nohup node ./server.js &
+nohup node ./socketserver.js &
 echo $! >> run.pid
 
-if [ "$1" == "local" ]; then rm sockurl; exit; fi
+if [ "$1" != "oncolab" ]; then rm sockurl; exit; fi
 
 which cloudflared
 

@@ -21,11 +21,15 @@ const SocketClient = function() {
             }).map(([k,v])=>k+":"+v).join(";");
             return `<div class="user uid${u.uid}" style="${styles}">${u.name}</div>`;
         }).join("");
-        $("#qlists").show().html("待機中: " + $users);
+        $("#qlists").show().html("待機中: " + $users + `<hr/><button id="qstart">はじめ</button>`);
         $("#member").html($users);
         $("#member .user").css({
             margin:"2px -2px","font-size":"12px",color:"black",width:"25px",
             "white-space":"nowrap","text-align":"center",overflow:"hidden",
+        });
+        $("#qstart").click(function() {
+            $(this).attr("disabled","disabled");
+            sock.send({action:"qstart"});
         });
     },
     answer: (d) => {
@@ -87,7 +91,6 @@ const SocketClient = function() {
         return qscreen.start(q0);
     },
     select: () => {},
-    finish: () => {},
     };
 
     const socksend = (obj) => {
@@ -263,6 +266,7 @@ qscreen.onAnswer = function(value)
 qscreen.end = () => {
     timer.stop();
     $(document).unbind();
+    sock.send({action:"finish",});
 
     $("#greet2").css("width","300px").get(0).innerHTML = $("#member .user").get().map($v=>{
         let uid = [...$v.classList].find(v=>v.indexOf("uid")==0);
