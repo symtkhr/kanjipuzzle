@@ -460,6 +460,7 @@ const PuzzleScreen = function() {
         return div;
     };
 
+
     // 語リストから以下のDOM要素を生成 + ansに分解結果を記録
     // .word
     //  .glyph
@@ -803,10 +804,12 @@ const PuzzleScreen = function() {
                 height:"20px",padding:"1px",margin:"1px"});
             $(".userans").val("");
         };
-        
+
+        let qscreen0 = this;
         const answer_check = function(value, undraw)
         {
-            if (value == "?" || value == "？") return parthint(); 
+            if (value == "?" || value == "？") return parthint();
+            if (qscreen0.onAnswer) return qscreen0.onAnswer(value);
 
             // 問の対象にない文字の除去
             let $glyph = $("#quiz .glyph.selected").nextAll(".glyph").addBack();
@@ -1084,7 +1087,8 @@ const PuzzleScreen = function() {
             });
         }, 1000);
     };
-    
+
+    this.dump_answereventhandler = () => console.log(this.onAnswer);
     this.draw = draw_puzzle;
     this.start = load_quiz;
     this.end = show_ending;
@@ -1304,6 +1308,36 @@ const TopMenu = function() {
             $link.download = 'bushubu.save.dat';
             $link.click();
         });
+        $("#uprec").click(function() {
+            let $file = $("#uprecfile").show();
+            let file = $file.get(0).files[0];
+            if (!file) return;
+            let gettext = async (blob) => {
+                const param = await blob.text();
+                let params = [];
+                console.log(param);
+                try {
+                    params = JSON.parse(param);
+                } catch (e) {
+                    console.log(e);
+                    $file.unbind().change(() => $("#uprec").text("アップロードする"));
+                    return $("#uprec").text("(異常ファイル)");
+                }
+                try {
+                    let score = JSON.parse(localStorage.qclear);
+                    let qids = score.map(v=>v.qid);
+                    let json = [...score, ...params.filter(v => qids.indexOf(v.qid)==-1)];
+                    localStorage.setItem("qclear", JSON.stringify(json));
+                    $("#uprec").unbind().text("ログ統合済(" + json.length + "問)").css("opacity",".7");
+                } catch {
+                    localStorage.setItem("qclear", JSON.stringify(params));
+                    $("#uprec").unbind().text("ログ移植済(" + params.length + "問)").css("opacity",".7");
+                }
+                $file.hide();
+            };
+            return gettext(new Blob([file], { type: "text/plain" }));
+        });
+        
         $("#onwid").change(function() {
             $("#quiz")[$("#onwid").prop("checked") ? "removeClass":"addClass"]("nowid");
         });
@@ -1560,6 +1594,7 @@ const timer = new TimeCounter();
 const se = new SoundEffect();
 
 $(function() {
+    if (location.href.indexOf("/versus") != -1) return;
     if (location.href.indexOf("/renewalsandbox") != -1) return location.href = "..";
     $("#sh, #continue, #main").hide();
     menu.load_qlist();

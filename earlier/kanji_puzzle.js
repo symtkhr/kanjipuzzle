@@ -1086,6 +1086,27 @@ var show_menu = function()
         }
         $("#top, #main").hide();
         $("#menu").show();
+        $("#inherit2new").click(function() {
+            let params = document.cookie.split(";").map(param => {
+                let p = param.split("=");
+                if (p[0].trim().indexOf('done') != 0) return;
+                return {
+                    qid: parseInt(p[0].split("_").pop()),
+                    score: p[1],
+                };
+            }).filter(v=>v && v.qid);
+            try {
+                let score = JSON.parse(localStorage.qclear);
+                let qids = score.map(v=>v.qid);
+                let json = [...score, ...params.filter(v => qids.indexOf(v.qid)==-1)];
+                localStorage.setItem("qclear", JSON.stringify(json));
+                $("#inherit2new").text("ログ統合済(" + json.length + "問)").attr("disabled",true);
+            } catch {
+                localStorage.setItem("qclear", JSON.stringify(params));
+                $("#inherit2new").text("ログ移植済(" + params.length + "問)").attr("disabled",true);
+            }
+            console.log(localStorage.qclear);
+        });
         if ($("#qlists").hasClass("logs")) return;
         if (location.href.slice(-3) != "log") return;
         $("#qlists").addClass("logs");

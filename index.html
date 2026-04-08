@@ -174,9 +174,14 @@
       width:200px;font-size:20px; height:50px;
       background-image:url(p0499_m.jpg);
   }
-  button.userrecord {
+  button.userrecord, #uprecfile {
       width:150px;height:30px;background-image:url(p0499_m.jpg);
       cursor:pointer;
+      display:block;
+  }
+  #uprecfile::file-selector-button {
+      display:none;
+      height:30px;background-image:url(p0499_m.jpg);
   }
   #greet {
       text-shadow:0 0 5px #3cc;
@@ -287,9 +292,10 @@
           <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
         </select>
       </label><br/>
-      これまでの記録:<br/>
-      <button class="userrecord" id="dlrec">ダウンロードする</button><br/>
-      <button class="userrecord" id="makeuprec">全問解禁する</button><br/>
+      これまでの記録:
+      <button class="userrecord" id="dlrec">ダウンロードする</button>
+      <button class="userrecord" id="uprec">アップロードする</button><input id="uprecfile" type="file" style="display:none;" />
+      <button class="userrecord" id="makeuprec">全問解禁する</button>
       <button class="userrecord" id="rmrec">削除する</button>
     </div>
 
