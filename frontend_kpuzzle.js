@@ -815,7 +815,7 @@ const PuzzleScreen = function() {
             quiz.hintwait = timer.count();
             let correct = $("#quiz .glyph.selected .correct").text();
             khint = khint.slice(-parseInt(HINTNUM / 2 * 3)).filter(c => (kopen.indexOf(c) < 0)).shuffle();
-            if ((Math.random() * 2 < 1) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
+            if ((Math.random() * 4 < 3) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
             
             $("#khint").html(khint.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
             //$("#hintc ul, #hintc h3:first-child").hide();
