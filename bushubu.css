@@ -143,6 +143,15 @@ div.glyph.hiragana div.correct {
     text-align:center;
     font-size:40px;
 }
+div.glyph.ruby {
+    width:40px;
+    height:40px;
+}
+div.glyph.ruby div.elm div.kpart,
+div.glyph.ruby div.correct {
+    font-size:30px;
+    line-height:40px;
+}
 
 .word {
     border: none;//px solid #555;

@@ -473,6 +473,8 @@ const PuzzleScreen = function() {
     //    .correct [村]
     const draw_puzzle = (qwords, $quiz, options = {}) => {
         let ans = qwords.reduce((ans, qword, i) => {
+            if (!qword.trim()) return ans;
+            let is_ruby = qword.match(/^[ぁ-ー]+=/);
             let is_hidden = (options.display && options.display != i);
             
             if (!is_hidden) {
@@ -481,7 +483,11 @@ const PuzzleScreen = function() {
                     $("<div>").addClass("word").appendTo($quiz);
                 $("<div>").addClass("wid").text((101 + i).toString().slice(-2)).appendTo($word);
             }
-            return [...ans, ...Array.fromCdp(qword).filter(c => !c.match(/^[ -~\s]?$/)).map(c => {
+            return [...ans, ...Array.fromCdp(qword).filter(c => (c == "=") || !c.match(/^[ -~\s\u3000]?$/)).map(c => {
+                if (c == "=") {
+                    $("<div>").addClass("wid").appendTo($word).css("height",0);
+                    return;
+                }
                 // 漢字分解
                 let n = kanjifrag.split(c);
                 let fragged = n.toString();
@@ -500,6 +506,7 @@ const PuzzleScreen = function() {
                 //かな文字の場合
                 if (!c.match(/\p{Script=Han}/u)) {
                     $glyph.addClass("hiragana");
+                    if (is_ruby) $glyph.addClass("ruby");
                 }
                 return fragged;
             })];
@@ -543,7 +550,7 @@ const PuzzleScreen = function() {
                 }
                 // かなの番号はセンタリング
                 if (boxclass.indexOf("hiragana") != -1) {
-                    $npart.css({"top":"20px", "bottom":"auto"});
+                    $npart.css({"top": (boxclass.indexOf("ruby") < 0 ? "20px" : "10px"), "bottom":"auto"});
                 }
                 // 1画パーツは色変更
                 else if (onestrokes.indexOf(c) != -1) {
@@ -767,17 +774,31 @@ const PuzzleScreen = function() {
             let left = (offset.left < 0) ? 0 : (0 < x) ? -x-80 : -50;
             let top = (offset.top < 0) ? -150 : (0 < y) ? -y-50 : 20;
             $("#hintc").css({left:left,bottom:top});
-
+            $("#hintc h3").eq(0).text("ヒント: 部首を含む文字");
             // $selectedから開示されている部品を拾う
             $("#hintc").show();
             $("#khint").html(`<div style="line-height:20px;font-size:15px;">このマスのヒントは<br/>ありません</div>`);
 
+            if ($("#quiz .selected .undone").length == 0) return;
             let kopen = $("#quiz .glyph.selected .kpart")
                 .filter(function(){ return $(this).siblings(".undone").size() == 0; })
                 .get().map($v => $v.innerText);
-            console.log(kopen);
-            if (kopen.length == 0 || $("#quiz .selected .undone").length == 0) return;
 
+            //開示部品がない場合はパズルにパズル内の部首をヒントにする
+            if (kopen.length == 0) {
+                return;
+                $("#hintc h3").eq(0).text("ヒント: この問題に使われている部首");
+                let kclose = $("#quiz .kpart")
+                    .filter(function(){ return $(this).siblings(".undone").size(); })
+                    .get().map($v => $v.innerText).filter((v,i,s)=>s.indexOf(v) == i);
+                //console.log(kclose, Object.keys(kanjitable.partslist()));
+                $("#khint").html(kclose.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
+                $("#khint .khint").addClass("cdpf").css({
+                    "background-image":"url(p0499_m.jpg)",
+                    border:"2px solid #920",display:"inline-block",
+                    height:"20px",padding:"1px",margin:"1px"});
+                return;
+            }
             quiz.hintwait = quiz.hintwait || 0;
             // 時間経過前なら通常メッセージを表示して終了
             if (timer.count() - quiz.hintwait < WAITSEC) {
@@ -787,19 +808,19 @@ const PuzzleScreen = function() {
                         +` お待ちください</div>`);
             }
             
-            // ない場合は通常メッセージを表示して終了
+            // なぜかない場合は通常メッセージを表示して終了
             let khint = kanjitable.find(kopen);
             if (khint.length == 0) return;
             
             quiz.hintwait = timer.count();
             let correct = $("#quiz .glyph.selected .correct").text();
             khint = khint.slice(-parseInt(HINTNUM / 2 * 3)).filter(c => (kopen.indexOf(c) < 0)).shuffle();
-            if ((Math.random() * 2 < 1) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
+            if ((Math.random() * 4 < 3) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
             
             $("#khint").html(khint.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
             //$("#hintc ul, #hintc h3:first-child").hide();
             $("#khint .khint").css({
-                "background-image":"url(p0499_m.jpg)",
+                "background-image":"url(p0499_m.jpg)", opacity:1,
                 border:"2px solid #920",display:"inline-block",
                 height:"20px",padding:"1px",margin:"1px"});
             $(".userans").val("");
@@ -980,6 +1001,11 @@ const PuzzleScreen = function() {
             $('#time').text(count);
             let bpm = qlen * 60 / (count || 0.5);
             $("#bonus").text(parseInt((bpm * bpm) * 20));
+            let $hint = $("#khint .khint");
+            if ($hint.length == 0) return;
+            let opc = parseInt(100 * $hint.eq(0).css("opacity"));
+            if (0 == opc) return $("#khint").html(`<div style="line-height:20px;font-size:15px;">ヒントは終了しました</div>`);
+            $hint.css("opacity", (opc - 5) / 100);
         });
 
         // 画面内に収まるように縮小

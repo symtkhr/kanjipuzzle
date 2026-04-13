@@ -447,16 +447,17 @@ let PartQuizMaker = function() {
         });
 
         partquiz.qwords = evals.sort((a,b) => {
-            if (a.n != b.n) return b.n - a.n;
+            if (a.w.length != b.w.length) return b.w.length - a.w.length;
+            //if (a.n != b.n) return b.n - a.n;
             if (a.ex != b.ex) return a.ex - b.ex;
             return (Math.random() * 2 - 1);
         }).map(v => v.w);
     };
     
     // 語を自動追加する(任意)
-    this.select_random_words = () => {
+    this.select_random_words = (options) => {
         let exc = this.nchars.split("");//.filter(c => (cs.indexOf(c) == -1));
-        let words = dic.find({num:[3,3], cs:[], ps:[], ctypes:{}, exc:exc}).shift();
+        let words = dic.find({num:(options.clen || "3,3").split(","), cs:[], ps:[], ctypes:{}, exc:exc}).shift();
         let ret = "";
         let i = 0;
         while (ret.length < 5 * 4 && i < 20) {
@@ -469,7 +470,7 @@ let PartQuizMaker = function() {
     };
     
     //語を自動追加する(部首遮蔽)
-    this.select_rpbc_words = () => {
+    this.select_rpbc_words = (options) => {
         this.update_exc(); 
        
         let cfg = {
@@ -497,7 +498,7 @@ let PartQuizMaker = function() {
             // なければ既存部首から成る語を検索
             ["/rb", "/rpb"].find(cs => {
                 words = dic.find({cs:cs.split(""), ps:[],
-                                  exc:exc, num:[3,3], ctypes: ctypes });
+                                  exc:exc, num:(options.clen || "3,3").split(","), ctypes: ctypes });
                 return (words[0].length);
             });
         } else {
@@ -506,7 +507,7 @@ let PartQuizMaker = function() {
                 return ps.some(p => {
                     words = dic.find({cs:"".split(""),
                                       ps:[p],
-                                      exc:exc, num:[3,3], ctypes: ctypes });
+                                      exc:exc, num:(options.clen || "3,3").split(","), ctypes: ctypes });
                     if (words[0].length) return true;
                     abandon.push(p);
                 });
@@ -570,8 +571,8 @@ nodeapp.automake = (argv) => {
     kanjifrag.definelocal(REDEFINE);
     dic.load(getfile("SKK-JISYO.ML.utf8"));
 
-    partquiz.qwords = makequiz.select_random_words().split("/").filter(w => w);
-    let options = {};
+    let options = Object.fromEntries(argv.map(v=>v.split("=")));
+    partquiz.qwords = makequiz.select_random_words(options).split("/").filter(w => w);
     partquiz.make(partquiz.qwords, options);
 
     if (argv.indexOf("qwords.sample1") != -1)
@@ -582,11 +583,11 @@ nodeapp.automake = (argv) => {
         .split("/");
 
     let miss = 0;
-    const wordlen = argv[0] || 40;
+    const wordlen = options.n || 40;
     for (;;)
     {
         let qn = partquiz.qwords.length;
-        if (makequiz.select_rpbc_words() < 0) { console.log("-1!"); break; }
+        if (makequiz.select_rpbc_words(options) < 0) { console.log("-1!"); break; }
         console.log(qn, makequiz.abandon);
         partquiz.make(partquiz.qwords, options);
         if (partquiz.qwords.length >= wordlen) break;
