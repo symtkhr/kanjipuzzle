@@ -765,8 +765,9 @@ const PuzzleScreen = function() {
         const parthint = () => {
             const WAITSEC = 60;
             const HINTNUM = 14;
+            quiz.hintwait = quiz.hintwait || 0;
             
-            // ポップアップを表示(キー操作とか他のヒント)
+            // ポップアップを表示
             $("#hintc").show().css({left:"-50px",bottom:"20px"});
             let offset = $("#hintc").offset();
             let x = offset.left + $("#hintc").width() - $("#main").width();
@@ -774,33 +775,13 @@ const PuzzleScreen = function() {
             let left = (offset.left < 0) ? 0 : (0 < x) ? -x-80 : -50;
             let top = (offset.top < 0) ? -150 : (0 < y) ? -y-50 : 20;
             $("#hintc").css({left:left,bottom:top});
-            $("#hintc h3").eq(0).text("ヒント: 部首を含む文字");
-            // $selectedから開示されている部品を拾う
             $("#hintc").show();
+
+            // 表示パターン1: 終了マス・仮名マス
             $("#khint").html(`<div style="line-height:20px;font-size:15px;">このマスのヒントは<br/>ありません</div>`);
-
-            if ($("#quiz .selected .undone").length == 0) return;
-            let kopen = $("#quiz .glyph.selected .kpart")
-                .filter(function(){ return $(this).siblings(".undone").size() == 0; })
-                .get().map($v => $v.innerText);
-
-            //開示部品がない場合はパズルにパズル内の部首をヒントにする
-            if (kopen.length == 0) {
-                return;
-                $("#hintc h3").eq(0).text("ヒント: この問題に使われている部首");
-                let kclose = $("#quiz .kpart")
-                    .filter(function(){ return $(this).siblings(".undone").size(); })
-                    .get().map($v => $v.innerText).filter((v,i,s)=>s.indexOf(v) == i);
-                //console.log(kclose, Object.keys(kanjitable.partslist()));
-                $("#khint").html(kclose.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
-                $("#khint .khint").addClass("cdpf").css({
-                    "background-image":"url(p0499_m.jpg)",
-                    border:"2px solid #920",display:"inline-block",
-                    height:"20px",padding:"1px",margin:"1px"});
-                return;
-            }
-            quiz.hintwait = quiz.hintwait || 0;
-            // 時間経過前なら通常メッセージを表示して終了
+            if (($("#quiz .selected .undone").length == 0) || (0 < $(".selected.hiragana").length)) return;
+            
+            // 表示パターン2: 時間経過前
             if (timer.count() - quiz.hintwait < WAITSEC) {
                 return $("#khint").html(
                     `<div style="line-height:20px;font-size:15px;">次のヒントまで`
@@ -808,22 +789,61 @@ const PuzzleScreen = function() {
                         +` お待ちください</div>`);
             }
             
-            // なぜかない場合は通常メッセージを表示して終了
+            // 表示パターン3: 部首ヒント
+            const bushuhint = () => {
+                let khints = $("#quiz .glyph:not(.hiragana) .kpart")
+                    .map(function(){ return ($(this).siblings(".undone").size() ? "" : "*") + $(this).text(); })
+                    .get().filter((v,i,s)=>s.indexOf(v) == i);
+                let kclose = khints.filter(v => v[0] != "*");
+                // 部首がすべて開いている場合はヒントなし
+                if (!kclose.length) return;
+                // 終盤になっても必ず5択は表示する
+                if (kclose.length < 5) kclose = [...kclose, ...khints.filter(v => v[0] == "*").shuffle().slice(0, 5 - kclose.length).map(v => v.slice(1))];
+
+                $("#hintc h3").eq(0).text("ヒント: この問題に使われている部首");
+                $("#khint").html(kclose.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
+                $("#khint .khint").addClass("cdpf elm pselected").css({
+                    "background-image":"url(p0499_m.jpg)",
+                    border:"2px solid #920",display:"inline-block",
+                    height:"20px",padding:"1px",margin:"1px"});
+
+                quiz.hintwait = timer.count();
+                userdata.logappend(timer.count() + "=?[" + $("#quiz .selected").siblings(".wid").text() + "]" +
+                                   $("#quiz .selected").parent().find(".glyph").index($("#quiz .selected")));
+            };
+
+            // 表示パターン4: 文字ヒント
+            const mojihint = (kopen, khint) => {
+                $("#hintc h3").eq(0).text("ヒント: 部首を含む文字");
+                let correct = $("#quiz .glyph.selected .correct").text();
+                khint = khint.slice(-parseInt(HINTNUM / 2 * 3)).filter(c => (kopen.indexOf(c) < 0)).shuffle();
+                // 75%の確率で正解が含まれる
+                if ((Math.random() * 4 < 3) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
+            
+                $("#khint").html(khint.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
+                //$("#hintc ul, #hintc h3:first-child").hide();
+                $("#khint .khint").css({
+                    "background-image":"url(p0499_m.jpg)", opacity:1,
+                    border:"2px solid #920",display:"inline-block",
+                    height:"20px",padding:"1px",margin:"1px"});
+                $(".userans").val("");
+
+                quiz.hintwait = timer.count();
+                userdata.logappend(timer.count() + "=?[" + $("#quiz .selected").siblings(".wid").text() + "]" +
+                                   $("#quiz .selected").parent().find(".glyph").index($("#quiz .selected")));
+            };
+
+            // $selectedから開示されている部品を拾う
+            let kopen = $("#quiz .glyph.selected .kpart")
+                .filter(function(){ return $(this).siblings(".undone").size() == 0; })
+                .get().map($v => $v.innerText);
+
+            // 開示部品がない場合はパズル内の部首をヒントにする
+            if (kopen.length == 0) return bushuhint();
+
+            // 文字検索
             let khint = kanjitable.find(kopen);
-            if (khint.length == 0) return;
-            
-            quiz.hintwait = timer.count();
-            let correct = $("#quiz .glyph.selected .correct").text();
-            khint = khint.slice(-parseInt(HINTNUM / 2 * 3)).filter(c => (kopen.indexOf(c) < 0)).shuffle();
-            if ((Math.random() * 4 < 3) && (khint.indexOf(correct) < 0)) khint = [...khint.slice(0, HINTNUM - 1),correct];
-            
-            $("#khint").html(khint.shuffle().slice(-HINTNUM).map(c => '<span class="khint">' + c + '</span>').join(""));
-            //$("#hintc ul, #hintc h3:first-child").hide();
-            $("#khint .khint").css({
-                "background-image":"url(p0499_m.jpg)", opacity:1,
-                border:"2px solid #920",display:"inline-block",
-                height:"20px",padding:"1px",margin:"1px"});
-            $(".userans").val("");
+            return khint.length ? mojihint(kopen, khint) : bushuhint();
         };
 
         let qscreen0 = this;
@@ -1003,9 +1023,9 @@ const PuzzleScreen = function() {
             $("#bonus").text(parseInt((bpm * bpm) * 20));
             let $hint = $("#khint .khint");
             if ($hint.length == 0) return;
-            let opc = parseInt(100 * $hint.eq(0).css("opacity"));
-            if (0 == opc) return $("#khint").html(`<div style="line-height:20px;font-size:15px;">ヒントは終了しました</div>`);
-            $hint.css("opacity", (opc - 5) / 100);
+            let opc = parseInt(100 * $hint.eq(0).css("opacity")) - 8;
+            if (opc <= 0) return $("#khint").html(`<div style="line-height:20px;font-size:15px;">ヒントは終了しました</div>`);
+            $hint.css("opacity", (opc / 100));
         });
 
         // 画面内に収まるように縮小
