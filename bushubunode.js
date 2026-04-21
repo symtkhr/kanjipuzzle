@@ -9,7 +9,7 @@ const { execSync } = require('child_process');
 let nodeapp = { help: () => { console.log("arg:", Object.keys(nodeapp)); }};
 
 const [dic, kanjifrag, partquiz, kanjitable, makequiz, Array, cdp2ucs] = require('vm').runInNewContext(
-    getfile('./bushubumaker.js') + "\n[dic, kanjifrag, partquiz, kanjitable, makequiz, Array, cdp2ucs];"
+    getfile(process.argv[1].split("/").slice(0,-1).join("/") + '/bushubumaker.js') + "\n[dic, kanjifrag, partquiz, kanjitable, makequiz, Array, cdp2ucs];"
 );
 
 // 自動生成テスト
@@ -189,6 +189,42 @@ nodeapp.logfilter = (argv) => {
     //logs.filter(v=>(typeof v.name!=="string")).map(v=>console.log(v));
     if (options.name) logs = logs.filter(v =>v.name.toString().indexOf(options.name) != -1);
     console.log(JSON.stringify(logs,null,1));
+};
+
+// makequiz_tool.jsの移植
+nodeapp.stat = (argv) => {
+    let qlists = JSON.parse(getfile("./earlier/qlist.json"));
+    JSON.parse(getfile("./qlist.json")).filter(v => !qlists.find(q=>q.qid == v.qid)).map(v => qlists.push(v));
+    kanjifrag.define(getfile("fragtable.txt"));
+    kanjifrag.define(getfile("fragtable.plus.txt"));
+
+    let wordstat = Object.entries(qlists.reduce((stat,q) => {
+        q.q.split("/").map(w => {
+            w = w.trim().split("+").join("").split("=").pop();
+            stat[w] = [...(stat[w]||[]), q.qid];
+        });
+        return stat;
+    }, {})).sort((a,b)=>b[1].length-a[1].length);
+
+    let glyphstat = Object.entries(qlists.reduce((stat,q) => {
+        Array.from(q.q).filter(c=>c.trim()&&c!="="&&c!="/"&&c!="+")
+            .map(c => { stat[c] = [...(stat[c]||[]), q.qid]; });
+        return stat;
+    }, {})).sort((a,b)=>a[1].length-b[1].length);
+
+    let partstat = Object.entries(qlists.reduce((stat,q) => {
+        kanjifrag.definelocal(q.def);
+        Array.from(q.q).filter(c=>c.match(/\p{Script=Han}/u)).map(c=> kanjifrag.split(c).toString()).join(",").split(",")
+            .filter(p=>!p.match(/^[A-z]$/)).map(p => { stat[p] = [...(stat[p]||[]), q.qid]; });
+        return stat;
+    },{})).sort((a,b)=>a[1].length-b[1].length);
+
+    console.log("--word");
+    wordstat.map(p=>console.log(p[0],p[1].length,JSON.stringify(p[1].filter((v,i,s)=>s.indexOf(v)==i).slice(0,10))));
+    console.log("--glyph");
+    glyphstat.map(p=>console.log(p[0],p[1].length,JSON.stringify(p[1].filter((v,i,s)=>s.indexOf(v)==i).slice(0,10))));
+    console.log("--part");
+    partstat.map(p=>console.log(p[0],p[1].length,JSON.stringify(p[1].filter((v,i,s)=>s.indexOf(v)==i).slice(0,10))));
 };
 
 if (typeof window == "undefined" && typeof process !== "undefined") {
