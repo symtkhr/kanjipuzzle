@@ -184,35 +184,59 @@ const UserRecord = function() {
         let q = quiz || menu.quiztable().find(q => q.qid == resume.qid);
         if (!q) return;
 
-        $("#resume .word .wid").addClass("widclose").css("font-size","13px").html("&times;").click(function(e) {
-            e.stopPropagation(); // 親へのイベント伝播をストップ
-            $("#resume").unbind().removeClass("enabled").hide();
-            userdata.erasepartway();
+        const $wid = $("#resume .word .wid").addClass("widclose").css("font-size","13px").html("&times;");
+
+        $wid.click(e => {
+            e.stopPropagation();
+            if ($("#resume").hasClass("enabled")) {
+                $("#resume").unbind().removeClass("enabled").hide();
+                userdata.erasepartway();
+            } else {
+                $("#resume").addClass("enabled");
+                $("#resume .hiragana").remove();
+            }
             $("#newstart").hide();
             $("#archives").show();
         });
         
         $("#resume").addClass("enabled").css("pointer-events","none").click(function() {
-            $(this).unbind().removeClass("enabled");
+            if (!$(this).hasClass("enabled")) return;
+            $(this).removeClass("enabled");
+            $("#resume .word").append('<div class="glyph hiragana"><div class="sbox elm qelm"><div class="kidx undone" style="top: 20px; bottom: auto;">3</div></div></div>');
 
             q.resume = true;
             q.hintwait = resume.time;
             qscreen.start(q);
+            $("#menu").show();
+            
+            let timer0 = setInterval(() => {
+                let $countdowner = $("#resume .hiragana .kidx");
+                let tval = $countdowner.text();
+                tval -= 1;
+                if (0 < tval) return $countdowner.text(tval);
 
-            // 解きかけ分の展開
-            $("#quiz .kidx").removeClass("undone").hide().next().show();
-            resume.undone.forEach(kid => $("#quiz .kidx" + kid).addClass("undone").show().next().hide());
+                clearInterval(timer0);
+                $("#menu").hide();
+                $("#resume").unbind();
 
-            $("#quiz .glyph").each(function() {
-                if ($(this).find(".undone").size() > 0) return;
-                let n = $(this).parent().find(".glyph").index($(this));
-                $(this).find(".correct").show();
-                $(this).find(".elm div").hide();
-            });
+                // 解きかけ分の展開
+                $("#quiz .kidx").removeClass("undone").hide().next().show();
+                resume.undone.forEach(kid => $("#quiz .kidx" + kid).addClass("undone").show().next().hide());
+                
+                $("#quiz .glyph").each(function() {
+                    if ($(this).find(".undone").size() > 0) return;
+                    let n = $(this).parent().find(".glyph").index($(this));
+                    $(this).find(".correct").show();
+                    $(this).find(".elm div").hide();
+                });
+                
+                playerlog = resume.log;
+                $("#point").text(resume.pt);
+                timer.start(resume.time + 1);
+            }, 1000);
 
-            playerlog = resume.log;
-            $("#point").text(resume.pt);
-            timer.start(resume.time + 1);
+            // カウントダウン中の停止
+            $wid.click(e => clearInterval(timer0));
         });
         return true;
     };
@@ -648,6 +672,12 @@ const PuzzleScreen = function() {
         $("#top, #score").hide();
         $("#wordlist").val(qlist);
         $("#redefine").val(quiz.def);
+        $("#hashgenerator").show();
+        const encoder = s => btoa(unescape(encodeURIComponent(s)));
+        $("#hashcopy").attr("href","#quiz:q=" + encoder(qlist) + ":def=" + encoder(quiz.def)).click(function() {
+            if (navigator.clipboard) navigator.clipboard.writeText($(this).attr("href"));
+            return false;
+        });
 
         if (quiz.genre) {
             $("#genre").text(quiz.genre);
@@ -1220,7 +1250,7 @@ const TopMenu = function() {
             console.log(r,$(window).height(),$("#howto").height());
             $("#overlap").css("zoom", r < 0.8 ? 0.8 : r);
         }
-        $("#overlap,#resume,#newstart,#continue").hide();
+        $("#overlap,#resume,#newstart,#continue,#hashgenerator").hide();
         $("#head h2 .glyph").eq(-1).remove();
         $("#head h2 .glyph").eq(-1).addClass("selected");
         $("#head h2 .correct").eq(-1).hide();
@@ -1320,7 +1350,7 @@ const TopMenu = function() {
         $("#control .gonext").eq(0).unbind().click(function() {
             se.play("tap");
             $("#menu,.menu").show();
-            $("#main,#overlap,#resume,#newstart,#continue,.loading").hide();
+            $("#main,#overlap,#resume,#newstart,#continue,.loading,#hashgenerator").hide();
             $("#keyinput").appendTo("#main");
             $(".qbox").css("opacity","");
             quiztable.map(v => v.resume = false);
@@ -1523,7 +1553,7 @@ const TopMenu = function() {
                 $("#overlap").hide();
                 $(".menu:not(.enabled)").hide();
                 //if (!$("#autoresume").prop("checked")) return;
-                return setTimeout(() => $("#resume").click(), 2000);
+                return setTimeout(() => $("#resume").click(), 500);
             }
         };
 
@@ -1551,7 +1581,7 @@ const TopMenu = function() {
             $("#overlap,#continue").hide();
             if (!$("#autoresume").prop("checked")) return;
             $(".menu:not(.enabled)").hide();
-            return setTimeout(() => $("#resume").click(), 2000);
+            return setTimeout(() => $("#resume").click(), 500);
         };
 
         runapps.archiveslog = () => {

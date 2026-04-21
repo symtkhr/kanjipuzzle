@@ -83,6 +83,7 @@ input[type="number"] {
   <div class="input-data" style="width:100%;">
     <textarea id="data_area"></textarea>
   </div>
+  <input id="gwdefs" style="float:right;" value="gwcdpdump.txt" />
   <div class="opt opt-gothic">
   <div class="goth-opt">
     <label><input type="radio" value="0" name="kagefont">Mincho (明朝)</label>
@@ -246,13 +247,14 @@ const updateGlyph = function() {
 };
 
 window.onload = async () => {
-    const rawdata = await getfile("./gwcdpdump.txt");
+    const rawdata = await getfile($id("gwdefs").value.trim());
     $id("data_area").value = rawdata;
     $id("inputcontrols").oninput = () => { updateGlyph(); };
     $id("inputcontrols").onsubmit = e => { e.preventDefault() };
     let m = location.hash.match(/^#kage=([^&]+)/);
     if (m) $id("data_area").value = decodeURIComponent(m[1]).split("$").join("\n");
     updateGlyph();
+    $id("gwdefs").onkeydown = (e) => { if (e.key == "Enter") window.onload(); };
 };
 </script>
 </body></html>

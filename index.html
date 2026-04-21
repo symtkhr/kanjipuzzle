@@ -174,10 +174,17 @@
       width:200px;font-size:20px; height:50px;
       background-image:url(p0499_m.jpg);
   }
-  button.userrecord, #uprecfile {
+  button.userrecord, #uprecfile, #hashcopy {
       width:150px;height:30px;background-image:url(p0499_m.jpg);
       cursor:pointer;
       display:block;
+  }
+  #hashcopy {
+      box-sizing:border-box;
+      font-size:14px;
+      line-height:30px;
+      border: 1px solid black;
+      text-align:center;
   }
   #uprecfile::file-selector-button {
       display:none;
@@ -297,6 +304,9 @@
       <button class="userrecord" id="uprec">アップロードする</button><input id="uprecfile" type="file" style="display:none;" />
       <button class="userrecord" id="makeuprec">全問解禁する</button>
       <button class="userrecord" id="rmrec">削除する</button>
+      <div id="hashgenerator">
+        この問のハッシュ:<a id="hashcopy" class="userrecord">コピー</a>
+      </div>
     </div>
 
     </div>

@@ -191,6 +191,42 @@ nodeapp.logfilter = (argv) => {
     console.log(JSON.stringify(logs,null,1));
 };
 
+// makequiz_tool.jsの移植
+nodeapp.stat = (argv) => {
+    let qlists = JSON.parse(getfile("./earlier/qlist.json"));
+    JSON.parse(getfile("./qlist.json")).filter(v => !qlists.find(q=>q.qid == v.qid)).map(v => qlists.push(v));
+    kanjifrag.define(getfile("fragtable.txt"));
+    kanjifrag.define(getfile("fragtable.plus.txt"));
+
+    let wordstat = Object.entries(qlists.reduce((stat,q) => {
+        q.q.split("/").map(w => {
+            w = w.trim().split("+").join("").split("=").pop();
+            stat[w] = [...(stat[w]||[]), q.qid];
+        });
+        return stat;
+    }, {})).sort((a,b)=>b[1].length-a[1].length);
+
+    let glyphstat = Object.entries(qlists.reduce((stat,q) => {
+        Array.from(q.q).filter(c=>c.trim()&&c!="="&&c!="/"&&c!="+")
+            .map(c => { stat[c] = [...(stat[c]||[]), q.qid]; });
+        return stat;
+    }, {})).sort((a,b)=>a[1].length-b[1].length);
+
+    let partstat = Object.entries(qlists.reduce((stat,q) => {
+        kanjifrag.definelocal(q.def);
+        Array.from(q.q).filter(c=>c.match(/\p{Script=Han}/u)).map(c=> kanjifrag.split(c).toString()).join(",").split(",")
+            .filter(p=>!p.match(/^[A-z]$/)).map(p => { stat[p] = [...(stat[p]||[]), q.qid]; });
+        return stat;
+    },{})).sort((a,b)=>a[1].length-b[1].length);
+
+    console.log("--word");
+    wordstat.map(p=>console.log(p[0],p[1].length,JSON.stringify(p[1].filter((v,i,s)=>s.indexOf(v)==i).slice(0,10))));
+    console.log("--glyph");
+    glyphstat.map(p=>console.log(p[0],p[1].length,JSON.stringify(p[1].filter((v,i,s)=>s.indexOf(v)==i).slice(0,10))));
+    console.log("--part");
+    partstat.map(p=>console.log(p[0],p[1].length,JSON.stringify(p[1].filter((v,i,s)=>s.indexOf(v)==i).slice(0,10))));
+};
+
 if (typeof window == "undefined" && typeof process !== "undefined") {
     let argv = process.argv.slice(2);
     let key = argv.shift();

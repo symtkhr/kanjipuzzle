@@ -160,10 +160,32 @@ $(function() {
     });
 
     //呼出ボタン
-    if (document.cookie) {
-        $("#qload").show().click(function() {
-            if (!confirm("ロードする?")) return;
-            var is_valid = false;
+    $("#qload").click(function() {
+        if (!$("#qloadhash").is(":visible")) {
+            return $("#qloadhash").show();
+        }
+        let hash = $("#qloadhash").val().split("#").slice(1).join("#").trim();
+        if (hash) {
+            const decodehash = (str) => {
+                try {
+                    return decodeURIComponent(escape(window.atob(str)));
+                } catch(e) {
+                    console.log(e);
+                    return false;
+                }
+            };
+            if (!confirm("ハッシュ問題をロードする?")) return;
+            let param = Object.fromEntries(hash.split(":").map(v=>v.split("=")));
+            $("#wordlist").val(decodehash(param.q));
+            $("#redefine").val(decodehash(param.def));
+            $(this).css("background-color", "#cfc");
+            $("#qloadhash").val("").hide();
+            make_quiz();
+            return;
+        }
+        if (document.cookie) {
+            if (!confirm("ローカル保存データをロードする?")) return;
+            let is_valid = false;
             document.cookie.split(";").forEach(function(param) {
                 var p = param.split("=");
                 if (p[0].trim() == "wordlist") {
@@ -178,12 +200,15 @@ $(function() {
             });
             if (is_valid) {
                 $(this).css("background-color", "#cfc");
+                $("#qloadhash").val("").hide();
                 make_quiz();
             } else {
                 $(this).css("background-color", "red");
             }
-        });
-    }
+            return;
+        }
+        $(this).css("background-color", "red");
+    });
     $("#qset").click(function() { qset(LOADURL); });
 
     return;
@@ -352,7 +377,7 @@ var make_quiz = function(is_unsort)
         .prop("target","_blank");
 
     //文字重複チェック
-    let dup = quiz.q.split("").filter((x, i, self) => (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x));
+    let dup = Array.from(quiz.q).filter((x, i, self) => (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x));
     if (0 < dup.length) {
         let $dup = $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.join());
 
@@ -473,7 +498,7 @@ var stats = function()
     // 字出現数
     var glyphstat = function(ws) {
 	// {"字":n}
-        var occ = ws.join("").split("").reduce((occ, c) => {
+        var occ = Array.from(ws.join("")).reduce((occ, c) => {
             if (!occ[c]) occ[c] = 0;
             occ[c]++;
 	    return occ;
@@ -512,18 +537,17 @@ var stats = function()
 	// ["部首"...]
         var ans = quiztable.map(q => {
             kanjifrag.definelocal(q.def);
-            return q.q.split("/").join("").split("")
-		.map(c => c.match(/^[!-ー]$/) ? "" : kanjifrag.split(c));
-        }).toString().split(",");
-
+            let ret = Array.from(q.q.split("/").join("")).map(c => c.match(/^[!-ー]$/) ? "" : kanjifrag.split(c).toString()).join(",");
+            return ret;
+        }).join(",").split(",").filter(p => p.trim().length && !p.match(/^[A-Z＿]$/)).sort();
 	// {"部首":n}
         var occ = ans.reduce((occ, p) => {
-            if (p.length == 0 || p.match(/^[A-Z＿]$/)) return occ;
             if (!occ[p]) occ[p] = 0;
             occ[p]++;
 	    return occ;
         }, partslist());
 
+        console.log(Object.keys(occ));
 	// {n:["部首"...]}
         var list = Object.keys(occ).reduce((list, c) => {
             var n = occ[c];
