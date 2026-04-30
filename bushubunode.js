@@ -2,7 +2,7 @@
 
 const WORDLEN = 40;
 const REDEFINE = "";
-
+const GASURL = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
 const getfile = (fname) => require('fs').readFileSync(fname, 'utf8');
 const { execSync } = require('child_process');
 
@@ -166,11 +166,30 @@ nodeapp.make = (argv) => {
 
 nodeapp.logfilter = (argv) => {
     let options = Object.fromEntries(argv.map(v=>v.split("=")));
-    let fname = options.file || `tmpbushubulog${parseInt(Math.random()*99999)}.json`;
-    if (!argv[0]) {
+    let fname = options.file;
+    if (!fname) return console.log("Specify args file=, uid=, name=");
+    if (options.file == "new") {
+        fname = `tmpbushubulog${parseInt(Math.random()*99999)}.json`;
         console.log("getlog...");
-        execSync(`wget 'https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec?v=score&logid=entire' -O ${fname}`);
+        execSync(`wget '${GASURL}?v=score&logid=entire' -O ${fname}`);
     }
+    let uids = [];
+    let uiddefs = [];
+    try {
+        uiddefs = require('vm').runInNewContext(getfile("logfilter.js"));
+    } catch {}
+
+    const suggestuid = (name0, name) => {
+        let ns = [name0,name].filter(v=>v).map(v=>v.toString().trim());
+        let def = uiddefs.find(def => ns.some(n => def.ns.indexOf(n) != -1 || ns.some(n=>def.f(n))));
+        if (def)  {
+            def.ns = [...def.ns, ...ns];
+            return def.uid;
+        }
+        uiddefs.push({uid:(300+uiddefs.length).toString()+name,ns:ns,f:()=>false});
+        return uiddefs.slice(-1)[0].uid;
+    };
+    
     let logs = JSON.parse(getfile(fname)).reduce((ret, v) => {
         if (v.time.toString().indexOf("-") != -1) {
             let d = v.time.split("-").map(v => parseInt(v));
@@ -180,16 +199,56 @@ nodeapp.logfilter = (argv) => {
             let timediff = v.time - setv.time;
             return (0 < timediff) && (timediff < 1000 * 60 * 60 * 24) && (v.score == setv.score);
         });
-        if (idx < 0) 
+        if (idx < 0) {
             ret.push(v);
-        else
-            ret[idx] = v;
+        } else {
+            let v0 = ret[idx];
+            // hold older data
+            if (v0.qid != v.qid) v0.qid0 = v0.qid;
+            if (v0.log != v.log) v0.log0 = v0.log;
+            if (v0.name != v.name && v0.name) v0.name0 = v0.name;
+            Object.keys(v).map(key => v0[key] = v[key]);
+        }
         return ret;
     }, [])
-    //logs.filter(v=>(typeof v.name!=="string")).map(v=>console.log(v));
     if (options.name) logs = logs.filter(v =>v.name.toString().indexOf(options.name) != -1);
+
+    logs.map((v,i)=> {
+        v.uid = suggestuid(v.name0, v.name);
+        v.logid = i;
+    });
+    if (options.uid) logs = logs.filter(v =>v.uid && v.uid == options.uid);
     console.log(JSON.stringify(logs,null,1));
+    //uiddefs.map((u,i)=>console.log(i,JSON.stringify(u)));
 };
+
+nodeapp.logappendtest = (argv) => {
+    let arg = Object.fromEntries(argv.map(s=>s.split("=")));
+
+    let param = {
+        qid: arg.qid || -120,
+        score: arg.score || "1000;200",
+        log: arg.log || ";15=温度計;33=花言葉;41=保護者;54=経験則;61=銀行員;73=幼馴染;79=胡麻;89=眼鏡@@",
+        name: arg.name || "Mt.Nest",
+        date: (new Date()).getTime(),
+    };
+    async function postToGas(url, param) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(param),
+                signal: AbortSignal.timeout(10000),
+            });
+            const data = await response.json();
+            console.log(data);
+        } catch (error) {
+            console.error('Error:', error.message);
+        }
+    }
+
+    postToGas(GASURL, param);
+}
 
 // makequiz_tool.jsの移植
 nodeapp.stat = (argv) => {
