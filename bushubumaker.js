@@ -68,6 +68,8 @@ const WordDictionary = function()
     // 辞書を消去する
     this.clear = function() { _wordDb = {}; };
 
+    this.words = function() { return Object.keys(_wordDb); }
+
     // 辞書を読み込む
     this.load = function(data) {
         data.split("\n").forEach(txt => {
@@ -119,7 +121,7 @@ const WordDictionary = function()
             } else {
                 let target = cs.map(v => (ctypes[v] || "")).join("");
                 //赤青以外の文字がないかチェック
-                if (word.split("").some(d => (target.indexOf(d) == -1))) return;
+                if (Array.from(word).some(d => (target.indexOf(d) == -1))) return;
             }
             
             // 包含部品チェック

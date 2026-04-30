@@ -509,6 +509,7 @@ const PuzzleScreen = function() {
             }
             return [...ans, ...Array.fromCdp(qword).filter(c => (c == "=") || !c.match(/^[ -~\s\u3000]?$/)).map(c => {
                 if (c == "=") {
+                    is_ruby = false;
                     $("<div>").addClass("wid").appendTo($word).css("height",0);
                     return;
                 }
