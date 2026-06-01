@@ -144,24 +144,31 @@ nodeapp.songcheck = (argv) => {
     console.log(ret);
 };
 
-nodeapp.make = (argv) => {
-    kanjifrag.define(getfile("fragtable.txt"));
-    kanjifrag.define(getfile("fragtable.plus.txt"));
-    let qlists = JSON.parse(getfile("./earlier/qlist.json"));
+nodeapp.maketest = (argv) => {
+    let path = process.argv[1].split("/").slice(0,-1).join("/") + "/";
+    kanjifrag.define(getfile(path + "./fragtable.txt"));
+    kanjifrag.define(getfile(path + "./fragtable.plus.txt"));
+    let qlists = JSON.parse(getfile(path + "./earlier/qlist.json"));
     let maker = q => {
         if (!q) return console.log("specify qid as arg");
         kanjifrag.definelocal(q.def);
         let ret = partquiz.make(q.q.split("/"));
         let entry = Object.entries(partquiz.count);
-        let tb = ret.tb.split("/");
-        let quiz = q.q.split("/").map(w =>
-            Array.from(w).map(c=> (tb.find(t => t.indexOf(c+":") == 0)||(c+":"+c)).split(":").slice(1)[0])
-                .map(fr=>Array.from(fr).map(p=> [p,1+Object.keys(partquiz.count).indexOf(p)]))
-                .map(fr=>fr.map(p=>p[1]||p[0]).join("."))
-        );
-        quiz.map(w=>console.log(w));
+        let tb = ret.tb.split("/").filter(v=>v);
+        let quiz = q.q.split("/").map(w => ({
+            w:w,
+            f:Array.from(w).map(c=> (tb.find(t => t.indexOf(c+":") == 0)||(c+":"+c)).split(":").slice(1)[0])
+                .map(fr=>Array.from(fr).map(p=> [p,1+Object.keys(partquiz.kidx).indexOf(p)]))
+                .map(fr=>fr.map(p=>p[1]||p[0]).join(".")),
+        }));
+        quiz.map(o=>console.log(o.w,o.f.map(c=>"["+c+"]").join("\t")));
     };
     maker(qlists.find(q => q.qid == parseInt(argv)));
+    console.log(
+        Object.entries(partquiz.kidx).map(([k,kid])=>[kid,k,partquiz.count[k]].join(":")),
+        Object.entries(partquiz.count).map(([k,v])=>v==1?k:"").filter(v=>v).join(","),
+    );
+    
 };
 
 nodeapp.logfilter = (argv) => {
