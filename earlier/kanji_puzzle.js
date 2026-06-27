@@ -648,7 +648,7 @@ var draw_puzzle = function(qwords, $quiz, options)
 
 var load_quiz = function(qid)
 {
-    var quiz = quiztable[(qid || quiztable.length) - 1];
+    var quiz = quiztable.find(q=> q.qid == qid) || quiztable.slice(-1)[0];
     var qlist = quiz.q;
     if (quiz.def.indexOf("@plus") != -1 || 130 < quiz.qid) {
         kanjifrag.define($("#fragtableplus").contents().find("body").text());
@@ -984,8 +984,8 @@ var show_daily = function()
         today.getMonth() * 35 + today.getDate();
     //seed = 2019 * 12 + 9 * 35 + 13;
     var random = new Random(seed);
-    var qid = 1 + random.next() % (quiztable.length - 1);
-    var quiz = quiztable[qid - 1];
+    var qidx = 1 + random.next() % (quiztable.length - 1);
+    var quiz = quiztable[qidx - 1];
     var qlist = quiz.q;
     var wlen = qlist.split("/").length;
     var iword = wlen - 1 - random.next() % parseInt(wlen * 0.3);
@@ -1001,7 +1001,7 @@ var show_daily = function()
         $('*').unbind();
         $('<div>').addClass("loading").text("読込中").appendTo(this)
             .animate({"opacity":".5"}, function() {
-                load_quiz(qid);
+                load_quiz(quiz.qid);
                 $("#quiz .word").eq(iword).find(".elm").eq(0).click();
             });
     });
@@ -1059,13 +1059,13 @@ var show_menu = function()
 
     if (quiztable.length == 0) return;
     $("#qlists").text("");
-    quiztable.forEach(function(factor, idx) {
+    quiztable.filter(factor => factor.qid < 200).forEach(function(factor, idx) {
         //var q = decodeURIComponent(escape(atob(factor[0])));
         var q = factor.q;
         quiztable[idx].q = q;
         var words = q.split("/");
         var $option = $('<div>').addClass("qoption").appendTo("#qlists");
-        var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
+        var $qid = $('<div>').addClass("qid").appendTo($option).text(idx + 1);
         $('<div>').addClass("qclear").appendTo($qid).text('✔');
         var d = new Date(factor.date.split("T").shift() + "T12:00+0900");
         $('<div>').addClass("qinfo").appendTo($option)
@@ -1128,6 +1128,8 @@ var show_menu = function()
         if (!$("#fragtable").hasClass("done")) return;
         if ($(this).hasClass("resume")) return;
         var qid = parseInt($(this).addClass("selected").find(".qid").text());
+        //console.log(qid,qid[0],qid.slice(1));
+        //qid = qid[0] == "詰" ? (2600 + parseInt(qid.slice(1))) : parseInt(qid);
         $(this).siblings(".qoption").animate({"opacity": "0"});
         var cleared = $(this).hasClass("cleared");
     
