@@ -648,11 +648,13 @@ var draw_puzzle = function(qwords, $quiz, options)
 
 var load_quiz = function(qid)
 {
-    var quiz = quiztable.find(q=> q.qid == qid) || quiztable.slice(-1)[0];
+    //var quiz = quiztable.find(q=> q.qid == qid) || quiztable.slice(-1)[0];
+    var quiz = quiztable[(qid || quiztable.length) - 1];
     var qlist = quiz.q;
     if (quiz.def.indexOf("@plus") != -1 || 130 < quiz.qid) {
         kanjifrag.define($("#fragtableplus").contents().find("body").text());
     }
+    console.log(quiz.def);
     kanjifrag.definelocal(quiz.def);
 
     $("#main .qid").text(qid);
@@ -1001,7 +1003,7 @@ var show_daily = function()
         $('*').unbind();
         $('<div>').addClass("loading").text("読込中").appendTo(this)
             .animate({"opacity":".5"}, function() {
-                load_quiz(quiz.qid);
+                load_quiz(qidx);
                 $("#quiz .word").eq(iword).find(".elm").eq(0).click();
             });
     });
@@ -1059,13 +1061,14 @@ var show_menu = function()
 
     if (quiztable.length == 0) return;
     $("#qlists").text("");
-    quiztable.filter(factor => factor.qid < 200).forEach(function(factor, idx) {
+    quiztable = quiztable.filter(factor => factor.qid < 200);
+    quiztable.forEach(function(factor, idx) {
         //var q = decodeURIComponent(escape(atob(factor[0])));
         var q = factor.q;
         quiztable[idx].q = q;
         var words = q.split("/");
         var $option = $('<div>').addClass("qoption").appendTo("#qlists");
-        var $qid = $('<div>').addClass("qid").appendTo($option).text(idx + 1);
+        var $qid = $('<div>').addClass("qid").appendTo($option).text(1 + idx);
         $('<div>').addClass("qclear").appendTo($qid).text('✔');
         var d = new Date(factor.date.split("T").shift() + "T12:00+0900");
         $('<div>').addClass("qinfo").appendTo($option)
