@@ -1430,12 +1430,14 @@ const TopMenu = function() {
         let allopen = $("#qlists").hasClass("earlier");
         quiztable.map((quiz, idx) => {
             let q = quiz.q;
-            quiz.qno = idx + 1;
+            quiz.qno = 1 + idx;
+            if (100 < quiztable.length) quiz.qno = (quiz.qid < 2600) ? (quiz.qid) : "詰" + (quiz.qid - 2600).toString();
             let words = q.split("/");
             let $qbox = $('<div>').appendTo("#qlists").addClass("qbox").css({position:"relative",display:"inline-block",margin:"2px"});
             let $qid = $('<div>').addClass("qid").appendTo($qbox).text(quiz.qno);
+            console.log($qid);
             let $option = $('<div>').addClass("qoption").appendTo($qbox).hide().css({position:"absolute"});
-            $('<div>').addClass("qid").appendTo($option).text(quiz.qno);
+            $('<div>').addClass("qid").appendTo($option).text(quiz.qno).prop("id",quiz.qid);
             $('<div>').addClass("qclear").appendTo($qid).text('✔');
             let d = new Date(quiz.date.split("T").shift() + "T12:00+0900");
             $('<div>').addClass("qinfo").appendTo($option).show()
@@ -1479,11 +1481,12 @@ const TopMenu = function() {
                 return $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"});
             }
 
-            let qid = parseInt($qopt.find(".qid").text());
+            let qid = parseInt($qopt.find(".qid").text()) || $qopt.find(".qid").get(0).id;
             $("#main .qid").text(qid);
             $("#makeuprec").addClass("withheld");
             if ((qid == 1) && !$(this).hasClass("cleared")) return $("#newstart").click();
-            let quiz = quiztable[qid - 1];//.find(q => qid == q.qid);
+            let quiz = quiztable.find(q => qid == q.qid);
+            console.log(quiz, qid);
             $(this).siblings(".qbox").animate({"opacity": "0"});
             $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"}, function() { qscreen.start(quiz); });
         }).hover(function() {

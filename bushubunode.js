@@ -129,11 +129,29 @@ nodeapp.qcompatible = (param) => {
 nodeapp.findpart = (argv) => {
     kanjifrag.define(getfile("fragtable.txt"));
     kanjifrag.define(getfile("fragtable.plus.txt"));
+    //todo: if argv[0]=="*" find_chars_with_exisiting_parts()
     let target = Array.fromCdp(argv[0]);
     kanjifrag.definelocal(target.map(c => c+":").join("/"));
     let filter = (n) => (n.length < 4) && n[0]=="N" && n[1]=="月";
     let ret = kanjitable.find(target) //, filter);
     console.log(ret.length, ret.join(""));
+};
+
+
+nodeapp.findword = (argv) => {
+    // param: 'c=* p=* n=3-4 x=* redef=**'
+    let param = Object.fromEntries(argv.map(v=>v.split("=")));
+    let ps = Array.fromCdp(param.p||"");
+    kanjifrag.definelocal(param.redef + "/" + ps.map(p=>p+":").join("/"));
+    dic.load(getfile("SKK-JISYO.ML.utf8"));
+    kanjifrag.define(getfile("fragtable.txt"));
+    kanjifrag.define(getfile("fragtable.plus.txt"));
+
+    let ret =  dic.find({
+        cs:Array.from(param.c), ps, exc:Array.from(param.x||""),
+        num:(param.n||"").split("-").map(v=>v), sort:true,
+    });
+    console.log(ret);
 };
 
 nodeapp.songcheck = (argv) => {
