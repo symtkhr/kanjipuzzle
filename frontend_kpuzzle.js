@@ -1427,11 +1427,13 @@ const TopMenu = function() {
         userdata.loadqclear(true);
         $("#qlists").html('<button class="closer">X</button>');
 
+        const is_ura = (100 < quiztable.length);
+
         let allopen = $("#qlists").hasClass("earlier");
         quiztable.map((quiz, idx) => {
             let q = quiz.q;
             quiz.qno = 1 + idx;
-            if (100 < quiztable.length) quiz.qno = (quiz.qid < 2600) ? (quiz.qid) : "詰" + (quiz.qid - 2600).toString();
+            if (is_ura) quiz.qno = (quiz.qid < 2600) ? (quiz.qid) : "詰" + (quiz.qid - 2600).toString();
             let words = q.split("/");
             let $qbox = $('<div>').appendTo("#qlists").addClass("qbox").css({position:"relative",display:"inline-block",margin:"2px"});
             let $qid = $('<div>').addClass("qid").appendTo($qbox).text(quiz.qno);
@@ -1485,7 +1487,8 @@ const TopMenu = function() {
             $("#main .qid").text(qid);
             $("#makeuprec").addClass("withheld");
             if ((qid == 1) && !$(this).hasClass("cleared")) return $("#newstart").click();
-            let quiz = quiztable.find(q => qid == q.qid);
+            let quiz = is_ura ? quiztable.find(q => qid == q.qid) : quiztable[qid - 1];
+
             console.log(quiz, qid);
             $(this).siblings(".qbox").animate({"opacity": "0"});
             $(this).find(".loading").show().css("opacity", 0).animate({"opacity":".5"}, function() { qscreen.start(quiz); });
