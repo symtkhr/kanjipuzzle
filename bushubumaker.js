@@ -295,6 +295,24 @@ const KanjiFragment = function()
             dbglobal[key] = k[1];
         });
     };
+
+    this.definefix = () => {
+        // かなを含む定義を漢字化
+        const atob = 'イ亻/ク𠂊/コ&CDP-8C78;/タ夕/ナ𠂇/ノ丿/ハ八/ヒ匕/マ龴/メ㐅/ユ&CDP-8BC8;/ヨ𫜹/ラ𪜊/リ&CDP-8BEA;/ヰ㐄/く𡿨'
+              .split("/").map(v=>[v[0],v.slice(1)]);
+        Object.entries(dbglobal).map(([k,v])=> {
+            let v0 = v;
+            if (k.match(/^[ぁ-ン]$/)) { dbglobal[k] = null; return; }
+            if (!v) return;
+            atob.map(s => { v = v.split(s[0]).join(s[1]); });
+            if (k!=v && v.match(/[ぁ-ン]/)) console.log(v); // チェック用
+            dbglobal[k] =  (k == v)  ? null : v;
+        });
+        // かなカナを同一視
+        [...Array(86)].map((_,i)=>[String.fromCodePoint(i+"ぁ".codePointAt(0)), String.fromCodePoint(i+"ァ".codePointAt(0))])
+            .map(v=>dbglobal[v[0]]=v[1]);
+        Array.from("ァィゥェォッャュョヮ").map(c=>{ dbglobal[c] = String.fromCodePoint(c.codePointAt(0)+1); });
+    };
     
     this.definelocal = function(localdb) {
         dblocal = {};

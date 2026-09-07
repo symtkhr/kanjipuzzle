@@ -1,7 +1,7 @@
 $(function() {
     const LOADURL = "https://script.google.com/macros/s/AKfycbx65oBGA7GbPsxMzM18DEpM3W2PpLMrJJHDujtv/exec";
     quiztable.push({q:""});
-    $.get("fragtable.plus.txt", function(txt) { kanjifrag.define(txt); });
+    $.get("fragtable.plus.txt", function(txt) { kanjifrag.define(txt); kanjifrag.definefix(); });
     $("#makequiz").show();
 
     //単語リスト・再定義文字

@@ -538,7 +538,7 @@ const PuzzleScreen = function() {
         }, []).filter(v=>v).join(",");
 
         // ansから番号リストを生成する
-        const onestrokes = "一丨亅丿ノ乙𠃌⺄乚𠃊丶";
+        const onestrokes = "一丨亅丿乙𠃌⺄乚𠃊丶" + (qwords.join("").match(/[のノ]/) ? "" : "ノ");
         const kidx = partquiz.make_list(ans, options.openlist || onestrokes);
 
         // 分割DOM要素内に部首または番号を表示
@@ -1556,6 +1556,7 @@ const TopMenu = function() {
                 let qdef = decodehash(param.def) || "";
                 if (!qlist) return;
                 let q0 = {qid:-1, q:qlist, def:qdef };
+                kanjifrag.definefix();
                 if (!userdata.loadpartway(q0) || param.demo) return qscreen.start(q0);
                 $("#overlap").hide();
                 $(".menu:not(.enabled)").hide();
