@@ -379,12 +379,25 @@ var make_quiz = function(is_unsort)
     //文字重複チェック
     let dup = Array.from(quiz.q).filter((x, i, self) => (x !== "/") && self.indexOf(x) === i && i !== self.lastIndexOf(x));
     if (0 < dup.length) {
-        let $dup = $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.join());
+        let $dup = $("<span>").css({"display":"inline-block", "color":"red"}).appendTo("#quiz").text(" [重複あり]" + dup.filter(c=>c.match(/\p{Script=Han}/u)).join());
 
         // 語重複チェック
         let wdup = quiz.q.split("/").filter((x, i, self) => self.indexOf(x) == i && self.lastIndexOf(x) != i);
         if (0 < wdup.length) {
             $("<span>").css({"display":"inline-block", "margin-left":"2px","background":"#fdd"}).appendTo($dup).text(" [語重複] " + wdup.join());
+        }
+        // 語根重複チェック
+        let stems = quiz.q.split("/").map(w => w.trim()).map(w => Array.from({length:w.length-1},(_,i)=> {
+            let stem = w.slice(i,i+3); // 連続かな3字・それ以外は2字を語根とする
+            return (w[i].match(/^[ぁ-ー]+$/)) ? stem : w.slice(i,i+2);
+        })).flat();
+        let stemdup = stems.filter((x, i, self) => wdup.join("/").indexOf(x) < 0 && self.indexOf(x) == i && self.lastIndexOf(x) != i);
+        stemdup.map(s=> {
+            let n = (s.length == 3) ? stemdup.indexOf(s.slice(-2)) : -1;
+            if (n != -1) stemdup[n] = ""; // 3字のかな語根重複は末尾2字も当然重複のため除去
+        });
+        if (0 < stemdup.length) {
+            $("<span>").css({"display":"inline-block", "margin-left":"2px","background":"#fdd"}).appendTo($dup).text(" [語根重複] " + stemdup.filter(v=>v).join());
         }
     }
 
