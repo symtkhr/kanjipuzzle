@@ -25,8 +25,8 @@ $(function() {
     //統計
     $("#stat").click(function() {
         $(this).remove();
-	$("#statbox").show();
-	setTimeout(stats, 400);
+        $("#statbox").show();
+        setTimeout(stats, 400);
     });
 
     //頻出再定義リスト
@@ -485,9 +485,21 @@ var find_defchange = function(qid)
 // 統計
 var stats = function()
 {
-    var q = quiztable.pop();
+    $.ajax({
+        url: "qlist.json",
+        type: 'get',
+        dataType: 'json',
+        timeout: 10000,
+    }).fail(function(){
+        return $("#statbox .result").text("(読込失敗)");
+    }).success(function(data, status, error) {
+        let q = quiztable.pop();
+        quiztable = data.filter(q => {
+            let p = q.date[0];
+            return (p != "*" && p != "#");
+        });
+
     var qs = quiztable.reduce((ret, quiz) => (ret + "/" + quiz.q.split("+").join("")), "");
-    quiztable.push(q);
 
     // 語出現数
     var wordstat = function(ws) {
@@ -572,6 +584,8 @@ var stats = function()
         //結果表示
         list.forEach((v, i) => v.forEach(c => draw_partbox(c, i, "div.statparts")));
     }();
+        quiztable = [q];
+    });
 };
 
 //素点ガイダンス

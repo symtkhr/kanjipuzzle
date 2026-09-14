@@ -528,7 +528,7 @@ const PuzzleScreen = function() {
                 splitbox($glyph, n, false);
                 $glyph.append('<div class="correct">' + c + '</div>');
                 
-                //かな文字の場合
+                //非漢字の場合
                 if (!c.match(/\p{Script=Han}/u)) {
                     $glyph.addClass("hiragana");
                     if (is_ruby) $glyph.addClass("ruby");
@@ -544,7 +544,6 @@ const PuzzleScreen = function() {
         // 分割DOM要素内に部首または番号を表示
         $quiz.find(".elm").each(function(){
             let c = $(this).text();
-
             $(this).text("");
 
             // 枠を表示しない
@@ -598,6 +597,7 @@ const PuzzleScreen = function() {
 
             let name = c.match(/^&([^;]+);$/);
             if (!name) {
+                if ($(this).parent().hasClass("hiragana")) c = $(this).parent().find(".correct").text();
                 $kpart.append(c).css(style);
                 return;
             }
