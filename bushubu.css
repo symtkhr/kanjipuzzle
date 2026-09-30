@@ -147,6 +147,10 @@ div.glyph.ruby {
     width:40px;
     height:40px;
 }
+div.glyph.ruby.alpha {
+    width:30px;
+    margin-right:0;
+}
 div.glyph.ruby div.elm div.kpart,
 div.glyph.ruby div.correct {
     font-size:30px;

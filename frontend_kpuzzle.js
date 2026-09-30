@@ -496,9 +496,9 @@ const PuzzleScreen = function() {
     //      .kpart [寸]
     //    .correct [村]
     const draw_puzzle = (qwords, $quiz, options = {}) => {
-        let ans = qwords.reduce((ans, qword, i) => {
+        let ans = qwords.map(w=>w.trim()).reduce((ans, qword, i) => {
             if (!qword.trim()) return ans;
-            let is_ruby = qword.match(/^[ぁ-ー]+=/);
+            let is_ruby = qword.match(/^[ぁ-ーa-zA-Z]+=/);
             let is_hidden = (options.display && options.display != i);
             
             if (!is_hidden) {
@@ -507,7 +507,7 @@ const PuzzleScreen = function() {
                     $("<div>").addClass("word").appendTo($quiz);
                 $("<div>").addClass("wid").text((101 + i).toString().slice(-2)).appendTo($word);
             }
-            return [...ans, ...Array.fromCdp(qword).filter(c => (c == "=") || !c.match(/^[ -~\s\u3000]?$/)).map(c => {
+            return [...ans, ...Array.fromCdp(qword).filter(c => (c == "=") || c.match(/^[a-zA-Z]$/) || !c.match(/^[ -~\s\u3000]?$/)).map(c => {
                 if (c == "=") {
                     is_ruby = false;
                     $("<div>").addClass("wid").appendTo($word).css("height",0);
@@ -532,6 +532,7 @@ const PuzzleScreen = function() {
                 if (!c.match(/\p{Script=Han}/u)) {
                     $glyph.addClass("hiragana");
                     if (is_ruby) $glyph.addClass("ruby");
+                    if (c.match(/^[A-z]$/)) $glyph.addClass("alpha");
                 }
                 return fragged;
             })];
@@ -790,7 +791,7 @@ const PuzzleScreen = function() {
                 $("#quiz .word").eq(wid - 1).find(".glyph:first").find(".elm:first").click();
                 return;
             }
-            answer_check($(this).val().trim());
+            answer_check(val);
         });
 
         const parthint = () => {
@@ -897,14 +898,14 @@ const PuzzleScreen = function() {
             // 指定の漢字かな書式に合わない文字の除去
             values = values.reduce((ret,v) => {
                 let ischira = $selecteds.eq(ret.length).hasClass("hiragana");
-                let isvhira = v.match(/[ぁ-ー]/);
+                let isvhira = v.match(/[ぁ-ーA-Za-z]/);
                 if ((ischira && isvhira) || (!ischira && !isvhira && v.match(/\p{Script=Han}/u))) ret.push(v);
                 return ret;
             }, []).slice(0, $selecteds.size());
 
             let g_log = timer.count() + "=";
             let trate = 0;
-            const is_same = (a, b) => a.kanachange().jischange() == b.kanachange().jischange();
+            const is_same = (a, b) => a.kanachange().jischange().toLowerCase() == b.kanachange().jischange().toLowerCase();
             
             //1文字ずつ正解判定
             let $word = $selecteds.eq(0).parent();
