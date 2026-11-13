@@ -475,7 +475,7 @@ let PartQuizMaker = function() {
     // 語を自動追加する(任意)
     this.select_random_words = (options) => {
         let exc = this.nchars.split("");//.filter(c => (cs.indexOf(c) == -1));
-        let words = dic.find({num:(options.clen || "3,3").split(","), cs:[], ps:[], ctypes:{}, exc:exc}).shift();
+        let words = dic.find({num:(options?.clen || "3,3").split(","), cs:[], ps:[], ctypes:{}, exc:exc}).shift();
         let ret = "";
         let i = 0;
         while (ret.length < 5 * 4 && i < 20) {
@@ -516,7 +516,7 @@ let PartQuizMaker = function() {
             // なければ既存部首から成る語を検索
             ["/rb", "/rpb"].find(cs => {
                 words = dic.find({cs:cs.split(""), ps:[],
-                                  exc:exc, num:(options.clen || "3,3").split(","), ctypes: ctypes });
+                                  exc:exc, num:(options?.clen || "3,3").split(","), ctypes: ctypes });
                 return (words[0].length);
             });
         } else {
@@ -525,7 +525,7 @@ let PartQuizMaker = function() {
                 return ps.some(p => {
                     words = dic.find({cs:"".split(""),
                                       ps:[p],
-                                      exc:exc, num:(options.clen || "3,3").split(","), ctypes: ctypes });
+                                      exc:exc, num:(options?.clen || "3,3").split(","), ctypes: ctypes });
                     if (words[0].length) return true;
                     abandon.push(p);
                 });

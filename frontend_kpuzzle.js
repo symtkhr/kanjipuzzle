@@ -49,11 +49,15 @@ class Random {
 }
 
 //JISが変更した字形を同一視する
-String.prototype.jischange = function() {
+String.prototype.jischange = function(qdef) {
     if (!this) return "";
+    let def = (qdef||"").trim().split("/").filter(d => d.match(/^\p{Script=Han}:\p{Script=Han}$/u)).reduce((def,d)=>{
+        let c = d.split(":");
+        return [def[0] + c[0], def[1] + c[1]];
+    }, ["",""]);
     return Array.from(this).map(c => {
-        const t = "倶剥呑嘘妍屏并痩繋唖焔鴎噛侠躯鹸麹屡繍蒋醤蝉掻騨箪掴填顛祷涜嚢溌醗頬麺莱蝋攅叱".indexOf(c);
-        return (t < 0) ? c : Array.from("俱剝吞噓姸屛幷瘦繫啞焰鷗嚙俠軀鹼麴屢繡蔣醬蟬搔驒簞摑塡顚禱瀆囊潑醱頰麵萊蠟攢𠮟")[t];
+        const t = ("倶剥呑嘘妍屏并痩繋唖焔鴎噛侠躯鹸麹屡繍蒋醤蝉掻騨箪掴填顛祷涜嚢溌醗頬麺莱蝋攅叱" + def[0]).indexOf(c);
+        return (t < 0) ? c : Array.from("俱剝吞噓姸屛幷瘦繫啞焰鷗嚙俠軀鹼麴屢繡蔣醬蟬搔驒簞摑塡顚禱瀆囊潑醱頰麵萊蠟攢𠮟" + def[1])[t];
     }).join("");
 };
 
@@ -497,8 +501,8 @@ const PuzzleScreen = function() {
     //    .correct [村]
     const draw_puzzle = (qwords, $quiz, options = {}) => {
         let ans = qwords.map(w=>w.trim()).reduce((ans, qword, i) => {
-            if (!qword.trim()) return ans;
-            let is_ruby = qword.match(/^[ぁ-ーa-zA-Z]+=/);
+            if (!qword) return ans;
+            let is_ruby = qword.match(/^[ぁ-ーa-zA-Z_]+=/);
             let is_hidden = (options.display && options.display != i);
             
             if (!is_hidden) {
@@ -507,10 +511,15 @@ const PuzzleScreen = function() {
                     $("<div>").addClass("word").appendTo($quiz);
                 $("<div>").addClass("wid").text((101 + i).toString().slice(-2)).appendTo($word);
             }
-            return [...ans, ...Array.fromCdp(qword).filter(c => (c == "=") || c.match(/^[a-zA-Z]$/) || !c.match(/^[ -~\s\u3000]?$/)).map(c => {
+            return [...ans, ...Array.fromCdp(qword).filter(c => (c == "=") || c.match(/^[a-zA-Z_]$/) || !c.match(/^[ -~\s\u3000]?$/)).map(c => {
                 if (c == "=") {
                     is_ruby = false;
                     $("<div>").addClass("wid").appendTo($word).css("height",0);
+                    return;
+                }
+                if (c == "_") {
+                    if (!is_ruby) return;
+                    $word.find(".glyph:last-child").css("margin-right",10);
                     return;
                 }
                 // 漢字分解
@@ -905,7 +914,7 @@ const PuzzleScreen = function() {
 
             let g_log = timer.count() + "=";
             let trate = 0;
-            const is_same = (a, b) => a.kanachange().jischange().toLowerCase() == b.kanachange().jischange().toLowerCase();
+            const is_same = (a, b) => a.kanachange().jischange(quiz.def).toLowerCase() == b.kanachange().jischange().toLowerCase();
             
             //1文字ずつ正解判定
             let $word = $selecteds.eq(0).parent();
@@ -1643,16 +1652,17 @@ const TopMenu = function() {
 // 自動生成
 const automaker = async () => {
     const encoder = s => btoa(unescape(encodeURIComponent(s)));
+    const WORDLEN = 40;
 
     dic.load(await getfile("./dicts/SKK-JISYO.ML.utf8"));
-    kanjifrag.definelocal(REDEFINE);
-    partquiz.qwords = makequiz.select_random_words().split("/").filter(w => w);
+    kanjifrag.definelocal("");
+    partquiz.qwords = makequiz.select_random_words({}).split("/").filter(w => w);
     partquiz.make(partquiz.qwords, {});
 
     let dump = () => {
         makequiz.wordsort();
-        location.hash = "quiz:q=" + encoder(partquiz.qwords.join("/")) + ":def=" + encoder(REDEFINE);
-        qscreen.start({q:partquiz.qwords.join("/"), def:REDEFINE, qid:-1});
+        location.hash = "quiz:q=" + encoder(partquiz.qwords.join("/")) + ":def=" + encoder("");
+        qscreen.start({q:partquiz.qwords.join("/"), def:"", qid:-1});
     };
 
     let miss = 0;
