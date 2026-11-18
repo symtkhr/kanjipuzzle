@@ -82,7 +82,7 @@ $(function() {
     var append_to_but = function() {
         if (!$("#addbut").prop("checked")) return;
         let txt = $("#nchars").val().split("/").shift();
-        txt += "/" + $("#wordlist").val().replace(/\(.+\)/g, "").split("/").join("");
+        txt += "/" + $("#wordlist").val().replace(/\(.+\)/g, "").replace(/[ぁ-ー]/g,"").split("/").join("");
         $("#nchars").val(txt);
     };
     

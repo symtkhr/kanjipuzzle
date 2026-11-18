@@ -1083,7 +1083,7 @@ const PuzzleScreen = function() {
             let pvlog = quiz.pvlog;
             let replay = new PlayerLog(pvlog);
             replay.draw_pulldown(pvlog.log, qlist);
-            console.log(pvlog,qlist);
+            console.log(pvlog,qlist,replay.pvlog());
             return replay.run_replay(answer_check);
         }
         

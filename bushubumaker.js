@@ -325,7 +325,7 @@ const KanjiFragment = function()
             let key = cdp2ucs(k[0]);
             dblocal[key] = k[1];
         });
-        console.log(Object.keys(dblocal).join(""));
+        //console.log(Object.keys(dblocal).join(""));
     };
 
     let referdb = function(c) {

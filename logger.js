@@ -3,6 +3,7 @@ const PlayerLog = function(qclear = {}) {
     const draw_pulldown = function(logstring, qlist)
     {
         let qwords = qlist.split("/");
+        let xincl = qwords.some(q => q.includes("x"));
 
         // ログ書式: "${秒}=${入力}x[${語番号}]${入力位置}" 形式で";"区切り
         // ログ例: "60=文学x[40]1;75=文字" (正解はx以下省略)
@@ -29,12 +30,13 @@ const PlayerLog = function(qclear = {}) {
             let wid = parseInt(log.wid);
             let time = log.time;
             let input = log.input;
-            let match = (input.slice(-1) == "x" ? input.slice(0, -2) : input).kanachange().jischange();
+            
+            let match = ((!xincl || wid != 0) && (input.slice(-1) == "x") ? input.slice(0, -2) : input).kanachange().jischange();
             if (!match.length) return log;
 
             // 語番号の推定
             if (wid == 0) {
-                wid = 1 + qwords.map(w => w.kanachange().jischange()).findIndex(w => {
+                wid = 1 + qwords.map(w => w.replace(/[=_ \s\u3000]/g,"").kanachange().jischange()).findIndex(w => {
                     // 字位置の推定
                     let glyph = w.indexOf(match);
                     if (glyph < 0) {
