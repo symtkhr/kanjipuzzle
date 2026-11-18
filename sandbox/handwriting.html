@@ -1,0 +1,350 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="pragma" content="no-cache">
+<meta name="viewport" content="initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="https://symtkhr.github.io/kanjipuzzle/bushubu.css?20260914">
+<title>部首パズル</title>
+<style>
+@charset "utf-8";
+html { }
+body { padding: 0px; margin: 0px; }
+@font-face { font-family: glyphwiki; src: url("webfont/glyphwiki.v2.woff?20260701"); }
+@media screen and (max-width: 600px) {
+  .topbox { width: 100%; }
+  #qex, #daily { min-width: 0px; }
+}
+#top { display: flex; flex-wrap: wrap; }
+.topbox { border-radius: 10px; margin: 10px; border: 1px solid rgb(153, 85, 0); text-align: left; padding: 5px; position: relative; }
+.topbox h4, #menu h4, #stat h4, span.minimized { border-radius: 20px; display: inline-block; border: 1px solid rgb(204, 204, 204); padding: 0px 6px; margin: 0px; font-weight: normal; background-color: rgb(255, 221, 204); }
+span.minimized { border: 1px solid rgb(153, 85, 0); background-color: rgb(221, 204, 170); cursor: pointer; margin: 5px; }
+#daily:hover { background-color: rgb(187, 221, 204); cursor: pointer; }
+#qex, #daily { text-align: center; }
+#example, #example_answer { display: inline-block; }
+.help, .closer { position: absolute; z-index: 2; right: 0px; top: 0px; height: 22px; width: 22px; padding: 0px; }
+#quiz { background: linear-gradient(60deg, rgb(238, 255, 238), rgb(170, 204, 170), rgb(85, 153, 85)); scroll-snap-type: y; text-align: center; }
+div.sbox { position: absolute; width: 100%; height: 100%; pointer-events: none; }
+div.elm { border: 1px solid rgb(153, 34, 0); box-sizing: border-box;  background-color: rgba(255, 240, 224, 0.3); background-blend-mode: lighten; pointer-events: initial;background: #eee; }
+div.qelm { background-color: transparent; }
+div.qelm.onestroke:not(.pselected):has(.undone) { background-color: rgba(64, 255, 64, 0.5); }
+.elm.pselected { background-color: rgba(128, 128, 255, 0.5); background-blend-mode: lighten; }
+div.glyph { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, "MS Gothic", sans-serif; position: relative; width: 60px; height: 60px; border: 1px solid rgb(136, 85, 51); box-sizing: border-box; display: inline-block; margin-right: 5px; cursor: pointer; }
+div.glyph div.judge { font-family: "MS Gothic"; position: absolute; width: 40px; height: 40px; top: 10px; left: 10px; font-size: 40px; line-height: 40px; font-weight: bold; color: red; text-align: center; z-index: 6; }
+div.correct { line-height: 58px; font-size: 58px; color: rgb(51, 0, 0); display: none; pointer-events: none; position: absolute; inset: 0px; }
+div.glyph.hiragana, div.glyph.hiragana div.elm { border-radius: 30px; }
+div.glyph.hiragana div.elm div.kpart, div.glyph.hiragana div.correct { text-align: center; font-size: 40px; }
+div.glyph.ruby { width: 40px; height: 40px; }
+div.glyph.ruby div.elm div.kpart, div.glyph.ruby div.correct { font-size: 30px; line-height: 40px; }
+.word { border-width: medium; border-style: none; border-color: currentcolor; border-image: none; display: inline-block; border-radius: 8px; box-shadow: gray 3px 3px 3px; padding: 1px 0px 0px 5px; margin: 5px; background:#eed7d0; /*background: url("p0499_m.jpg"); */
+scroll-snap-align: start; }
+.word .wid { margin: 2px 2px 0px auto; position: relative; width: 30px; height: 15px; line-height: 18px; font-size: 12px; font-family: monospace; text-align: center; vertical-align: bottom; overflow: hidden; white-space: nowrap; color: rgba(20, 20, 50, 0.8); border-radius: 15px; background-color: rgba(0, 0, 0, 0.2); background-blend-mode: lighten; box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 2px 1px inset; }
+div.glyph.selected .elm { border-color: yellow; }
+div.glyph.selected { border-color: yellow; }
+div.kidx { width: 100%; position: absolute; text-align: center; color: rgb(153, 0, 0); z-index: 2; top: 0px; height: 16px; line-height: 16px; font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.elm.L1 div.kidx, .elm.U1 div.kidx { top: auto; bottom: 0px; text-align: left; }
+div.kpart { font-family: glyphwiki; font-weight: bold; color: rgb(51, 0, 0); width: 100%; position: absolute; text-align: center; z-index: 1; pointer-events: none; top: 0px; bottom: 0px; margin: auto; }
+#judge { position: absolute; right: 10px; bottom: 10px; display: none; font: 30pt bold; }
+#keyinput { display: inline-block; padding: 0px; position: absolute; z-index: 4; scroll-snap-align: start; }
+.userans, .usercmd, .helpuserans, #srvlog { width: 300px; height: 30px; font-size: 30px; border: 3px solid rgb(136, 204, 136); background-color: rgb(0, 17, 0); color: rgb(136, 204, 136); }
+#g_log, #score { display: none; }
+#discover { font-family: glyphwiki; }
+div.cdp { width: 20px; height: 20px; display: inline-block; }
+#message { display: none; width: 300px; height: 200px; position: absolute; inset: 0px; background-color: rgb(187, 204, 204); margin: auto; border: 2px solid gray; border-radius: 40px; line-height: 25px; z-index: 4; }
+#archives { text-decoration: underline; cursor: pointer; }
+#qlistsX, #newest, #qposts { display: flex; flex-wrap: wrap; }
+.qoption .loading, #qdesc .loading { position: absolute; inset: 0px; opacity: 0; line-height: 60px; font-size: 60px; text-align: center; z-index: 0; color: rgb(0, 0, 136); }
+.qoption:hover { background-color: rgb(187, 221, 204); }
+.qoption.resume { background-color: rgb(255, 170, 170); border: 1px solid rgb(255, 34, 34); }
+.qoption.resume:hover { background-color: rgb(255, 204, 170); border: 1px solid rgb(255, 34, 34); }
+.qclear { position: absolute; left: 0px; right: 0px; top: 0px; color: red; height: 40px; font-size: 40px; display: none; }
+.qbox.cleared .qclear { display: block; }
+.qinfo { color: rgb(102, 102, 170); margin-left: 4px; float: left; height: 40px; line-height: 20px; white-space: nowrap; }
+.qdesc { margin: 0px 5px; clear: both; display: block; font-size: 12pt; width: auto; }
+.qinfo, .qdesc { display: none; }
+h2.sampleword { zoom: 0.5; margin: 2px; transform: translate(0px, -25px) rotate(-6deg); }
+.fkana { font-size: 80%; color: rgb(51, 51, 136); }
+.fword { position: relative; display: inline-block; }
+.fchar, .fword { cursor: pointer; }
+.fchar.selected, .fword.selected { border: 1px solid gray; font-size: 150%; }
+.maskr { color: red; }
+.maskb { color: blue; }
+.maskp { color: rgb(255, 136, 0); }
+.maskc { color: rgb(0, 136, 255); }
+.barekey, .fragkey, .statparts, .cdpf, #parts, #redefine { font-family: glyphwiki; }
+#ifdicload label { white-space: nowrap; }
+#dicloader label { display: inline-block; white-space: nowrap; }
+.setpartbox { margin: 0px 1px 1px 0px; line-height: 10px; font-size: 10px; width: 20px; height: 30px; overflow: hidden; display: inline-block; cursor: pointer; }
+.setpart { font-family: glyphwiki, serif; cursor: pointer; line-height: 20px; font-size: 18px; width: 20px; height: 20px; background-color: rgb(204, 204, 204); display: inline-block; }
+.setpartbox.selected { overflow: visible; }
+.setpartbox.selected .setpart { width: 40px; height: 40px; line-height: 40px; font-size: 38px; position: relative; left: -10px; border: 1px solid white; }
+#parts, #chars, #nchars, #numof { width: 100px; }
+#frequents label { display: inline-block; background-color: rgb(204, 204, 204); border-radius: 12px; border: 1px solid rgb(0, 136, 0); font-size: 12px; padding: 0px 5px; }
+#frequents span { display: inline-block; color: rgb(0, 0, 136); font-family: glyphwiki, serif; height: 24px; line-height: 24px; cursor: pointer; }
+#frequents span:hover { background-color: rgb(204, 204, 204); }
+.setpart:hover { background-color: rgb(136, 136, 136); }
+
+  /* 手書き用のオーバーレイ */
+  .qelm {
+    position: relative;
+  }
+  .handwriting-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    cursor: crosshair;
+    pointer-events: auto;
+  }
+  /* 表示同期用のSVGコンテナ */
+  .handwriting-svg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none; /* 通常時のイベント透過 */
+  }
+  /* 拡大縮小されても線の太さを一定に保つ設定 */
+  .stroke-path {
+    vector-effect: non-scaling-stroke;
+    stroke: #330000;
+    stroke-width: 4px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    transition: stroke 0.2s, filter 0.2s;
+  }
+  
+  /* 右クリック選択時の赤く光るスタイル */
+  .stroke-path.highlighted {
+    stroke: #0066cc !important;
+      //filter: drop-shadow(0px 0px 3px #ff0000);
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // kidxごとのデータ構造
+  // { baseWidth, baseHeight, strokes: [ "M...", "M..." ], selectedIndices: Set(0, 1) }
+  const pathDataMap = {};
+
+  const qelms = document.querySelectorAll('div.qelm');
+
+  qelms.forEach(qelm => {
+    const kidxEl = qelm.querySelector('div.kidx');
+    if (!kidxEl) return;
+    
+    const kidxClass = Array.from(kidxEl.classList).find(c => c.startsWith('kidx') && c !== 'kidx');
+    if (!kidxClass) return;
+
+    // SVGコンテナとCanvasの設置
+    const canvas = document.createElement('canvas');
+    canvas.className = 'handwriting-canvas';
+    
+    const svgContainer = document.createElement('div');
+    svgContainer.className = 'handwriting-svg-container';
+    svgContainer.innerHTML = `<svg width="100%" height="100%" preserveAspectRatio="none" style="position:absolute; top:0; left:0; overflow:visible;"></svg>`;
+
+    qelm.appendChild(svgContainer);
+    qelm.appendChild(canvas);
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    let isDrawing = false;
+    let currentPath = [];
+
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    // 描画開始
+    function startDrawing(e) {
+      // 左クリック(button === 0)・タッチ時のみ手書きを行う
+      if (e.button !== undefined && e.button !== 0) return;
+
+      isDrawing = true;
+      const pt = getCanvasCoords(e);
+      
+      if (!pathDataMap[kidxClass]) {
+        pathDataMap[kidxClass] = {
+          baseWidth: pt.width,
+          baseHeight: pt.height,
+          strokes: [],
+          selectedIndices: new Set()
+        };
+      }
+
+      currentPath = [`M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`];
+      e.preventDefault();
+    }
+
+    // 描画中
+    function draw(e) {
+      if (!isDrawing) return;
+      const pt = getCanvasCoords(e);
+      currentPath.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+
+      // 描画中の仮ストロークを含めてリアルタイム同期
+      const data = pathDataMap[kidxClass];
+      const tempStrokes = [...data.strokes, currentPath.join(' ')];
+      syncKidxDisplay(kidxClass, tempStrokes);
+      e.preventDefault();
+    }
+
+    // 描画終了
+    function stopDrawing(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+
+      if (currentPath.length > 0) {
+        const data = pathDataMap[kidxClass];
+        data.strokes.push(currentPath.join(' '));
+        syncKidxDisplay(kidxClass, data.strokes);
+      }
+    }
+
+    // 右クリック（コンテキストメニュー）で線を判定して赤く光らせる（トグル）
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault(); // コンテキストメニュー表示の無効化
+
+      const data = pathDataMap[kidxClass];
+      if (!data || data.strokes.length === 0) return;
+
+      const pt = getCanvasCoords(e);
+
+      // SVG上の各path要素とクリック点との最短距離を計算して判定
+      const svgEl = svgContainer.querySelector('svg');
+      const pathEls = svgEl.querySelectorAll('path.stroke-path');
+
+      let closestIndex = -1;
+      let minDistance = Infinity;
+
+      pathEls.forEach((pathEl, idx) => {
+        // SVG要素上の最寄りの点とマウス位置の距離判定
+        const length = pathEl.getTotalLength();
+        const steps = Math.max(10, Math.floor(length / 2));
+        
+        for (let i = 0; i <= steps; i++) {
+          const point = pathEl.getPointAtLength((i / steps) * length);
+          const dist = Math.hypot(point.x - pt.x, point.y - pt.y);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestIndex = idx;
+          }
+        }
+      });
+
+      // マウス位置から20px以内に線がある場合、選択状態を反転
+      if (closestIndex !== -1 && minDistance < 20) {
+        if (data.selectedIndices.has(closestIndex)) {
+          data.selectedIndices.delete(closestIndex);
+        } else {
+          data.selectedIndices.add(closestIndex);
+        }
+        syncKidxDisplay(kidxClass, data.strokes);
+      }
+    });
+
+    // イベントのバインド
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+  });
+
+  // 分離された各 <path> 要素をレンダリングして全マスに同期させる関数
+  function syncKidxDisplay(kidxClass, strokesArray) {
+    const data = pathDataMap[kidxClass];
+    if (!data) return;
+
+    const targets = document.querySelectorAll(`.${kidxClass}`);
+
+    targets.forEach(kidxEl => {
+      const qelm = kidxEl.closest('div.qelm');
+      if (!qelm) return;
+
+      const svgEl = qelm.querySelector('svg');
+      if (!svgEl) return;
+
+      svgEl.setAttribute('viewBox', `0 0 ${data.baseWidth} ${data.baseHeight}`);
+
+      // strokeごとに個別 <path> を生成して挿入
+      const pathHTML = strokesArray.map((strokeD, idx) => {
+        const isSelected = data.selectedIndices.has(idx);
+        const activeClass = isSelected ? 'stroke-path highlighted' : 'stroke-path';
+        return `<path class="${activeClass}" d="${strokeD}" />`;
+      }).join('');
+
+      svgEl.innerHTML = pathHTML;
+    });
+  }
+});
+</script></head>
+<body>
+  <div id="main" style="display: flex;">
+    <div id="head"></div>
+    <div id="quiz" class="nowid" style="zoom: 1.5;">
+
+<div class="word"><div class="wid">01</div>
+<div class="glyph"><div class="sbox L1"><div class="sbox elm qelm"><div class="kidx kidx1 undone" style="bottom: 0px; top: auto; text-align: left; display: block;">1</div></div></div><div class="sbox" style="width:70%; height:70%; top:0; right:0;"><div class="sbox elm qelm"><div class="kidx kidx2 undone">2</div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx3 undone">3</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">以</div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx3 undone">3</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">直</div></div></div></div></div>
+
+<div class="word"><div class="wid">02</div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">礻</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx4 undone">4</div></div></div></div>
+<div class="glyph"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 0.482143);">貝</div></div></div></div>
+<div class="glyph"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx6 undone">6</div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 0.482143);">尞</div></div></div></div></div>
+
+<div class="word"><div class="wid">03</div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx3 undone">3</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 1);">木</div></div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx3 undone">3</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">建</div></div></div></div>
+<div class="glyph"><div class="sbox" style="top: 0px; height: 33.3333%;"><div class="sbox elm qelm"><div class="kidx kidx6 undone">6</div></div></div><div class="sbox" style="bottom: 0px; height: 66.6667%;"><div class="sbox elm" style="top: 0px; height: 50%;"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 0.303571);">𠫔</div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx4 undone">4</div></div></div></div></div></div>
+
+<div class="word"><div class="wid">04</div>
+<div class="glyph"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 0.482143);"></div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx7 undone">7</div></div></div></div>
+<div class="glyph"><div class="sbox L1"><div class="sbox elm qelm"><div class="kidx kidx1 undone" style="bottom: 0px; top: auto; text-align: left; display: block;">1</div></div></div><div class="sbox" style="width:70%; height:70%; top:0; right:0;"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 39px; width: 39px; transform-origin: left top; line-height: 39px; transform: scale(1, 0.461538);">⺧</div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx3 undone">3</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">乍</div></div></div></div></div>
+
+<div class="word"><div class="wid">05</div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">戸</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx2 undone">2</div></div></div></div>
+<div class="glyph"><div class="sbox F1"><div class="sbox elm"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 1);"></div></div></div><div class="sbox" style="width:70%; height:70%; bottom:0; right:0;"><div class="sbox elm qelm"><div class="kidx kidx4 undone">4</div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx4 undone">4</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">也</div></div></div></div></div>
+
+<div class="word"><div class="wid">06</div>
+<div class="glyph"><div class="sbox O1"><div class="sbox elm qelm"><div class="kidx kidx5 undone" style="text-align: right; display: block;">5</div></div></div><div class="sbox" style="width:60%; height:60%; top:20%; right:20%;"><div class="sbox elm"><div class="kpart" style="font-size: 33px; width: 33px; transform-origin: left top; line-height: 33px; transform: scale(1, 1);">寸</div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx3 undone">3</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">本</div></div></div></div>
+<div class="glyph"><div class="sbox" style="top: 0px; height: 33.3333%;"><div class="sbox elm qelm"><div class="kidx kidx6 undone">6</div></div></div><div class="sbox" style="bottom: 0px; height: 66.6667%;"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 0.303571);">夂</div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div></div></div></div>
+
+
+<div class="word"><div class="wid">07</div>
+<div class="glyph"><div class="sbox L1"><div class="sbox elm qelm"><div class="kidx kidx1 undone" style="bottom: 0px; top: auto; text-align: left; display: block;">1</div></div></div><div class="sbox elm" style="width:70%; height:70%; top:0; right:0;"><div class="kpart" style="font-size: 39px; width: 39px; transform-origin: left top; line-height: 39px; transform: scale(1, 1);">𠂤</div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">力</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div></div>
+<div class="glyph"><div class="sbox" style="top: 0px; height: 66.6667%;"><div class="sbox" style="top: 0px; height: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 56px; width: 56px; transform-origin: left top; line-height: 56px; transform: scale(1, 0.303571);">⺊</div></div></div><div class="sbox" style="bottom: 0px; height: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div></div><div class="sbox" style="bottom: 0px; height: 33.3333%;"><div class="sbox elm qelm"><div class="kidx kidx7 undone">7</div></div></div></div></div>
+
+
+<div class="word"><div class="wid">08</div>
+<div class="glyph"><div class="sbox L1"><div class="sbox elm qelm"><div class="kidx kidx1 undone" style="bottom: 0px; top: auto; text-align: left; display: block;">1</div></div></div><div class="sbox" style="width:70%; height:70%; top:0; right:0;"><div class="sbox H1"><div class="sbox elm"><div class="kpart" style="font-size: 39px; width: 39px; transform-origin: left top; line-height: 39px; transform: scale(1, 1);">冎</div></div></div><div class="sbox" style="width:60%; height:60%; bottom:0; right:20%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">乎</div></div></div></div>
+<div class="glyph"><div class="sbox" style="left: 0px; width: 50%;"><div class="sbox elm qelm"><div class="kidx kidx5 undone">5</div></div></div><div class="sbox" style="right: 0px; width: 50%;"><div class="sbox elm"><div class="kpart" style="font-size: 27px; width: 27px; transform-origin: left top; line-height: 27px; transform: scale(1, 2.07407);">及</div></div></div></div></div></div>
+  </div>
+
+</body></html>

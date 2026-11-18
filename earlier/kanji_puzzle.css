@@ -93,7 +93,7 @@ div.glyph {
   margin-right: 5px;
   cursor: pointer;
 }
-
+div.pselected { background-color: #8cf;};
 div.glyph div.judge {
     font-family: MS Gothic;
     position:absolute;

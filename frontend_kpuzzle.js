@@ -1690,6 +1690,7 @@ const se = new SoundEffect();
 
 $(function() {
     if (location.href.indexOf("/versus") != -1) return;
+    if (location.href.includes("/sandbox")) return;
     if (location.href.indexOf("/renewalsandbox") != -1) return location.href = "..";
     $("#sh, #continue, #main").hide();
     menu.load_qlist();
