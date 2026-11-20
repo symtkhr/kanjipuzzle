@@ -4,67 +4,25 @@ $(function() {
     load_qlist("qlist.json");
 });
 
-const save_status = function(qid)
+// replace userdata.loadpartway
+const earlier_loadpartway = function()
 {
-    if ((!timer.is_running)) {// ($(".qoption").eq(qid - 1).hasClass("resume"))) {
-        qid = -1;
-    }
-
-    if (qid < 0) {
-        document.cookie = "tempopreserve=";
-        return;
-    }
-
-    const undone = $('.kidx.undone').map(function() {
-        return parseInt($(this).text());
-    }).get().filter((x, i, self) => (self.indexOf(x) == i));
-
-    const time = timer.count();
-    const pt = parseInt($("#point").text(), 10);
-
-    const date = new Date();
-    date.setTime(date.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const expired = ";expires=" + date.toGMTString();
-
-    const val = qid + "<>" + pt + "<>" + time + "<>" + undone.join(",")
-        + "<>" + $("#g_log").val();
-    const cookie = "tempopreserve=" + encodeURIComponent(val);
-    document.cookie = cookie + expired;
-};
-
-const load_status = function()
-{
-    let is_valid = false;
-    let res = {};
-    
-    document.cookie.split(";").forEach(function(param) {
-        let p = param.split("=");
-        if (p[0].trim().indexOf('done') == 0) {
-            let qid = parseInt(p[0].split("_").pop());
-            if (!qid) return;
-            $("#menu .qoption").eq(qid - 1).addClass('cleared');
+    let resume = (() => {
+        try {
+            return JSON.parse(localStorage.savepartway);
+        } catch (e) {
             return;
         }
-        if (p[0].trim() != "tempopreserve") return;
-        let data = decodeURIComponent(p[1]).split("<>");
-
-        if (data.length < 5) return;
-        res.qid = data.shift();
-        res.pt = data.shift();
-        res.time = parseInt(data.shift());
-        res.undone = data.shift().split(",");
-        res.logs = data.join("<>");
-        is_valid = true;
-    });
-    //console.log(document.cookie);
-
-    if (!is_valid) return false;
-    if (!res.qid) return false;
-
+    })();
+    
+    if (!resume) return;
+    
     // 再開時のデータ展開
+    let q = menu.quiztable().find(q => q.qid == resume.qid);
+    if (!q) return;
+
     $("#continue").show().find(".resume").remove();
-    $("#menu .qoption").eq(res.qid - 1).addClass("resume").clone().appendTo("#continue");
-    //if (res.qid == quiztable.length) $("#newest").hide();
+    $(`#menu .qoption .qid[data-qid=${resume.qid}]`).parent().addClass("resume").clone().appendTo("#continue");
 
     $(".resume").unbind().click(function() {
         if (!$("#fragtable").hasClass("done")) return;
@@ -73,26 +31,28 @@ const load_status = function()
 
         $('<div>').addClass("loading").text("再開").appendTo(this)
             .animate({"opacity":".5"}, function() {
-                qscreen.start(quiztable.find(q=>q.qid==qid));
-                $(".kidx").removeClass("undone").hide().next().show();
-                res.undone.forEach(function(kid) {
-                    $(".kidx" + kid).addClass("undone").show().next().hide();
-                });
+                q.resume = true;
+                q.hintwait = resume.time;
+                qscreen.start(q);
+
+                $("#quiz .kidx").removeClass("undone").hide().next().show();
+                resume.undone.forEach(kid => $("#quiz .kidx" + kid).addClass("undone").show().next().hide());
+
                 //全パーツが開いたグリフを表示
-                $(".glyph").each(function() {
+                $("#quiz .glyph").each(function() {
                     if ($(this).find(".undone").size() > 0) return;
                     let n = $(this).parent().find(".glyph").index($(this));
                     $(this).find(".correct").show();
                     $(this).find(".elm div").hide();
                 });
-                $("#g_log").val(res.logs);
-                $("#point").text(res.pt);
-                timer.start(res.time + 1);
+                $("#g_log").val(resume.log);
+                $("#point").text(resume.pt);
+                timer.start(resume.time + 1);
             });
     });
 
     $("#erase_resume").show().click(function() {
-        save_status(-1);
+        userdata.erasepartway();
         $(this).hide();
         $("#continue").hide();
         $(".qoption.resume").removeClass("resume").show();
@@ -162,13 +122,13 @@ const load_qlist = (url) =>
         let txt = $(this).contents().find("body").text();
         kanjifrag.define(txt);
         $(this).addClass("done");
-        show_menu();
+        if ($("#fragtable.done").size() && $("#fragtableplus.done").size()) show_menu();
     });
 
     loadfile();
 };
 
-let show_menu = function()
+const show_menu = function()
 {
     let draw_top = () => {
         if ($("#example .word").size()) return;
@@ -196,6 +156,7 @@ let show_menu = function()
                   d.toJSON().split("T").shift() + " " + q.author);
         $('<div>').addClass("qdesc").appendTo($option).text(q.desc);
     });
+    menu.quiztable = () => quiztable;
 
     if (!$('.qoption').size()) { return $('body').hide(); }
 
@@ -235,7 +196,7 @@ let show_menu = function()
     };
 
     show_daily();
-    load_status();
+    earlier_loadpartway();
     anchor_check();
 
     $("#newest").text('');
@@ -282,6 +243,7 @@ let show_menu = function()
             });
     });
     $(".help").click(function() {
+        console.log($(this).prop("id"));
         if ($(this).prop("id") == "showrule") return;
         let $helper = $(this).parent().find(".helper");
         if ($helper.is(":visible")) $helper.hide(); else $helper.show();
@@ -295,11 +257,10 @@ let show_menu = function()
         $('#rule').toggle();
     });
 
-    if (location.href.indexOf("#debug") < 0 || makecache()) return;
+    if (location.href.indexOf("#debug") < 0) return;
 
     draw_top = () => 0;
     $("#top").hide();
-    $.getScript("./makequiz_tool.js");
-    $.getScript("./jisho_tool.js");
+    $.getScript("frontend_bushubumaker.js");
 };
 
