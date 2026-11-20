@@ -194,7 +194,7 @@ const KanjiTable = function()
 {
     // 指定された部首を持つ漢字を返す
     this.find = function(part, filter = (() => true)) {
-        return _SKKTABLE.split("").filter(c => {
+        return Array.from(_SKKTABLE).filter(c => {
             let n = kanjifrag.split(c).toString().split(",");
             return part.every(val => {
                 let i = n.indexOf(val);

@@ -93,7 +93,6 @@ div.glyph {
   margin-right: 5px;
   cursor: pointer;
 }
-
 div.glyph div.judge {
     font-family: MS Gothic;
     position:absolute;
@@ -170,7 +169,14 @@ div.glyph.hiragana div.correct {
     text-align:center;
     font-size:40px;
 }
-
+div.glyph.ruby {
+    width:40px;
+    height:40px;
+}
+div.glyph.ruby.alpha {
+    width:30px;
+    margin-right:0;
+}
 div.word {
     border: 1px solid green;
     display:inline-block;
@@ -197,6 +203,8 @@ div.glyph.selected .elm {
 div.glyph.selected {
     border-color: red;
 }
+div.pselected { background-color: #8cf;}
+
 div.kidx {
     width:100%; position:absolute; text-align:center; color:blue; z-index:2;
     top:0; height:16px; line-height:16px;
@@ -382,7 +390,31 @@ h2 {
 .maskc {
     color:#08f;
 }
-    
+.wordstat {
+    display:inline-block;
+    margin:2px 1px;
+    border: 1px solid #88c;
+    padding:0px 4px;
+}
+.wordstat0 {
+    margin:0 1px 1px 0;
+    line-height:10px;
+    font-size: 10px;
+    height:30px;
+    overflow:hidden;
+    display:inline-block;
+    cursor:pointer;
+}
+.wordstat09 div {
+    font-family: glyphwiki;
+    cursor: pointer;
+    line-height:20px;
+    font-size: 18px;
+    height:20px;
+    border: 1px solid #88c;
+    display:inline-block;
+}
+
 .barekey, .fragkey, .statparts, .cdpf, #parts, #redefine {
     font-family: "glyphwiki";
 }
@@ -416,7 +448,25 @@ h2 {
     background-color:#ccc;
     display:inline-block;
 }
-
+.glyphstat {
+    margin:1px;
+    height:auto;
+    width:22px;
+    font-size:10px;
+    line-height:10px;
+}
+.glyphstat span {
+    text-align:center;
+    border: 1px solid #88c;
+    font-size:18px;
+    line-height:18px;
+    padding:1px;
+    display:block;
+}
+#glyphstat {
+    display: flex;
+    flex-wrap: wrap;
+}
 .setpartbox.selected {
     overflow:visible;
 }
